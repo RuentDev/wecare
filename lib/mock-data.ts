@@ -60,7 +60,7 @@ export interface ClinicLocation {
 export const mockLocations: ClinicLocation[] = [
   {
     id: "1",
-    name: "FamilyCare - Olongapo",
+    name: "WeCare - Olongapo",
     phone: "+63 978 765 4321",
     email: "olongapo@wecare.com",
     address:
@@ -72,7 +72,7 @@ export const mockLocations: ClinicLocation[] = [
   },
   {
     id: "2",
-    name: "FamilyCare - Castillejos",
+    name: "WeCare - Castillejos",
     phone: "+63 978 765 4322",
     email: "castillejos@wecare.com",
     address:
