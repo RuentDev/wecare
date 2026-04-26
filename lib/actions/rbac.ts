@@ -161,3 +161,107 @@ export async function toggleUserStatus(userId: string, isActive: boolean) {
   revalidatePath("/admin/users");
   return { success: true };
 }
+
+/**
+ * Fetches a single user by ID with their roles.
+ */
+export async function getUserById(userId: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:view");
+
+  return await prisma.users.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      first_name: true,
+      last_name: true,
+      phone: true,
+      role: true,
+      is_active: true,
+      avatar_url: true,
+      gender: true,
+      date_of_birth: true,
+      street: true,
+      city: true,
+      state: true,
+      postal_code: true,
+      user_roles: {
+        include: {
+          roles: true
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Admin action to update user details.
+ */
+export async function adminUpdateUser(userId: string, data: any) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:edit");
+
+  const updatedUser = await protectedPrisma.users.update({
+    where: { id: userId },
+    data: {
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      role: data.role,
+      is_active: data.is_active,
+    }
+  });
+
+  // Sync with RBAC roles if system role changed
+  const roleRecord = await prisma.roles.findUnique({
+    where: { name: data.role }
+  });
+
+  if (roleRecord) {
+    // For simplicity, we just ensure they have this role in user_roles
+    // In a more complex system, we might manage this differently
+    const existing = await prisma.user_roles.findUnique({
+      where: { user_id_role_id: { user_id: userId, role_id: roleRecord.id } }
+    });
+
+    if (!existing) {
+      await prisma.user_roles.create({
+        data: { user_id: userId, role_id: roleRecord.id }
+      });
+    }
+  }
+
+  revalidateTag("users", "default");
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  return { success: true, user: updatedUser };
+}
+
+/**
+ * Admin action to create a new user.
+ */
+export async function adminCreateUser(data: any) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:edit");
+
+  // We reuse the auth createUser which handles hashing and RBAC sync
+  const { createUser: authCreateUser } = await import("@/lib/auth");
+  
+  const newUser = await authCreateUser({
+    email: data.email,
+    password: data.password || "ChangeMe123!", // Default password
+    first_name: data.first_name,
+    last_name: data.last_name,
+    phone: data.phone,
+    role: data.role,
+  });
+
+  revalidateTag("users", "default");
+  revalidatePath("/admin/users");
+  return { success: true, user: newUser };
+}

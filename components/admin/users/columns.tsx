@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Shield, UserCog, UserMinus, UserCheck } from "lucide-react";
+import Link from "next/link";
 
 export type Role = {
   id: string;
@@ -140,6 +141,15 @@ export const getColumns = ({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Management</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link 
+                href={`/admin/users/${user.id}`}
+                className="flex items-center w-full cursor-pointer"
+              >
+                <UserCog className="mr-2 h-4 w-4 text-primary" />
+                Edit Profile
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAssignRoles(user)}>
               <Shield className="mr-2 h-4 w-4 text-primary" />
               Assign Roles
