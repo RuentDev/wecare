@@ -1,34 +1,39 @@
-"use client";
+import { Sidebar } from "@/components/admin/sidebar";
+import { DashboardHeader } from "@/components/admin/dashboard-header";
 
-import React from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
-import { AdminSidebar } from "@/components/admin-sidebar";
+import { getCurrentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({
+export const metadata = {
+  title: {
+    default: "WeCare | Dashboard",
+    template: "WeCare Admin",
+  },
+  description: "WeCare clinic administration dashboard",
+};
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  // const user = await getCurrentUser();
 
-  React.useEffect(() => {
-    if (!isAuthenticated || user?.role !== "admin") {
-      router.push("/login");
-    }
-  }, [isAuthenticated, user, router]);
+  // if (!user) {
+  //   redirect("/login?redirect=/admin");
+  // }
 
-  if (!isAuthenticated || user?.role !== "admin") {
-    return null;
-  }
+  // if (user.role !== "admin" && user.role !== "staff") {
+  //   redirect("/dashboard");
+  // }
 
   return (
-    <div className="flex">
-      <AdminSidebar />
-      <main className="flex-1 ml-64 bg-neutral-light min-h-screen">
-        {children}
-      </main>
+    <div className="min-h-screen">
+      <Sidebar />
+      <div className="lg:pl-64">
+        <DashboardHeader />
+        <div className="p-5">{children}</div>
+      </div>
     </div>
   );
 }

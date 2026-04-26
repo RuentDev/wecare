@@ -1,8 +1,3 @@
-"use client";
-
-import React from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { Header } from "@/components/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,19 +6,6 @@ import Link from "next/link";
 import { Star, Trash2, Edit } from "lucide-react";
 
 export default function DoctorsManagement() {
-  const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
-
-  React.useEffect(() => {
-    if (!isAuthenticated || user?.role !== "admin") {
-      router.push("/login");
-    }
-  }, [isAuthenticated, user, router]);
-
-  if (!isAuthenticated || user?.role !== "admin") {
-    return null;
-  }
-
   return (
     <>
       <Header />

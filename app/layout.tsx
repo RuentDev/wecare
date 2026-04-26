@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { AuthProvider } from "@/lib/auth-context";
+// import { Analytics } from "@vercel/analytics/next";
+// import { Header } from "@/components/header";
+// import Footer from "@/components/footer";
 import "./globals.css";
-import { Header } from "@/components/header";
-import Footer from "@/components/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "WeCare Clinic - Patient Booking & Management",
-  description:
-    "Professional healthcare scheduling and management system for WeCare Clinic",
-  generator: "v0.app",
+  title: "WeCare Clinic",
+  description: "Professional healthcare management system for WeCare Clinic",
   icons: {
     icon: [
       {
@@ -48,12 +45,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} font-sans antialiased`}>
-        <AuthProvider>
-          <Header />
-          {children}
-          <Footer />
-        </AuthProvider>
-        <Analytics />
+        {/* <Header /> */}
+        {children}
+        {/* <Footer /> */}
+        {/* <Analytics /> */}
       </body>
     </html>
   );

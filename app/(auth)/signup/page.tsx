@@ -1,57 +1,38 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      await login(email, password);
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fillDemoPatient = () => {
-    setEmail('patient@example.com');
-    setPassword('password123');
+    setEmail("patient@example.com");
+    setPassword("password123");
   };
 
   const fillDemoAdmin = () => {
-    setEmail('admin@example.com');
-    setPassword('admin123');
+    setEmail("admin@example.com");
+    setPassword("admin123");
   };
 
   return (
     <>
-      <Header />
       <main className="min-h-screen bg-neutral-light py-12 px-4 flex items-center justify-center">
         <Card className="w-full max-w-md rounded-[12px] shadow-md p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-neutral-dark mb-2">Welcome to WeCare</h1>
+            <h1 className="text-2xl font-bold text-neutral-dark mb-2">
+              Welcome to WeCare
+            </h1>
             <p className="text-neutral-gray">Sign in to your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-[12px] text-sm">
                 {error}
@@ -91,13 +72,15 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-primary hover:bg-blue-900 text-white font-semibold py-3 rounded-[12px] transition-colors disabled:bg-neutral-gray"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
           {/* Demo Credentials */}
           <div className="mt-8 pt-6 border-t border-neutral-gray space-y-2">
-            <p className="text-xs text-neutral-gray font-medium">Demo Credentials:</p>
+            <p className="text-xs text-neutral-gray font-medium">
+              Demo Credentials:
+            </p>
             <button
               type="button"
               onClick={fillDemoPatient}
