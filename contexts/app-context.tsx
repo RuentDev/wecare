@@ -1,22 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from "react";
+import { type User, type UserRole } from "@/lib/types/user";
+import { getMe, logoutAction } from "@/lib/actions/auth";
 
 // Types
-export type UserRole = "admin" | "staff" | "patient";
-
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  role: UserRole;
-  avatar_url: string | null;
-  is_active: boolean;
-  email_verified: boolean;
-}
-
 export interface Location {
   id: string;
   name: string;
@@ -144,8 +132,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 // Context
 interface AppContextType extends AppState {
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (data: RegisterData) => Promise<boolean>;
+  setUser: (user: User | null) => void;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
   fetchLocations: () => Promise<void>;
   fetchServices: () => Promise<void>;
@@ -155,14 +143,6 @@ interface AppContextType extends AppState {
   clearError: () => void;
 }
 
-interface RegisterData {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-}
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider
@@ -170,83 +150,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   // Check authentication status on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const refreshUser = useCallback(async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const response = await fetch("/api/auth/me");
-      if (response.ok) {
-        const data = await response.json();
-        dispatch({ type: "SET_USER", payload: data.user });
-      } else {
-        dispatch({ type: "SET_USER", payload: null });
-      }
-    } catch {
+      const user = await getMe();
+      dispatch({ type: "SET_USER", payload: user });
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
       dispatch({ type: "SET_USER", payload: null });
     }
-  };
-
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    dispatch({ type: "SET_ERROR", payload: null });
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        dispatch({ type: "SET_USER", payload: data.user });
-        return true;
-      } else {
-        dispatch({ type: "SET_ERROR", payload: data.error || "Login failed" });
-        dispatch({ type: "SET_LOADING", payload: false });
-        return false;
-      }
-    } catch {
-      dispatch({ type: "SET_ERROR", payload: "Network error. Please try again." });
-      dispatch({ type: "SET_LOADING", payload: false });
-      return false;
-    }
   }, []);
 
-  const register = useCallback(async (data: RegisterData): Promise<boolean> => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    dispatch({ type: "SET_ERROR", payload: null });
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        dispatch({ type: "SET_USER", payload: result.user });
-        return true;
-      } else {
-        dispatch({ type: "SET_ERROR", payload: result.error || "Registration failed" });
-        dispatch({ type: "SET_LOADING", payload: false });
-        return false;
-      }
-    } catch {
-      dispatch({ type: "SET_ERROR", payload: "Network error. Please try again." });
-      dispatch({ type: "SET_LOADING", payload: false });
-      return false;
-    }
+  const setUser = useCallback((user: User | null) => {
+    dispatch({ type: "SET_USER", payload: user });
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await logoutAction();
     } finally {
       dispatch({ type: "LOGOUT" });
     }
@@ -312,8 +237,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         ...state,
-        login,
-        register,
+        setUser,
+        refreshUser,
         logout,
         fetchLocations,
         fetchServices,

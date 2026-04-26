@@ -4,23 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { NextRequest } from "next/server";
 
-// Types
-export type UserRole = "admin" | "doctor" | "nurse" | "staff" | "patient";
-
-export interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  role: UserRole;
-  avatar_url: string | null;
-  date_of_birth: Date | null;
-  address: string | null;
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: Date;
-}
+import { type User, type UserRole } from "@/lib/types/user";
 
 export interface Session {
   id: string;
@@ -128,7 +112,12 @@ export async function getSession(
       phone: session.users.phone,
       role: session.users.role as UserRole,
       avatar_url: session.users.avatar_url,
+      gender: session.users.gender as any,
       date_of_birth: session.users.date_of_birth,
+      street: session.users.street,
+      city: session.users.city,
+      state: session.users.state,
+      postal_code: session.users.postal_code,
       address: session.users.address,
       is_active: session.users.is_active || false,
       email_verified: session.users.email_verified || false,
@@ -201,6 +190,12 @@ export async function createUser(data: {
   last_name: string;
   phone?: string;
   role?: UserRole;
+  gender?: string;
+  date_of_birth?: string | Date;
+  street?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
 }): Promise<User> {
   const passwordHash = await hashPassword(data.password);
 
@@ -212,8 +207,29 @@ export async function createUser(data: {
       last_name: data.last_name,
       phone: data.phone || null,
       role: data.role || "patient",
+      gender: (data.gender as any) || null,
+      date_of_birth: data.date_of_birth ? new Date(data.date_of_birth) : null,
+      street: data.street || null,
+      city: data.city || null,
+      state: data.state || null,
+      postal_code: data.postal_code || null,
     },
   });
+
+  // Sync with RBAC roles table if it exists
+  const roleName = data.role || "patient";
+  const roleRecord = await prisma.roles.findUnique({
+    where: { name: roleName },
+  });
+
+  if (roleRecord) {
+    await prisma.user_roles.create({
+      data: {
+        user_id: user.id,
+        role_id: roleRecord.id,
+      },
+    });
+  }
 
   return {
     id: user.id,
@@ -223,7 +239,12 @@ export async function createUser(data: {
     phone: user.phone,
     role: user.role as UserRole,
     avatar_url: user.avatar_url,
+    gender: user.gender as any,
     date_of_birth: user.date_of_birth,
+    street: user.street,
+    city: user.city,
+    state: user.state,
+    postal_code: user.postal_code,
     address: user.address,
     is_active: user.is_active || false,
     email_verified: user.email_verified || false,
@@ -250,7 +271,12 @@ export async function findUserByEmail(
     phone: user.phone,
     role: user.role as UserRole,
     avatar_url: user.avatar_url,
+    gender: user.gender as any,
     date_of_birth: user.date_of_birth,
+    street: user.street,
+    city: user.city,
+    state: user.state,
+    postal_code: user.postal_code,
     address: user.address,
     is_active: user.is_active || false,
     email_verified: user.email_verified || false,

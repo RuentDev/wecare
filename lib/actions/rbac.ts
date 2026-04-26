@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma-db";
+import { protectedPrisma } from "@/lib/protected-prisma";
 import { revalidatePath, unstable_cache, revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/lib/auth";
@@ -40,6 +41,9 @@ export async function getUsers() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
   
+  // Ensure user has permission to view users
+  await requirePermission(user.id, "users:view");
+  
   return await getCachedUsers();
 }
 
@@ -49,15 +53,15 @@ export async function getUsers() {
 export async function updateUserRoles(userId: string, roleIds: string[]) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  // await requirePermission(user.id, "users:edit");
+  await requirePermission(user.id, "users:edit");
 
   // Transactions are not fully supported in Neon serverless via standard Prisma
   // but for simple deletes and inserts it's usually fine or we can use raw SQL if needed.
   // Here we use Prisma's $transaction if supported by the adapter.
   
-  await prisma.$transaction([
-    prisma.user_roles.deleteMany({ where: { user_id: userId } }),
-    prisma.user_roles.createMany({
+  await protectedPrisma.$transaction([
+    protectedPrisma.user_roles.deleteMany({ where: { user_id: userId } }),
+    protectedPrisma.user_roles.createMany({
       data: roleIds.map(roleId => ({
         user_id: userId,
         role_id: roleId
@@ -99,6 +103,9 @@ export async function getRoles() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
 
+  // Optional: Add a specific permission for viewing roles if needed
+  await requirePermission(user.id, "roles:manage");
+
   return await getCachedRoles();
 }
 
@@ -109,7 +116,7 @@ export async function getPermissions() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
 
-  return await prisma.permissions.findMany({
+  return await protectedPrisma.permissions.findMany({
     orderBy: { name: "asc" }
   });
 }
@@ -120,11 +127,11 @@ export async function getPermissions() {
 export async function updateRolePermissions(roleId: string, permissionIds: string[]) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  // await requirePermission(user.id, "roles:manage");
+  await requirePermission(user.id, "roles:manage");
 
-  await prisma.$transaction([
-    prisma.role_permissions.deleteMany({ where: { role_id: roleId } }),
-    prisma.role_permissions.createMany({
+  await protectedPrisma.$transaction([
+    protectedPrisma.role_permissions.deleteMany({ where: { role_id: roleId } }),
+    protectedPrisma.role_permissions.createMany({
       data: permissionIds.map(permId => ({
         role_id: roleId,
         permission_id: permId
@@ -143,9 +150,9 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
 export async function toggleUserStatus(userId: string, isActive: boolean) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  // await requirePermission(user.id, "users:edit");
+  await requirePermission(user.id, "users:edit");
 
-  await prisma.users.update({
+  await protectedPrisma.users.update({
     where: { id: userId },
     data: { is_active: isActive }
   });

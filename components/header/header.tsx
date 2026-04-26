@@ -1,5 +1,4 @@
 import { HeaderProvider } from "@/contexts/header";
-
 import MobileNavs from "./mobile-navs";
 import RightButtons from "./right-buttons";
 import Navs from "./navs";
@@ -20,10 +19,7 @@ export function Header() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center h-16">
             <Logo />
-
-            {/* Desktop Navigation */}
             <Navs links={navLinks} />
-
             <RightButtons />
           </div>
           <MobileNavs links={navLinks} />

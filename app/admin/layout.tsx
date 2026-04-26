@@ -17,15 +17,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // const user = await getCurrentUser();
+  const user = await getCurrentUser();
 
-  // if (!user) {
-  //   redirect("/login?redirect=/admin");
-  // }
+  if (!user) {
+    redirect("/login?redirect=/admin");
+  }
 
-  // if (user.role !== "admin" && user.role !== "staff") {
-  //   redirect("/dashboard");
-  // }
+  if (user.role !== "admin" && user.role !== "staff") {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="min-h-screen">

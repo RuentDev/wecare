@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -6,9 +8,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { useApp } from "@/contexts/app-context";
+import { ChevronDown } from "lucide-react";
 
 const UserDropdown = () => {
-  const user = { role: "patient" };
+  const { user, logout } = useApp();
+
+  if (!user) {
+    return (
+      <div className="hidden sm:flex items-center gap-2">
+        <Link href="/login">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-neutral-dark border-neutral-300"
+          >
+            Login
+          </Button>
+        </Link>
+        <Link href="/signup">
+          <Button variant="default" size="sm">
+            Sign Up
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -16,35 +42,47 @@ const UserDropdown = () => {
           variant="ghost"
           className="hidden lg:flex text-neutral-dark hover:bg-neutral-light hover:text-primary font-medium"
         >
-          Ruentgen
+          {user.first_name}
+          <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {user?.role === "patient" && (
+        {user.role === "patient" && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/patient/appointments">My Appointments</Link>
+              <Link href="/dashboard" className="cursor-pointer">
+                Dasboard
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/patient/medical-record">Medical Record</Link>
+              <Link href="/patient/appointments" className="cursor-pointer">
+                My Appointments
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/patient/medical-record" className="cursor-pointer">
+                Medical Record
+              </Link>
             </DropdownMenuItem>
           </>
         )}
-        {user?.role === "admin" && (
+        {(user.role === "admin" || user.role === "staff") && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/admin/dashboard">Admin Dashboard</Link>
+              <Link href="/admin/dashboard" className="cursor-pointer">
+                Dashboard
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/admin/doctors">Manage Doctors</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/appointments">Manage Appointments</Link>
+              <Link href="/admin/appointments" className="cursor-pointer">
+                Manage Appointments
+              </Link>
             </DropdownMenuItem>
           </>
         )}
         <DropdownMenuItem
-        // onClick={logout}
+          onClick={logout}
+          className="text-red-600 focus:text-red-600 cursor-pointer"
         >
           Logout
         </DropdownMenuItem>
