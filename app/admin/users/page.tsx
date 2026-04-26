@@ -1,5 +1,5 @@
+import { UsersClient } from "@/components/admin/users/users-client";
 import { getUsers, getRoles } from "@/lib/actions/rbac";
-import { UsersClient } from "./users-client";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -19,11 +19,13 @@ export default async function UsersPage() {
         </div>
       </div>
 
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        }
+      >
         <UsersClient initialUsers={users} roles={roles} />
       </Suspense>
     </main>
