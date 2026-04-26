@@ -59,9 +59,9 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
   // but for simple deletes and inserts it's usually fine or we can use raw SQL if needed.
   // Here we use Prisma's $transaction if supported by the adapter.
   
-  await protectedPrisma.$transaction([
-    protectedPrisma.user_roles.deleteMany({ where: { user_id: userId } }),
-    protectedPrisma.user_roles.createMany({
+  await prisma.$transaction([
+    prisma.user_roles.deleteMany({ where: { user_id: userId } }),
+    prisma.user_roles.createMany({
       data: roleIds.map(roleId => ({
         user_id: userId,
         role_id: roleId
@@ -129,9 +129,9 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
   if (!user) throw new Error("Unauthorized");
   await requirePermission(user.id, "roles:manage");
 
-  await protectedPrisma.$transaction([
-    protectedPrisma.role_permissions.deleteMany({ where: { role_id: roleId } }),
-    protectedPrisma.role_permissions.createMany({
+  await prisma.$transaction([
+    prisma.role_permissions.deleteMany({ where: { role_id: roleId } }),
+    prisma.role_permissions.createMany({
       data: permissionIds.map(permId => ({
         role_id: roleId,
         permission_id: permId

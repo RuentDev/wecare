@@ -345,3 +345,5 @@ export async function usePasswordResetToken(
 
   return true;
 }
+
+export { User };
