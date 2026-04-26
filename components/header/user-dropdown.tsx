@@ -69,13 +69,23 @@ const UserDropdown = () => {
         {(user.role === "admin" || user.role === "staff") && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/admin/dashboard" className="cursor-pointer">
+              <Link href="/admin" className="cursor-pointer">
                 Dashboard
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/admin/appointments" className="cursor-pointer">
-                Manage Appointments
+                Appointments
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/services" className="cursor-pointer">
+                Services
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/settings" className="cursor-pointer">
+                Settings
               </Link>
             </DropdownMenuItem>
           </>
