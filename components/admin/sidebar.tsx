@@ -14,6 +14,7 @@ import {
   Shield,
   UserCog,
   ChevronDown,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth";
@@ -35,8 +36,16 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Appointments", href: "/admin/appointments", icon: Calendar },
-  { name: "Users", href: "/admin/users", icon: UserCog },
-  { name: "Patients", href: "/admin/patients", icon: Users },
+  {
+    name: "Users",
+    href: "/admin/users",
+    icon: UserCog,
+    children: [
+      { name: "Users", href: "/admin/users/general", icon: UserCog },
+      { name: "Doctors", href: "/admin/users/doctors", icon: Stethoscope },
+      { name: "Patients", href: "/admin/users/patients", icon: Users },
+    ],
+  },
   { name: "Services", href: "/admin/services", icon: Tag },
   { name: "Locations", href: "/admin/locations", icon: MapPin },
   { name: "Promotions", href: "/admin/promotions", icon: Tag },
