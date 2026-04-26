@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getPatientById } from "@/lib/mock-data";

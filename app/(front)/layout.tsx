@@ -1,8 +1,8 @@
 import Footer from "@/components/footer";
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/header";
 import React from "react";
 
-const FrontLayout = ({ children }: { children: React.ReactNode }) => {
+const FrontLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Header />

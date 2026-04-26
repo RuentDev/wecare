@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
-import { query } from "./db";
+import { prisma } from "@/lib/prisma-db";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { NextRequest } from "next/server";
 
 // Types
-export type UserRole = "admin" | "staff" | "patient";
+export type UserRole = "admin" | "doctor" | "nurse" | "staff" | "patient";
 
 export interface User {
   id: string;
@@ -15,18 +15,18 @@ export interface User {
   phone: string | null;
   role: UserRole;
   avatar_url: string | null;
-  date_of_birth: string | null;
+  date_of_birth: Date | null;
   address: string | null;
   is_active: boolean;
   email_verified: boolean;
-  created_at: string;
+  created_at: Date;
 }
 
 export interface Session {
   id: string;
   user_id: string;
   token: string;
-  expires_at: string;
+  expires_at: Date;
   ip_address: string | null;
   user_agent: string | null;
 }
@@ -79,23 +79,21 @@ export async function createSession(
   const token = generateToken();
   const expiresAt = new Date(Date.now() + SESSION_DURATION);
 
-  await query(
-    `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [
-      userId,
+  await prisma.sessions.create({
+    data: {
+      user_id: userId,
       token,
-      expiresAt.toISOString(),
-      ipAddress || null,
-      userAgent || null,
-    ],
-  );
+      expires_at: expiresAt,
+      ip_address: ipAddress || null,
+      user_agent: userAgent || null,
+    },
+  });
 
   // Update last login
-  await query(
-    `UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1`,
-    [userId],
-  );
+  await prisma.users.update({
+    where: { id: userId },
+    data: { last_login_at: new Date() },
+  });
 
   return token;
 }
@@ -104,58 +102,64 @@ export async function createSession(
 export async function getSession(
   token: string,
 ): Promise<(Session & { user: User }) | null> {
-  const result = await query<Session & User>(
-    `SELECT s.*, u.id as user_id, u.email, u.first_name, u.last_name, 
-            u.phone, u.role, u.avatar_url, u.date_of_birth, u.address,
-            u.is_active, u.email_verified, u.created_at
-     FROM sessions s
-     JOIN users u ON s.user_id = u.id
-     WHERE s.token = $1 AND s.expires_at > CURRENT_TIMESTAMP AND u.is_active = true`,
-    [token],
-  );
+  const session = await prisma.sessions.findUnique({
+    where: { token },
+    include: {
+      users: true,
+    },
+  });
 
-  if (result.rows.length === 0) {
+  if (!session || session.expires_at < new Date() || !session.users.is_active) {
     return null;
   }
 
-  const row = result.rows[0];
   return {
-    id: row.id,
-    user_id: row.user_id,
-    token: row.token,
-    expires_at: row.expires_at,
-    ip_address: row.ip_address,
-    user_agent: row.user_agent,
+    id: session.id,
+    user_id: session.user_id,
+    token: session.token,
+    expires_at: session.expires_at,
+    ip_address: session.ip_address,
+    user_agent: session.user_agent,
     user: {
-      id: row.user_id,
-      email: row.email,
-      first_name: row.first_name,
-      last_name: row.last_name,
-      phone: row.phone,
-      role: row.role,
-      avatar_url: row.avatar_url,
-      date_of_birth: row.date_of_birth,
-      address: row.address,
-      is_active: row.is_active,
-      email_verified: row.email_verified,
-      created_at: row.created_at,
+      id: session.users.id,
+      email: session.users.email,
+      first_name: session.users.first_name,
+      last_name: session.users.last_name,
+      phone: session.users.phone,
+      role: session.users.role as UserRole,
+      avatar_url: session.users.avatar_url,
+      date_of_birth: session.users.date_of_birth,
+      address: session.users.address,
+      is_active: session.users.is_active || false,
+      email_verified: session.users.email_verified || false,
+      created_at: session.users.created_at || new Date(),
     },
   };
 }
 
 // Delete session
 export async function deleteSession(token: string): Promise<void> {
-  await query(`DELETE FROM sessions WHERE token = $1`, [token]);
+  await prisma.sessions.delete({
+    where: { token },
+  });
 }
 
 // Delete all sessions for a user
 export async function deleteAllUserSessions(userId: string): Promise<void> {
-  await query(`DELETE FROM sessions WHERE user_id = $1`, [userId]);
+  await prisma.sessions.deleteMany({
+    where: { user_id: userId },
+  });
 }
 
 // Clean up expired sessions
 export async function cleanupExpiredSessions(): Promise<void> {
-  await query(`DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP`);
+  await prisma.sessions.deleteMany({
+    where: {
+      expires_at: {
+        lt: new Date(),
+      },
+    },
+  });
 }
 
 // Get current user from cookies
@@ -200,36 +204,58 @@ export async function createUser(data: {
 }): Promise<User> {
   const passwordHash = await hashPassword(data.password);
 
-  const result = await query<User>(
-    `INSERT INTO users (email, password_hash, first_name, last_name, phone, role)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, email, first_name, last_name, phone, role, avatar_url, 
-               date_of_birth, address, is_active, email_verified, created_at`,
-    [
-      data.email.toLowerCase(),
-      passwordHash,
-      data.first_name,
-      data.last_name,
-      data.phone || null,
-      data.role || "patient",
-    ],
-  );
+  const user = await prisma.users.create({
+    data: {
+      email: data.email.toLowerCase(),
+      password_hash: passwordHash,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      phone: data.phone || null,
+      role: data.role || "patient",
+    },
+  });
 
-  return result.rows[0];
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    phone: user.phone,
+    role: user.role as UserRole,
+    avatar_url: user.avatar_url,
+    date_of_birth: user.date_of_birth,
+    address: user.address,
+    is_active: user.is_active || false,
+    email_verified: user.email_verified || false,
+    created_at: user.created_at || new Date(),
+  };
 }
 
 // Find user by email
 export async function findUserByEmail(
   email: string,
 ): Promise<(User & { password_hash: string }) | null> {
-  const result = await query<User & { password_hash: string }>(
-    `SELECT id, email, password_hash, first_name, last_name, phone, role, 
-            avatar_url, date_of_birth, address, is_active, email_verified, created_at
-     FROM users WHERE email = $1`,
-    [email.toLowerCase()],
-  );
+  const user = await prisma.users.findUnique({
+    where: { email: email.toLowerCase() },
+  });
 
-  return result.rows[0] || null;
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    password_hash: user.password_hash,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    phone: user.phone,
+    role: user.role as UserRole,
+    avatar_url: user.avatar_url,
+    date_of_birth: user.date_of_birth,
+    address: user.address,
+    is_active: user.is_active || false,
+    email_verified: user.email_verified || false,
+    created_at: user.created_at || new Date(),
+  };
 }
 
 // Generate password reset token
@@ -239,11 +265,13 @@ export async function generatePasswordResetToken(
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-  await query(
-    `INSERT INTO password_reset_tokens (user_id, token, expires_at)
-     VALUES ($1, $2, $3)`,
-    [userId, token, expiresAt.toISOString()],
-  );
+  await prisma.password_reset_tokens.create({
+    data: {
+      user_id: userId,
+      token,
+      expires_at: expiresAt,
+    },
+  });
 
   return token;
 }
@@ -252,13 +280,17 @@ export async function generatePasswordResetToken(
 export async function verifyPasswordResetToken(
   token: string,
 ): Promise<string | null> {
-  const result = await query<{ user_id: string }>(
-    `SELECT user_id FROM password_reset_tokens 
-     WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP AND used_at IS NULL`,
-    [token],
-  );
+  const resetToken = await prisma.password_reset_tokens.findUnique({
+    where: {
+      token,
+      expires_at: {
+        gt: new Date(),
+      },
+      used_at: null,
+    },
+  });
 
-  return result.rows[0]?.user_id || null;
+  return resetToken?.user_id || null;
 }
 
 // Use password reset token
@@ -273,14 +305,16 @@ export async function usePasswordResetToken(
 
   const passwordHash = await hashPassword(newPassword);
 
-  await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [
-    passwordHash,
-    userId,
-  ]);
-  await query(
-    `UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE token = $1`,
-    [token],
-  );
+  await prisma.users.update({
+    where: { id: userId },
+    data: { password_hash: passwordHash },
+  });
+
+  await prisma.password_reset_tokens.update({
+    where: { token },
+    data: { used_at: new Date() },
+  });
+
   await deleteAllUserSessions(userId);
 
   return true;

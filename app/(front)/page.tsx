@@ -1,5 +1,5 @@
 "use client";
-import Scheduling from "@/components/scheduling";
+import Scheduling from "@/components/sections/scheduling";
 import Feature from "@/components/sections/feature";
 import Doctors from "@/components/sections/doctors";
 import Services from "@/components/sections/services";

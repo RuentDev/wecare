@@ -1,4 +1,4 @@
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { mockDoctors } from "@/lib/mock-data";

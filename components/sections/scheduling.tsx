@@ -4,17 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { mockDoctors, mockServices, createAppointment } from "@/lib/mock-data";
-import { StepIndicator } from "./scheduling/StepIndicator";
-import { ServiceStep } from "./scheduling/ServiceStep";
-import { DoctorStep } from "./scheduling/DoctorStep";
-import { DateTimeStep } from "./scheduling/DateTimeStep";
-import { PatientStep } from "./scheduling/PatientStep";
+import { StepIndicator } from "../scheduling/StepIndicator";
+import { ServiceStep } from "../scheduling/ServiceStep";
+import { DoctorStep } from "../scheduling/DoctorStep";
+import { DateTimeStep } from "../scheduling/DateTimeStep";
+import { PatientStep } from "../scheduling/PatientStep";
 
 interface Props {
-  date: Date;
+  date?: Date;
 }
 
-const Scheduling = ({ date }: Props) => {
+const Scheduling = ({ date = new Date() }: Props) => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
@@ -30,6 +30,7 @@ const Scheduling = ({ date }: Props) => {
   const [patientReason, setPatientReason] = useState("");
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [appointmentId, setAppointmentId] = useState<string>("");
 
   const doctor = mockDoctors.find((d) => d.id === selectedDoctor);
   const service = mockServices.find((s) => s.id === selectedService);
@@ -58,7 +59,7 @@ const Scheduling = ({ date }: Props) => {
       selectedDate &&
       selectedTime
     ) {
-      createAppointment({
+      const appointment = createAppointment({
         patientId: "landing-patient",
         doctorId: selectedDoctor,
         serviceId: selectedService,
@@ -67,6 +68,7 @@ const Scheduling = ({ date }: Props) => {
         status: "scheduled",
         reason: patientReason,
       });
+      setAppointmentId(appointment.id);
       setShowSuccess(true);
     }
   };
@@ -111,14 +113,18 @@ const Scheduling = ({ date }: Props) => {
                 </span>
                 .
               </p>
+              {appointmentId && (
+                <div className="bg-blue-50 rounded-[12px] p-4 max-w-sm mx-auto text-left border border-blue-100">
+                  <p className="text-sm text-neutral-gray mb-1">
+                    Appointment ID
+                  </p>
+                  <p className="font-mono text-primary font-bold break-all">
+                    {appointmentId}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="pt-8 border-t border-neutral-gray/30 flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-primary hover:bg-blue-900 text-white font-bold py-4 px-8 rounded-2xl h-auto text-lg transition-all shadow-lg hover:shadow-primary/30"
-              >
-                Back to Home
-              </Button>
               <Button
                 variant="outline"
                 className="border-2 border-neutral-gray text-neutral-dark font-bold py-4 px-8 rounded-2xl h-auto text-lg hover:bg-neutral-light transition-all"
@@ -133,7 +139,7 @@ const Scheduling = ({ date }: Props) => {
   }
 
   return (
-    <section className="py-10 px-5 sm:px-6 lg:px-8 bg-neutral-light min-h-screen">
+    <section className="py-10 px-5 sm:px-6 lg:px-8 bg-neutral-light min-h-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-10 text-center">

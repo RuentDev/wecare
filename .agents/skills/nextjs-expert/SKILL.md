@@ -45,13 +45,14 @@ Every implementation must be secure by default.
 
 ---
 
-## 2. Readability = Maintainability
+## 2. Readability = Maintainability & SRP
 
 Code should be understandable within **30 seconds**.
 
 ### Rules:
 
-- Components ≤ 100 lines
+- **Single Responsibility Principle (SRP)**: A component or module should have one, and only one, reason to change.
+- Components ≤ 100 lines (Extract sub-components if they grow too large)
 - Clear naming > clever naming
 - Avoid nested logic (early returns)
 - Prefer declarative patterns over imperative
@@ -59,10 +60,22 @@ Code should be understandable within **30 seconds**.
 ### Structure:
 
 - One responsibility per file
-- UI ≠ logic ≠ data fetching
+- UI ≠ logic ≠ data fetching (SRP)
 
-Bad:
+---
 
-```tsx
-// everything mixed together
-```
+## 3. Folder Architecture & Organization
+
+Maintain a clean and predictable project structure.
+
+### Rules:
+
+- **Reusable Components**: All reusable client/UI components MUST be placed in the `components/` directory (e.g., `@/components/ui/` or `@/components/common/`).
+- **Page-Specific Components**: Components used only by a single page can reside within that page's directory (e.g., `app/(dashboard)/_components/`), but move to `@/components` if reuse is anticipated.
+- **Separation of Concerns**: Keep business logic (hooks, actions) separate from presentational UI components.
+
+### Red Flags:
+
+- Reusable components scattered across `app/` directories.
+- Large components doing both data fetching and complex UI rendering.
+- Mixing server and client logic in the same file without clear boundaries.
