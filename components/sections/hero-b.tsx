@@ -41,12 +41,14 @@ const HeroB = () => {
         <div className="text-center max-w-3xl mx-auto">
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 text-balance">
-            Your Health, Our Priority
+            Keep you Family Healthy with WeCare Clinic, Your Health, Our
+            Priority
           </h1>
 
           {/* Subheading */}
           <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto text-pretty">
-            Book appointments with qualified healthcare professionals in just a few clicks. Your wellness journey starts here.
+            Book appointments with qualified healthcare professionals in just a
+            few clicks. Your wellness journey starts here.
           </p>
 
           {/* Trust Signals */}
@@ -82,7 +84,7 @@ const HeroB = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-white text-white hover:bg-white/10 font-semibold px-8"
+                className="border-white text-secondary hover:bg-white/10 font-semibold px-8"
               >
                 View Available Doctors
               </Button>
