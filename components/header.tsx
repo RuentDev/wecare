@@ -2,12 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 
@@ -23,12 +17,12 @@ export function Header() {
   ];
 
   return (
-    <header className="bg-background border-b border-neutral-100 sticky top-0 z-50 backdrop-blur-sm bg-white/80">
+    <header className="border-b border-neutral-100 sticky top-0 z-50 backdrop-blur-sm bg-white/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-secondary flex items-center justify-center">
               <span className="text-white font-bold text-sm">W</span>
             </div>
             <span className="font-bold text-lg text-neutral-dark hidden sm:inline group-hover:text-primary transition-colors">
@@ -54,8 +48,8 @@ export function Header() {
             {/* Auth Buttons - Desktop */}
             <div className="hidden sm:flex items-center gap-2">
               <Link href="/login">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="text-neutral-dark border-neutral-300 hover:bg-neutral-light"
                 >
@@ -63,10 +57,7 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button 
-                  variant="default" 
-                  size="sm"
-                >
+                <Button variant="default" size="sm">
                   Sign Up
                 </Button>
               </Link>
