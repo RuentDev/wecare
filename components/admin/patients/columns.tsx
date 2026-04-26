@@ -36,7 +36,19 @@ export type Patient = {
   last_appointment: Date | null;
 };
 
-export const columns: ColumnDef<Patient>[] = [
+interface GetColumnsProps {
+  onViewProfile: (patient: Patient) => void;
+  onViewHistory: (patient: Patient) => void;
+  onSendMessage: (patient: Patient) => void;
+  onQuickView: (patient: Patient) => void;
+}
+
+export const getColumns = ({
+  onViewProfile,
+  onViewHistory,
+  onSendMessage,
+  onQuickView,
+}: GetColumnsProps): ColumnDef<Patient>[] => [
   {
     accessorKey: "name",
     header: "Patient",
@@ -159,20 +171,32 @@ export const columns: ColumnDef<Patient>[] = [
             <DropdownMenuLabel className="text-xs font-semibold uppercase text-muted-foreground px-2 py-1.5">
               Actions
             </DropdownMenuLabel>
-            <DropdownMenuItem className="flex items-center gap-2 rounded-lg cursor-pointer">
+            <DropdownMenuItem 
+              className="flex items-center gap-2 rounded-lg cursor-pointer"
+              onClick={() => onViewProfile(patient)}
+            >
               <User className="h-4 w-4 text-primary" />
               <span>View Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2 rounded-lg cursor-pointer">
+            <DropdownMenuItem 
+              className="flex items-center gap-2 rounded-lg cursor-pointer"
+              onClick={() => onViewHistory(patient)}
+            >
               <History className="h-4 w-4 text-primary" />
               <span>Medical History</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2 rounded-lg cursor-pointer">
+            <DropdownMenuItem 
+              className="flex items-center gap-2 rounded-lg cursor-pointer"
+              onClick={() => onSendMessage(patient)}
+            >
               <MessageSquare className="h-4 w-4 text-primary" />
               <span>Send Message</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-primary/5" />
-            <DropdownMenuItem className="flex items-center justify-between gap-2 rounded-lg cursor-pointer text-primary font-medium">
+            <DropdownMenuItem 
+              className="flex items-center justify-between gap-2 rounded-lg cursor-pointer text-primary font-medium"
+              onClick={() => onQuickView(patient)}
+            >
               <span>Quick View</span>
               <ChevronRight className="h-4 w-4" />
             </DropdownMenuItem>

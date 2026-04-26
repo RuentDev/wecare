@@ -3,17 +3,51 @@
 import { DataTable } from "@/components/ui/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { columns, Patient } from "./columns";
+import { getColumns, Patient } from "./columns";
 import { Users, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { PatientQuickView } from "./patient-quick-view";
+import { PatientMedicalHistory } from "./patient-medical-history";
+import { PatientMessageModal } from "./patient-message-modal";
+import { useRouter } from "next/navigation";
 
 interface PatientsClientProps {
   initialPatients: Patient[];
 }
 
 export function PatientsClient({ initialPatients: data }: PatientsClientProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isMessageOpen, setIsMessageOpen] = useState(false);
+
+  const handleViewProfile = (patient: Patient) => {
+    router.push(`/admin/users/patients/${patient.id}`);
+  };
+
+  const handleQuickView = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsQuickViewOpen(true);
+  };
+
+  const handleViewHistory = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsHistoryOpen(true);
+  };
+
+  const handleSendMessage = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsMessageOpen(true);
+  };
+
+  const columns = getColumns({
+    onViewProfile: handleViewProfile,
+    onQuickView: handleQuickView,
+    onViewHistory: handleViewHistory,
+    onSendMessage: handleSendMessage,
+  });
 
   return (
     <div className="space-y-6">
@@ -48,6 +82,26 @@ export function PatientsClient({ initialPatients: data }: PatientsClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      <PatientQuickView
+        patientId={selectedPatient?.id || null}
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+      />
+
+      <PatientMedicalHistory
+        patientId={selectedPatient?.id || null}
+        patientName={selectedPatient ? `${selectedPatient.first_name} ${selectedPatient.last_name}` : ""}
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+      />
+
+      <PatientMessageModal
+        patientId={selectedPatient?.id || null}
+        patientName={selectedPatient ? `${selectedPatient.first_name} ${selectedPatient.last_name}` : ""}
+        isOpen={isMessageOpen}
+        onClose={() => setIsMessageOpen(false)}
+      />
     </div>
   );
 }

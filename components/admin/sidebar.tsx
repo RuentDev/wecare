@@ -163,15 +163,17 @@ function SidebarNavGroup({
             />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-1 mt-1">
-          {item.children?.map((child) => (
-            <SidebarNavItem
-              key={child.name}
-              item={child}
-              pathname={pathname}
-              isChild
-            />
-          ))}
+        <CollapsibleContent className="mt-1">
+          <ul className="space-y-1">
+            {item.children?.map((child) => (
+              <SidebarNavItem
+                key={child.name}
+                item={child}
+                pathname={pathname}
+                isChild
+              />
+            ))}
+          </ul>
         </CollapsibleContent>
       </Collapsible>
     </li>

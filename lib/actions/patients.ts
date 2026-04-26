@@ -76,3 +76,166 @@ export async function getPatientStats() {
     };
   }
 }
+
+export async function getPatientById(id: string) {
+  try {
+    const patient = await prisma.users.findUnique({
+      where: { id, role: "patient" },
+      include: {
+        appointments: {
+          orderBy: { appointment_date: "desc" },
+          take: 5,
+          include: {
+            doctors: {
+              include: {
+                users: {
+                  select: {
+                    first_name: true,
+                    last_name: true,
+                  },
+                },
+              },
+            },
+            services: true,
+          },
+        },
+        medical_records: {
+          orderBy: { created_at: "desc" },
+          take: 5,
+        },
+        _count: {
+          select: { appointments: true },
+        },
+      },
+    });
+
+    return patient;
+  } catch (error) {
+    console.error("[GET_PATIENT_BY_ID]", error);
+    return null;
+  }
+}
+
+export async function getPatientMedicalHistory(patientId: string) {
+  try {
+    const history = await prisma.medical_records.findMany({
+      where: { patient_id: patientId },
+      include: {
+        doctors: {
+          include: {
+            users: {
+              select: {
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        },
+        appointments: {
+          select: {
+            appointment_date: true,
+            services: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return history;
+  } catch (error) {
+    console.error("[GET_PATIENT_MEDICAL_HISTORY]", error);
+    return [];
+  }
+}
+
+export async function sendPatientNotification(data: {
+  userId: string;
+  subject: string;
+  content: string;
+  type: string;
+}) {
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: data.userId },
+      select: { email: true },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    await prisma.notification_logs.create({
+      data: {
+        user_id: data.userId,
+        notification_type: data.type,
+        recipient: user.email,
+        subject: data.subject,
+        content: data.content,
+        status: "sent",
+        sent_at: new Date(),
+      },
+    });
+
+    revalidatePath("/admin/users/patients");
+    return { success: true };
+  } catch (error) {
+    console.error("[SEND_PATIENT_NOTIFICATION]", error);
+    return { success: false, error: "Failed to send notification" };
+  }
+}
+
+export async function getLatestVitals(patientId: string) {
+  try {
+    const latestVitals = await prisma.vitals.findFirst({
+      where: { patient_id: patientId },
+      orderBy: { created_at: "desc" },
+    });
+    return latestVitals;
+  } catch (error) {
+    console.error("[GET_LATEST_VITALS]", error);
+    return null;
+  }
+}
+
+export async function updateVitals(patientId: string, data: any) {
+  try {
+    await prisma.vitals.create({
+      data: {
+        patient_id: patientId,
+        ...data,
+      },
+    });
+    revalidatePath(`/admin/users/patients/${patientId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[UPDATE_VITALS]", error);
+    return { success: false, error: "Failed to update vitals" };
+  }
+}
+
+export async function saveClinicalRecord(patientId: string, data: any) {
+  try {
+    // For now, we update medical_records or handle specific consultation/diagnosis/medication fields
+    // This is a placeholder for a more complex multi-table update if needed
+    await prisma.medical_records.create({
+      data: {
+        patient_id: patientId,
+        diagnosis: data.diagnosis,
+        treatment: data.treatment,
+        prescription: data.prescription,
+        notes: data.notes,
+        // We could store the JSON structure in attachments if we want to preserve the exact UI state
+        attachments: data.raw_data || null,
+      },
+    });
+    revalidatePath(`/admin/users/patients/${patientId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[SAVE_CLINICAL_RECORD]", error);
+    return { success: false, error: "Failed to save clinical record" };
+  }
+}

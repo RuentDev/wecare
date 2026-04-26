@@ -274,6 +274,7 @@ model users {
   payments                payments[]
   sessions                sessions[]
   user_roles              user_roles[]
+  vitals                  vitals[]
 
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
@@ -442,4 +443,18 @@ enum invoice_status {
   PAID
   VOID
   PARTIAL
+}
+
+model vitals {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patient_id            String    @db.Uuid
+  blood_glucose_before  String?   @db.VarChar(50)
+  blood_glucose_after   String?   @db.VarChar(50)
+  temperature           String?   @db.VarChar(50)
+  blood_pressure        String?   @db.VarChar(50)
+  height                String?   @db.VarChar(50)
+  weight                String?   @db.VarChar(50)
+  created_at            DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime? @default(now()) @db.Timestamptz(6)
+  users                 users     @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
