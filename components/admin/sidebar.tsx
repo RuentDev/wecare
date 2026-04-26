@@ -41,7 +41,7 @@ const navigation: NavItem[] = [
     href: "/admin/users",
     icon: UserCog,
     children: [
-      { name: "Users", href: "/admin/users/general", icon: UserCog },
+      { name: "Users", href: "/admin/users", icon: UserCog },
       { name: "Doctors", href: "/admin/users/doctors", icon: Stethoscope },
       { name: "Patients", href: "/admin/users/patients", icon: Users },
     ],
