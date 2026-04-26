@@ -51,17 +51,39 @@ export function Header() {
 
           {/* Right Section */}
           <div className="flex items-center gap-3">
-            <DropdownMenu>
+            {/* Auth Buttons - Desktop */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Link href="/login">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-neutral-dark border-neutral-300 hover:bg-neutral-light"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                >
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+
+            {/* User Dropdown - Desktop (commented out for now) */}
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="hidden sm:flex text-neutral-dark hover:bg-neutral-light hover:text-primary font-medium"
+                  className="hidden lg:flex text-neutral-dark hover:bg-neutral-light hover:text-primary font-medium"
                 >
                   Ruentgen
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {/* {user?.role === 'patient' && (
+                {user?.role === 'patient' && (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href="/patient/appointments">My Appointments</Link>
@@ -83,14 +105,14 @@ export function Header() {
                         <Link href="/admin/appointments">Manage Appointments</Link>
                       </DropdownMenuItem>
                     </>
-                  )} */}
+                  )}
                 <DropdownMenuItem
                 // onClick={logout}
                 >
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
 
             {/* Mobile Menu Button */}
             <button
