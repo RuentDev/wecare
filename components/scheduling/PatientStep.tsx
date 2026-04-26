@@ -11,7 +11,7 @@ interface PatientStepProps {
   patientReason: string;
   doctor: Doctor | undefined;
   service: Service | undefined;
-  selectedDate: string;
+  selectedDate: Date;
   selectedTime: string;
   setPatientName: (val: string) => void;
   setPatientPhone: (val: string) => void;
@@ -30,11 +30,20 @@ export function PatientStep({
   setPatientPhone,
   setPatientReason,
 }: PatientStepProps) {
+  const setPrefixToTime = (time: string) => {
+    const hours = parseInt(time.split(":")[0]);
+    const minutes = time.split(":")[1];
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12;
+    return `${formattedHours}:${minutes} ${ampm}`;
+  };
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-4">
         <Info className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-bold text-neutral-dark">Patient Information</h3>
+        <h3 className="text-xl font-bold text-neutral-dark">
+          Patient Information
+        </h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -88,7 +97,8 @@ export function PatientStep({
             <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
               <Shield className="w-5 h-5 text-primary" />
               <p className="text-xs text-blue-900 leading-relaxed">
-                Your data is protected. We use industry-standard encryption to keep your medical information private and secure.
+                Your data is protected. We use industry-standard encryption to
+                keep your medical information private and secure.
               </p>
             </div>
           </Card>
@@ -96,7 +106,7 @@ export function PatientStep({
 
         {/* Summary Card */}
         <div className="lg:col-span-1">
-          <Card className="p-6 rounded-[24px] bg-neutral-dark text-white shadow-xl sticky top-6">
+          <Card className="p-6 rounded-[24px] text-white shadow-xl sticky top-6">
             <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-secondary" />
               Booking Summary
@@ -104,26 +114,44 @@ export function PatientStep({
 
             <div className="space-y-6">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-neutral-gray uppercase tracking-widest">Selected Service</p>
+                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Selected Service
+                </p>
                 <p className="font-bold text-secondary">{service?.name}</p>
-                <p className="text-xs text-neutral-gray">{service?.duration} Minutes • ${service?.price}</p>
+                <p className="text-xs text-neutral-500">
+                  {service?.duration} Minutes • ${service?.price}
+                </p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-neutral-gray uppercase tracking-widest">Healthcare Provider</p>
-                <p className="font-bold">{doctor?.name}</p>
-                <p className="text-xs text-neutral-gray">{doctor?.specialty}</p>
+                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Healthcare Provider
+                </p>
+                <p className="font-bold text-secondary">{doctor?.name}</p>
+                <p className="text-xs text-neutral-500">{doctor?.specialty}</p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-neutral-gray uppercase tracking-widest">Date & Time</p>
-                <p className="font-bold">{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                <p className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit mt-1">{selectedTime}</p>
+                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                  Date & Time
+                </p>
+                <p className="font-bold text-secondary">
+                  {selectedDate.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+                <p className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit mt-1">
+                  {setPrefixToTime(selectedTime)}
+                </p>
               </div>
 
               <div className="pt-6 border-t border-white/10 mt-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-neutral-gray">Consultation Fee</span>
+                  <span className="text-sm text-neutral-500">
+                    Consultation Fee
+                  </span>
                   <span className="font-bold">${service?.price}.00</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold">

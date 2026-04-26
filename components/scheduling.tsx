@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { mockDoctors, mockServices, createAppointment } from "@/lib/mock-data";
@@ -10,14 +10,18 @@ import { DoctorStep } from "./scheduling/DoctorStep";
 import { DateTimeStep } from "./scheduling/DateTimeStep";
 import { PatientStep } from "./scheduling/PatientStep";
 
-export function Scheduling() {
+interface Props {
+  date: Date;
+}
+
+const Scheduling = ({ date }: Props) => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
   // Selection states
   const [selectedDoctor, setSelectedDoctor] = useState<string>("");
   const [selectedService, setSelectedService] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(date);
   const [selectedTime, setSelectedTime] = useState<string>("");
 
   // Patient states
@@ -146,7 +150,7 @@ export function Scheduling() {
         <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
 
         {/* Form Content */}
-        <div className="min-h-[500px]">
+        <div className="min-h-auto">
           {currentStep === 1 && (
             <ServiceStep
               services={mockServices}
@@ -244,7 +248,7 @@ export function Scheduling() {
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid()}
-                  className="w-full md:w-auto group bg-primary hover:bg-blue-900 text-white font-black py-4 px-10 rounded-2xl h-14 text-lg transition-all duration-300 shadow-[0_10px_20px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_30px_rgba(37,99,235,0.3)] hover:-translate-y-0.5 disabled:bg-neutral-gray disabled:shadow-none disabled:translate-y-0"
+                  className="w-full md:w-auto group bg-primary text-white font-black py-4 px-10 rounded-2xl h-14 text-lg transition-all duration-300 shadow-[0_10px_20px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_30px_rgba(37,99,235,0.3)] hover:-translate-y-0.5 disabled:bg-neutral-gray disabled:shadow-none disabled:translate-y-0"
                 >
                   Continue
                   <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
@@ -265,4 +269,6 @@ export function Scheduling() {
       </div>
     </section>
   );
-}
+};
+
+export default Scheduling;

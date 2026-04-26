@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import { getAvailableSlots } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
 
 interface DateTimeStepProps {
   selectedDoctorId: string;
-  selectedDate: string;
+  selectedDate: Date;
   selectedTime: string;
-  onDateSelect: (date: string) => void;
+  onDateSelect: (date: Date) => void;
   onTimeSelect: (time: string) => void;
 }
 
@@ -20,65 +22,10 @@ export function DateTimeStep({
   onDateSelect,
   onTimeSelect,
 }: DateTimeStepProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-
   const availableSlots = useMemo(() => {
     if (!selectedDoctorId || !selectedDate) return [];
-    // Mock data uses 30 min slots
     return getAvailableSlots(selectedDoctorId, selectedDate, 30);
   }, [selectedDoctorId, selectedDate]);
-
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentMonth);
-    const firstDay = getFirstDayOfMonth(currentMonth);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const days = [];
-
-    // Adjust for Monday start (if desired, or keep Sunday)
-    // The original code used 0-6 where 0 is Sunday.
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-10"></div>);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day,
-      );
-      const dateStr = date.toISOString().split("T")[0];
-      const isDisabled = date < today;
-      const isSelected = selectedDate === dateStr;
-
-      days.push(
-        <button
-          key={day}
-          onClick={() => !isDisabled && onDateSelect(dateStr)}
-          disabled={isDisabled}
-          className={`h-10 rounded-xl text-sm font-bold transition-all ${
-            isDisabled
-              ? "text-neutral-gray cursor-not-allowed opacity-30"
-              : isSelected
-                ? "bg-primary text-white shadow-lg scale-110 z-10"
-                : "bg-neutral-light text-neutral-dark hover:bg-secondary hover:text-white"
-          }`}
-        >
-          {day}
-        </button>,
-      );
-    }
-
-    return days;
-  };
 
   // Define display times (mapping to HH:mm)
   const timeSlots = [
@@ -98,6 +45,9 @@ export function DateTimeStep({
     { label: "04:30 PM", value: "16:30" },
   ];
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-4">
@@ -109,56 +59,43 @@ export function DateTimeStep({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calendar */}
-        <Card className="p-6 rounded-[24px] border-neutral-gray bg-white shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-lg font-bold text-neutral-dark">
-              {currentMonth.toLocaleDateString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-            </h4>
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      currentMonth.getFullYear(),
-                      currentMonth.getMonth() - 1,
-                    ),
-                  )
-                }
-                className="p-2 hover:bg-neutral-light rounded-full transition-colors border border-neutral-gray"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      currentMonth.getFullYear(),
-                      currentMonth.getMonth() + 1,
-                    ),
-                  )
-                }
-                className="p-2 hover:bg-neutral-light rounded-full transition-colors border border-neutral-gray"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div
-                key={day}
-                className="text-center text-[10px] font-bold text-neutral-gray uppercase tracking-widest h-8 flex items-center justify-center"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+        <Card className="p-8 rounded-[32px] border-neutral-gray bg-white shadow-sm flex flex-col items-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => date && onDateSelect(date)}
+            disabled={(date) => date < today}
+            className="w-full p-0"
+            classNames={{
+              months: "w-full",
+              month: "w-full space-y-8",
+              month_caption:
+                "flex justify-between items-center h-12 w-full mb-8 relative",
+              caption_label: "text-2xl font-black text-neutral-dark",
+              nav: "flex items-center gap-3",
+              button_previous: cn(
+                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm",
+              ),
+              button_next: cn(
+                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm",
+              ),
+              month_grid: "w-full border-collapse",
+              weekdays: "flex w-full justify-between mb-6",
+              weekday:
+                "text-neutral-gray w-full font-bold text-[11px] uppercase tracking-[0.2em] text-center",
+              week: "flex w-full mt-4 justify-between",
+              day: cn(
+                "h-12 w-12 p-0 font-bold aria-selected:opacity-100 rounded-xl transition-all hover:bg-secondary hover:text-white flex items-center justify-center text-base",
+              ),
+              day_button: "w-full h-full flex items-center justify-center",
+              selected:
+                "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white shadow-[0_10px_20px_rgba(37,99,235,0.3)] scale-110 z-10",
+              today: "text-primary border-2 border-primary/20",
+              outside: "text-neutral-gray opacity-20",
+              disabled: "text-neutral-gray cursor-not-allowed",
+              hidden: "invisible",
+            }}
+          />
         </Card>
 
         {/* Time Slots */}
@@ -172,11 +109,11 @@ export function DateTimeStep({
 
           {!selectedDate ? (
             <div className="h-[280px] flex flex-col items-center justify-center text-neutral-gray bg-neutral-light/50 rounded-[16px] border-2 border-dashed border-neutral-gray/30">
-              <Calendar className="w-12 h-12 mb-3 opacity-20" />
+              <CalendarIcon className="w-12 h-12 mb-3 opacity-20" />
               <p className="text-sm font-medium">Please select a date first</p>
             </div>
           ) : availableSlots.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
               {timeSlots.map((slot) => {
                 const isAvailable = availableSlots.includes(slot.value);
                 const isSelected = selectedTime === slot.value;

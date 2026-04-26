@@ -20,7 +20,7 @@ export function ServiceStep({
         <Calendar className="w-5 h-5 text-primary" />
         <h3 className="text-xl font-bold text-neutral-dark">Select Service</h3>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {services.map((service) => (
           <button
             key={service.id}
@@ -41,7 +41,7 @@ export function ServiceStep({
               >
                 <Calendar className="w-6 h-6" />
               </div>
-              <p className="text-lg font-bold text-primary">${service.price}</p>
+              {/* <p className="text-lg font-bold text-primary">${service.price}</p> */}
             </div>
             <h4 className="font-bold text-neutral-dark mb-2 group-hover:text-primary transition-colors">
               {service.name}
