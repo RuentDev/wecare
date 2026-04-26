@@ -12,6 +12,8 @@ import {
   FileText,
   Settings,
   CreditCard,
+  Shield,
+  UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth";
@@ -19,12 +21,14 @@ import type { User } from "@/lib/auth";
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Appointments", href: "/admin/appointments", icon: Calendar },
+  { name: "Users", href: "/admin/users", icon: UserCog },
   { name: "Patients", href: "/admin/patients", icon: Users },
   { name: "Services", href: "/admin/services", icon: Tag },
   { name: "Locations", href: "/admin/locations", icon: MapPin },
   { name: "Promotions", href: "/admin/promotions", icon: Tag },
   { name: "Articles", href: "/admin/articles", icon: FileText },
   { name: "Payments", href: "/admin/payments", icon: CreditCard },
+  { name: "RBAC Settings", href: "/admin/settings/roles", icon: Shield },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

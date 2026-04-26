@@ -16,9 +16,6 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">W</span>
-            </div>
             <span className="font-bold text-lg text-neutral-dark hidden sm:inline">
               WeCare
             </span>
