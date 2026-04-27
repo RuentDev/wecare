@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { PermissionItem } from "./permission-item";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface RoleCardProps {
   role: {
