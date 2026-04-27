@@ -22,7 +22,12 @@ export async function getDoctors() {
       },
     });
 
-    return { success: true, data: doctors };
+    const serializedDoctors = doctors.map(doctor => ({
+      ...doctor,
+      consultation_fee: doctor.consultation_fee ? Number(doctor.consultation_fee) : null,
+    }));
+
+    return { success: true, data: serializedDoctors };
   } catch (error) {
     console.error("Error fetching doctors:", error);
     return { success: false, error: "Failed to fetch doctors" };
