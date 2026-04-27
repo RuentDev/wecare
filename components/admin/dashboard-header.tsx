@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User as UserType } from "@/lib/auth";
-import { NAVIGATIONS } from "./sidebar";
+import { NAVIGATIONS } from "@/constant/admin";
 
 interface AdminHeaderProps {
   user?: UserType;

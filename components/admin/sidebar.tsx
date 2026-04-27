@@ -2,20 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  MapPin,
-  Tag,
-  FileText,
-  Settings,
-  CreditCard,
-  Shield,
-  UserCog,
-  ChevronDown,
-  Stethoscope,
-} from "lucide-react";
+import { UserCog, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth";
 import {
@@ -23,46 +10,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import React, { useState, useEffect } from "react";
-
-// Types
-interface NavItem {
-  name: string;
-  href: string;
-  icon: any;
-  children?: { name: string; href: string; icon: any }[];
-  allowedRoles?: string[];
-}
-
-export const NAVIGATIONS: NavItem[] = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Appointments", href: "/admin/appointments", icon: Calendar },
-  {
-    name: "Users",
-    href: "/admin/users",
-    icon: UserCog,
-    children: [
-      { name: "Users", href: "/admin/users", icon: UserCog },
-      { name: "Doctors", href: "/admin/users/doctors", icon: Stethoscope },
-      { name: "Patients", href: "/admin/users/patients", icon: Users },
-    ],
-  },
-  { name: "Services", href: "/admin/services", icon: Tag, allowedRoles: ["admin", "staff"] },
-  { name: "Locations", href: "/admin/locations", icon: MapPin, allowedRoles: ["admin", "staff"] },
-  { name: "Promotions", href: "/admin/promotions", icon: Tag, allowedRoles: ["admin", "staff"] },
-  { name: "Articles", href: "/admin/articles", icon: FileText, allowedRoles: ["admin", "staff"] },
-  { name: "Payments", href: "/admin/payments", icon: CreditCard, allowedRoles: ["admin", "staff"] },
-  {
-    name: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-    allowedRoles: ["admin"],
-    children: [
-      { name: "General", href: "/admin/settings", icon: Settings },
-      { name: "RBAC Roles", href: "/admin/settings/roles", icon: Shield },
-    ],
-  },
-];
+import { useState, useEffect } from "react";
+import { NAVIGATIONS, NavItem } from "@/constant/admin";
 
 interface SidebarProps {
   user?: User;
@@ -216,7 +165,11 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <ul className="space-y-1">
-          {NAVIGATIONS.filter(item => !item.allowedRoles || (user?.role && item.allowedRoles.includes(user.role))).map((item) =>
+          {NAVIGATIONS.filter(
+            (item) =>
+              !item.allowedRoles ||
+              (user?.role && item.allowedRoles.includes(user.role)),
+          ).map((item) =>
             item.children ? (
               <SidebarNavGroup
                 key={item.name}
