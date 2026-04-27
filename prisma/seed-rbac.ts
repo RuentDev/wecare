@@ -34,6 +34,12 @@ async function main() {
     { name: "billing:view", description: "Can view invoices and payments" },
     { name: "billing:edit", description: "Can manage billing" },
     { name: "roles:manage", description: "Can manage roles and permissions" },
+    { name: "promotions:view", description: "Can view promotions" },
+    { name: "promotions:edit", description: "Can manage promotions" },
+    { name: "articles:view", description: "Can view articles" },
+    { name: "articles:edit", description: "Can manage articles" },
+    { name: "locations:view", description: "Can view locations" },
+    { name: "locations:edit", description: "Can manage locations" },
   ];
 
   // 1. Create Roles

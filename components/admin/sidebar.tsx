@@ -31,6 +31,7 @@ interface NavItem {
   href: string;
   icon: any;
   children?: { name: string; href: string; icon: any }[];
+  allowedRoles?: string[];
 }
 
 export const NAVIGATIONS: NavItem[] = [
@@ -46,15 +47,16 @@ export const NAVIGATIONS: NavItem[] = [
       { name: "Patients", href: "/admin/users/patients", icon: Users },
     ],
   },
-  { name: "Services", href: "/admin/services", icon: Tag },
-  { name: "Locations", href: "/admin/locations", icon: MapPin },
-  { name: "Promotions", href: "/admin/promotions", icon: Tag },
-  { name: "Articles", href: "/admin/articles", icon: FileText },
-  { name: "Payments", href: "/admin/payments", icon: CreditCard },
+  { name: "Services", href: "/admin/services", icon: Tag, allowedRoles: ["admin", "staff"] },
+  { name: "Locations", href: "/admin/locations", icon: MapPin, allowedRoles: ["admin", "staff"] },
+  { name: "Promotions", href: "/admin/promotions", icon: Tag, allowedRoles: ["admin", "staff"] },
+  { name: "Articles", href: "/admin/articles", icon: FileText, allowedRoles: ["admin", "staff"] },
+  { name: "Payments", href: "/admin/payments", icon: CreditCard, allowedRoles: ["admin", "staff"] },
   {
     name: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    allowedRoles: ["admin"],
     children: [
       { name: "General", href: "/admin/settings", icon: Settings },
       { name: "RBAC Roles", href: "/admin/settings/roles", icon: Shield },
@@ -214,7 +216,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <ul className="space-y-1">
-          {NAVIGATIONS.map((item) =>
+          {NAVIGATIONS.filter(item => !item.allowedRoles || (user?.role && item.allowedRoles.includes(user.role))).map((item) =>
             item.children ? (
               <SidebarNavGroup
                 key={item.name}

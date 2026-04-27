@@ -1,12 +1,17 @@
 import { UsersClient } from "@/components/admin/users/users-client";
 import { getUsers, getRoles } from "@/lib/actions/rbac";
+import { getCurrentUser } from "@/lib/auth";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 export const revalidate = 60; // ISR: Revalidate every 60 seconds
 
 export default async function UsersPage() {
-  const [users, roles] = await Promise.all([getUsers(), getRoles()]);
+  const [users, currentUser, roles] = await Promise.all([
+    getUsers(), 
+    getCurrentUser(),
+    getRoles().catch(() => []) // Fallback to empty array if user lacks roles:manage permission
+  ]);
 
   return (
     <main className="space-y-6">
@@ -17,7 +22,7 @@ export default async function UsersPage() {
           </div>
         }
       >
-        <UsersClient initialUsers={users} roles={roles} />
+        <UsersClient initialUsers={users} roles={roles} currentUserRole={currentUser?.role} />
       </Suspense>
     </main>
   );

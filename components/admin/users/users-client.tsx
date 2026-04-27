@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 interface UsersClientProps {
   initialUsers: User[];
   roles: Role[];
+  currentUserRole?: string;
 }
 
-export function UsersClient({ initialUsers, roles }: UsersClientProps) {
+export function UsersClient({ initialUsers, roles, currentUserRole }: UsersClientProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -41,6 +42,7 @@ export function UsersClient({ initialUsers, roles }: UsersClientProps) {
   const columns = getColumns({
     onAssignRoles: handleOpenRoleModal,
     onToggleStatus: handleToggleStatus,
+    currentUserRole: currentUserRole,
   });
 
   return (
@@ -52,13 +54,15 @@ export function UsersClient({ initialUsers, roles }: UsersClientProps) {
               {initialUsers.length} total users
             </Badge>
 
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6 shadow-lg shadow-primary/20 flex items-center gap-2 group transition-all active:scale-95"
-            >
-              <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              Add User Account
-            </Button>
+            {currentUserRole !== "doctor" && (
+              <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6 shadow-lg shadow-primary/20 flex items-center gap-2 group transition-all active:scale-95"
+              >
+                <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                Add User Account
+              </Button>
+            )}
           </div>
 
           <DataTable 

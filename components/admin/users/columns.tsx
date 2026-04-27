@@ -41,11 +41,13 @@ export type User = {
 interface ColumnProps {
   onAssignRoles: (user: User) => void;
   onToggleStatus: (userId: string, currentStatus: boolean | null) => void;
+  currentUserRole?: string;
 }
 
 export const getColumns = ({
   onAssignRoles,
   onToggleStatus,
+  currentUserRole,
 }: ColumnProps): ColumnDef<User>[] => [
   {
     accessorKey: "user",
@@ -130,6 +132,10 @@ export const getColumns = ({
     id: "actions",
     cell: ({ row }) => {
       const user = row.original;
+
+      if (currentUserRole === "doctor") {
+        return null;
+      }
 
       return (
         <DropdownMenu>
