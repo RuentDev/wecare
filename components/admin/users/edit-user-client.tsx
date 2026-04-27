@@ -1,17 +1,76 @@
 "use client";
 
+import { useState } from "react";
 import { UserForm } from "./user-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserCog, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { UserCog, ArrowLeft, ShieldAlert, Loader2, KeyRound, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { adminSetUserPassword } from "@/lib/actions/rbac";
+import { toast } from "sonner";
 
 interface EditUserClientProps {
   user: any;
 }
 
 export function EditUserClient({ user }: EditUserClientProps) {
+  const [isResetting, setIsResetting] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let pwd = "";
+    for (let i = 0; i < 12; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pwd);
+  };
+
+  const copyToClipboard = () => {
+    if (newPassword) {
+      navigator.clipboard.writeText(newPassword);
+      toast.success("Password copied to clipboard");
+    }
+  };
+
+  const handleForcePasswordReset = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+    
+    setIsResetting(true);
+    try {
+      const result = await adminSetUserPassword(user.id, newPassword);
+      if (result.success) {
+        toast.success("Password updated successfully", {
+          description: "All active sessions have been terminated. The user can now log in with the new password.",
+          duration: 6000,
+        });
+        setNewPassword("");
+      } else {
+        toast.error("Failed to update password");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-8">
@@ -116,12 +175,79 @@ export function EditUserClient({ user }: EditUserClientProps) {
               <p className="text-xs text-muted-foreground">
                 Force a password reset or deactivate this account permanently.
               </p>
-              <Button
-                variant="outline"
-                className="w-full border-amber-200 text-amber-700 hover:bg-amber-50"
-              >
-                Force Password Reset
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={isResetting}
+                    className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 gap-2"
+                  >
+                    {isResetting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldAlert className="h-4 w-4" />
+                    )}
+                    Force Password Reset
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Force Password Reset?</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          This will immediately terminate all active sessions for{" "}
+                          <span className="font-semibold text-foreground">
+                            {user.first_name} {user.last_name}
+                          </span>.
+                        </p>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold">New Password</label>
+                          <div className="flex gap-2">
+                            <Input 
+                              type="text" 
+                              placeholder="Enter or generate password" 
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="font-mono text-sm"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={copyToClipboard}
+                              title="Copy to clipboard"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="secondary" 
+                              onClick={generatePassword}
+                              className="whitespace-nowrap gap-2"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                              Auto Generate
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-xl" onClick={() => setNewPassword("")}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleForcePasswordReset();
+                      }}
+                      disabled={isResetting || !newPassword}
+                      className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Update Password
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>

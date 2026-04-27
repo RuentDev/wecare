@@ -265,3 +265,31 @@ export async function adminCreateUser(data: any) {
   revalidatePath("/admin/users");
   return { success: true, user: newUser };
 }
+
+/**
+ * Admin action to set a new password for a user.
+ * Invalidates all active sessions.
+ */
+export async function adminSetUserPassword(userId: string, newPassword: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:edit");
+
+  const {
+    hashPassword,
+    deleteAllUserSessions,
+  } = await import("@/lib/auth");
+
+  // Kill all active sessions so the user is immediately signed out
+  await deleteAllUserSessions(userId);
+
+  const passwordHash = await hashPassword(newPassword);
+
+  await protectedPrisma.users.update({
+    where: { id: userId },
+    data: { password_hash: passwordHash }
+  });
+
+  revalidatePath(`/admin/users/${userId}`);
+  return { success: true };
+}
