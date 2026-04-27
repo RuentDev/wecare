@@ -22,9 +22,14 @@ export function LoginForm() {
     if (state.success) {
       if (state.user) {
         setUser(state.user);
-        
+
         // Role-based redirection
-        if (state.user.role === "admin") {
+        if (
+          state.user.role === "admin" ||
+          state.user.role === "staff" ||
+          state.user.role === "nurse" ||
+          state.user.role === "doctor"
+        ) {
           router.push("/admin");
         } else {
           router.push("/dashboard");
@@ -46,7 +51,9 @@ export function LoginForm() {
         <h1 className="text-3xl font-bold text-neutral-dark mb-2 tracking-tight">
           Welcome to WeCare
         </h1>
-        <p className="text-neutral-gray font-medium">Sign in to your professional portal</p>
+        <p className="text-neutral-gray font-medium">
+          Sign in to your professional portal
+        </p>
       </div>
 
       <form action={formAction} className="space-y-6">
