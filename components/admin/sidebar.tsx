@@ -74,9 +74,11 @@ function SidebarNavItem({
 function SidebarNavGroup({
   item,
   pathname,
+  role,
 }: {
   item: NavItem;
   pathname: string;
+  role: string;
 }) {
   const isAnyChildActive = item.children?.some(
     (child) =>
@@ -116,14 +118,16 @@ function SidebarNavGroup({
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-1">
           <ul className="space-y-1">
-            {item.children?.map((child) => (
-              <SidebarNavItem
-                key={child.name}
-                item={child}
-                pathname={pathname}
-                isChild
-              />
-            ))}
+            {item.children
+              ?.filter((child) => child.allowedRoles.includes(role))
+              .map((child) => (
+                <SidebarNavItem
+                  key={child.name}
+                  item={child}
+                  pathname={pathname}
+                  isChild
+                />
+              ))}
           </ul>
         </CollapsibleContent>
       </Collapsible>
@@ -165,16 +169,15 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <ul className="space-y-1">
-          {NAVIGATIONS.filter(
-            (item) =>
-              !item.allowedRoles ||
-              (user?.role && item.allowedRoles.includes(user.role)),
+          {NAVIGATIONS.filter((item) =>
+            item.allowedRoles.includes(user?.role || ""),
           ).map((item) =>
             item.children ? (
               <SidebarNavGroup
                 key={item.name}
                 item={item}
                 pathname={pathname}
+                role={user?.role || ""}
               />
             ) : (
               <SidebarNavItem key={item.name} item={item} pathname={pathname} />

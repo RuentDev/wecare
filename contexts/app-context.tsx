@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+} from "react";
 import { type User, type UserRole } from "@/lib/types/user";
 import { getMe, logoutAction } from "@/lib/actions/auth";
 

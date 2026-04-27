@@ -33,9 +33,9 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen">
-      <Sidebar />
+      <Sidebar user={user} />
       <div className="lg:pl-64">
-        <DashboardHeader />
+        <DashboardHeader user={user} />
         <div className="p-5">{children}</div>
       </div>
     </div>

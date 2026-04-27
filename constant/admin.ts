@@ -16,7 +16,12 @@ export interface NavItem {
   name: string;
   href: string;
   icon: any;
-  children?: { name: string; href: string; icon: any }[];
+  children?: {
+    name: string;
+    href: string;
+    icon: any;
+    allowedRoles: string[];
+  }[];
   allowedRoles: string[];
 }
 
@@ -38,17 +43,32 @@ export const NAVIGATIONS: NavItem[] = [
     href: "/admin/users",
     icon: UserCog,
     children: [
-      { name: "Users", href: "/admin/users", icon: UserCog },
-      { name: "Doctors", href: "/admin/users/doctors", icon: Stethoscope },
-      { name: "Patients", href: "/admin/users/patients", icon: Users },
+      {
+        name: "Users",
+        href: "/admin/users",
+        icon: UserCog,
+        allowedRoles: ["admin", "staff"],
+      },
+      {
+        name: "Doctors",
+        href: "/admin/users/doctors",
+        icon: Stethoscope,
+        allowedRoles: ["admin", "staff", "doctor"],
+      },
+      {
+        name: "Patients",
+        href: "/admin/users/patients",
+        icon: Users,
+        allowedRoles: ["admin", "staff", "doctor"],
+      },
     ],
-    allowedRoles: ["admin", "staff"],
+    allowedRoles: ["admin", "staff", "doctor"],
   },
   {
     name: "Services",
     href: "/admin/services",
     icon: Tag,
-    allowedRoles: ["admin", "staff"],
+    allowedRoles: ["admin", "staff", "doctor"],
   },
   {
     name: "Locations",
@@ -78,10 +98,20 @@ export const NAVIGATIONS: NavItem[] = [
     name: "Settings",
     href: "/admin/settings",
     icon: Settings,
-    allowedRoles: ["admin"],
+    allowedRoles: ["admin", "doctor"],
     children: [
-      { name: "General", href: "/admin/settings", icon: Settings },
-      { name: "RBAC Roles", href: "/admin/settings/roles", icon: Shield },
+      {
+        name: "General",
+        href: "/admin/settings",
+        icon: Settings,
+        allowedRoles: ["admin", "doctor"],
+      },
+      {
+        name: "RBAC Roles",
+        href: "/admin/settings/roles",
+        icon: Shield,
+        allowedRoles: ["admin"],
+      },
     ],
   },
 ];
