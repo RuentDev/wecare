@@ -31,19 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User as UserType } from "@/lib/auth";
-
-const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Appointments", href: "/admin/appointments", icon: Calendar },
-  { name: "Patients", href: "/admin/patients", icon: Users },
-  { name: "Dentists", href: "/admin/dentists", icon: Stethoscope },
-  { name: "Services", href: "/admin/services", icon: Tag },
-  { name: "Locations", href: "/admin/locations", icon: MapPin },
-  { name: "Promotions", href: "/admin/promotions", icon: Tag },
-  { name: "Articles", href: "/admin/articles", icon: FileText },
-  { name: "Payments", href: "/admin/payments", icon: CreditCard },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-];
+import { NAVIGATIONS } from "./sidebar";
 
 interface AdminHeaderProps {
   user?: UserType;
@@ -98,7 +86,7 @@ export function DashboardHeader({ user }: AdminHeaderProps) {
             {/* Mobile Navigation */}
             <nav className="flex-1 py-4 px-3">
               <ul className="space-y-1">
-                {navigation.map((item) => {
+                {NAVIGATIONS.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -129,7 +117,7 @@ export function DashboardHeader({ user }: AdminHeaderProps) {
         {/* Page Title - Hidden on mobile */}
         <div className="hidden lg:block">
           <h1 className="text-lg font-semibold text-foreground">
-            {navigation.find(
+            {NAVIGATIONS.find(
               (n) =>
                 pathname === n.href ||
                 (n.href !== "/admin" && pathname.startsWith(n.href)),

@@ -9,20 +9,24 @@ import { AppointmentDetailsModal } from "./appointment-details-modal";
 import { format } from "date-fns";
 import { CalendarDays, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 interface AppointmentsClientProps {
   initialAppointments: any[];
 }
 
-export function AppointmentsClient({ initialAppointments }: AppointmentsClientProps) {
-  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+export function AppointmentsClient({
+  initialAppointments,
+}: AppointmentsClientProps) {
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,12 +51,13 @@ export function AppointmentsClient({ initialAppointments }: AppointmentsClientPr
 
   const filteredData = useMemo(() => {
     return formattedData.filter((item) => {
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      const matchesSearch = 
+      const matchesStatus =
+        statusFilter === "all" || item.status === statusFilter;
+      const matchesSearch =
         item.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.id.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       return matchesStatus && matchesSearch;
     });
   }, [formattedData, statusFilter, searchQuery]);
@@ -61,22 +66,6 @@ export function AppointmentsClient({ initialAppointments }: AppointmentsClientPr
 
   return (
     <div className="space-y-6 animate-in-fade">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glassmorphism-card border-none shadow-lg">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-2xl text-primary">
-              <CalendarDays className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">Total Appointments</p>
-              <h3 className="text-2xl font-bold">{initialAppointments.length}</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* You could add more stats cards here if needed */}
-      </div>
-
       <Card className="glassmorphism border-none shadow-xl">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
@@ -111,10 +100,7 @@ export function AppointmentsClient({ initialAppointments }: AppointmentsClientPr
             </div>
           </div>
 
-          <DataTable 
-            columns={columns} 
-            data={filteredData} 
-          />
+          <DataTable columns={columns} data={filteredData} />
         </CardContent>
       </Card>
 

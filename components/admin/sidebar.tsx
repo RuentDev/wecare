@@ -33,7 +33,7 @@ interface NavItem {
   children?: { name: string; href: string; icon: any }[];
 }
 
-const navigation: NavItem[] = [
+export const NAVIGATIONS: NavItem[] = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Appointments", href: "/admin/appointments", icon: Calendar },
   {
@@ -214,7 +214,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <ul className="space-y-1">
-          {navigation.map((item) =>
+          {NAVIGATIONS.map((item) =>
             item.children ? (
               <SidebarNavGroup
                 key={item.name}
