@@ -13,6 +13,7 @@ export async function getAppointments() {
             first_name: true,
             last_name: true,
             email: true,
+            is_guest: true,
           },
         },
         doctors: {

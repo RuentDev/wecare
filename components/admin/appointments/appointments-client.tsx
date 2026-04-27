@@ -45,6 +45,7 @@ export function AppointmentsClient({
       date: format(new Date(apt.appointment_date), "MMM dd, yyyy"),
       time: format(new Date(apt.start_time), "hh:mm a"),
       status: apt.status || "pending",
+      isGuest: apt.users?.is_guest || false,
       raw: apt,
     }));
   }, [initialAppointments]);

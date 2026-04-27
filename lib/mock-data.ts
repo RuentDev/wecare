@@ -96,7 +96,7 @@ export interface User {
 // Mock Doctors
 export const mockDoctors: Doctor[] = [
   {
-    id: "1",
+    id: "00000000-0000-0000-0000-000000000001",
     name: "Dr. Sarah Chen",
     specialty: "General Practitioner",
     avatar: "👩‍⚕️",
@@ -145,14 +145,14 @@ export const mockDoctors: Doctor[] = [
 // Mock Services
 export const mockServices: Service[] = [
   {
-    id: "1",
+    id: "00000000-0000-0000-0000-000000000001",
     name: "Consultation",
     description: "Initial consultation with a healthcare professional",
     duration: 30,
     price: 50,
   },
   {
-    id: "2",
+    id: "00000000-0000-0000-0000-000000000002",
     name: "Follow-up Visit",
     description: "Follow-up appointment for ongoing treatment",
     duration: 20,

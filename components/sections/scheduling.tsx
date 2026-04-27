@@ -1,94 +1,241 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useReducer } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ChevronLeft, ChevronRight, Shield } from "lucide-react";
-import { mockDoctors, mockServices, createAppointment } from "@/lib/mock-data";
+import {
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { createGuestBooking } from "@/lib/actions/booking";
+import {
+  getPublicDoctors,
+  getPublicServices,
+  getDefaultLocationId,
+} from "@/lib/actions/scheduling";
 import { StepIndicator } from "../scheduling/StepIndicator";
 import { ServiceStep } from "../scheduling/ServiceStep";
 import { DoctorStep } from "../scheduling/DoctorStep";
 import { DateTimeStep } from "../scheduling/DateTimeStep";
 import { PatientStep } from "../scheduling/PatientStep";
+import { useToast } from "@/hooks/use-toast";
+import { useAsyncState } from "@/hooks/use-async-state";
+import type { SchedulingDoctor, SchedulingService } from "@/lib/types/scheduling";
+
+// ---------------------------------------------------------------------------
+// State shape & reducer
+// ---------------------------------------------------------------------------
+
+interface BookingState {
+  currentStep: number;
+  selectedServiceId: string;
+  selectedDoctorId: string;
+  selectedDate: Date;
+  selectedTime: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhone: string;
+  patientReason: string;
+  isSubmitting: boolean;
+  bookingError: string;
+  showSuccess: boolean;
+  appointmentId: string;
+}
+
+type BookingAction =
+  | { type: "SET_STEP"; step: number }
+  | { type: "SELECT_SERVICE"; id: string }
+  | { type: "SELECT_DOCTOR"; id: string }
+  | { type: "SELECT_DATE"; date: Date }
+  | { type: "SELECT_TIME"; time: string }
+  | {
+      type: "SET_PATIENT_FIELD";
+      field: keyof Pick<
+        BookingState,
+        "patientName" | "patientEmail" | "patientPhone" | "patientReason"
+      >;
+      value: string;
+    }
+  | { type: "SUBMIT_START" }
+  | { type: "SUBMIT_SUCCESS"; appointmentId: string }
+  | { type: "SUBMIT_ERROR"; error: string };
+
+function bookingReducer(
+  state: BookingState,
+  action: BookingAction
+): BookingState {
+  switch (action.type) {
+    case "SET_STEP":
+      return { ...state, currentStep: action.step };
+    case "SELECT_SERVICE":
+      return { ...state, selectedServiceId: action.id };
+    case "SELECT_DOCTOR":
+      return { ...state, selectedDoctorId: action.id };
+    case "SELECT_DATE":
+      // Reset time when date changes so stale selection is cleared
+      return { ...state, selectedDate: action.date, selectedTime: "" };
+    case "SELECT_TIME":
+      return { ...state, selectedTime: action.time };
+    case "SET_PATIENT_FIELD":
+      return { ...state, [action.field]: action.value };
+    case "SUBMIT_START":
+      return { ...state, isSubmitting: true, bookingError: "" };
+    case "SUBMIT_SUCCESS":
+      return {
+        ...state,
+        isSubmitting: false,
+        showSuccess: true,
+        appointmentId: action.appointmentId,
+      };
+    case "SUBMIT_ERROR":
+      return { ...state, isSubmitting: false, bookingError: action.error };
+    default:
+      return state;
+  }
+}
+
+const TOTAL_STEPS = 4;
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface Props {
   date?: Date;
 }
 
 const Scheduling = ({ date = new Date() }: Props) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const { toast } = useToast();
 
-  // Selection states
-  const [selectedDoctor, setSelectedDoctor] = useState<string>("");
-  const [selectedService, setSelectedService] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<Date>(date);
-  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [state, dispatch] = useReducer(bookingReducer, {
+    currentStep: 1,
+    selectedServiceId: "",
+    selectedDoctorId: "",
+    selectedDate: date,
+    selectedTime: "",
+    patientName: "",
+    patientEmail: "",
+    patientPhone: "",
+    patientReason: "",
+    isSubmitting: false,
+    bookingError: "",
+    showSuccess: false,
+    appointmentId: "",
+  });
 
-  // Patient states
-  const [patientName, setPatientName] = useState("");
-  const [patientPhone, setPatientPhone] = useState("");
-  const [patientReason, setPatientReason] = useState("");
+  // Remote data via useAsyncState
+  const doctors = useAsyncState<SchedulingDoctor[]>([]);
+  const services = useAsyncState<SchedulingService[]>([]);
+  const locationId = useAsyncState<string>("");
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [appointmentId, setAppointmentId] = useState<string>("");
+  // Fetch all remote data once on mount
+  useEffect(() => {
+    doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
+    services.load(() => getPublicServices().then((r) => r.data ?? []));
+    locationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const doctor = mockDoctors.find((d) => d.id === selectedDoctor);
-  const service = mockServices.find((s) => s.id === selectedService);
+  // Derived: find the currently selected doctor/service objects
+  const selectedDoctor = doctors.data.find(
+    (d) => d.id === state.selectedDoctorId
+  );
+  const selectedService = services.data.find(
+    (s) => s.id === state.selectedServiceId
+  );
 
+  // Navigation
+  const goToStep = (step: number) => {
+    dispatch({ type: "SET_STEP", step });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (state.currentStep < TOTAL_STEPS) goToStep(state.currentStep + 1);
   };
-
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (state.currentStep > 1) goToStep(state.currentStep - 1);
   };
 
-  const handleConfirmBooking = () => {
-    if (
-      patientName &&
-      patientPhone &&
-      patientReason &&
-      selectedDoctor &&
-      selectedService &&
-      selectedDate &&
-      selectedTime
-    ) {
-      const appointment = createAppointment({
-        patientId: "landing-patient",
-        doctorId: selectedDoctor,
-        serviceId: selectedService,
-        date: selectedDate,
-        time: selectedTime,
-        status: "scheduled",
-        reason: patientReason,
-      });
-      setAppointmentId(appointment.id);
-      setShowSuccess(true);
-    }
-  };
-
-  const isStepValid = () => {
-    switch (currentStep) {
+  const isStepValid = (): boolean => {
+    switch (state.currentStep) {
       case 1:
-        return !!selectedService;
+        return !!state.selectedServiceId;
       case 2:
-        return !!selectedDoctor;
+        return !!state.selectedDoctorId;
       case 3:
-        return !!selectedDate && !!selectedTime;
+        return !!state.selectedDate && !!state.selectedTime;
       case 4:
-        return !!patientName && !!patientPhone && !!patientReason;
+        return (
+          !!state.patientName &&
+          !!state.patientEmail &&
+          !!state.patientPhone &&
+          !!state.patientReason
+        );
       default:
         return false;
     }
   };
 
-  if (showSuccess) {
+  const handleConfirmBooking = async () => {
+    if (!isStepValid()) return;
+
+    dispatch({ type: "SUBMIT_START" });
+
+    try {
+      const durationMinutes = selectedService?.durationMinutes ?? 30;
+      const [hours, minutes] = state.selectedTime.split(":").map(Number);
+      const endDate = new Date();
+      endDate.setHours(hours, minutes + durationMinutes);
+      const endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
+
+      const result = await createGuestBooking({
+        firstName: state.patientName.split(" ")[0],
+        lastName:
+          state.patientName.split(" ").slice(1).join(" ") || "Guest",
+        email: state.patientEmail,
+        phone: state.patientPhone,
+        reason: state.patientReason,
+        doctorId: state.selectedDoctorId,
+        serviceId: state.selectedServiceId,
+        locationId: locationId.data,
+        appointmentDate: state.selectedDate.toISOString(),
+        startTime: state.selectedTime,
+        endTime,
+      });
+
+      if (result.success) {
+        dispatch({
+          type: "SUBMIT_SUCCESS",
+          appointmentId: result.appointmentId!,
+        });
+        toast({
+          title: "Booking Successful",
+          description: "Your appointment has been scheduled.",
+        });
+      } else {
+        dispatch({
+          type: "SUBMIT_ERROR",
+          error: result.error ?? "Failed to book appointment",
+        });
+        toast({
+          variant: "destructive",
+          title: "Booking Failed",
+          description: result.error,
+        });
+      }
+    } catch {
+      dispatch({
+        type: "SUBMIT_ERROR",
+        error: "An unexpected error occurred. Please try again.",
+      });
+    }
+  };
+
+  // ------ Success screen ------
+  if (state.showSuccess) {
     return (
       <section className="py-10 px-4 sm:px-6 lg:px-8 bg-neutral-light min-h-[50vh] flex items-center">
         <div className="max-w-3xl mx-auto w-full">
@@ -101,25 +248,27 @@ const Scheduling = ({ date = new Date() }: Props) => {
                 Appointment Confirmed!
               </h2>
               <p className="text-xl text-neutral-gray max-w-lg mx-auto">
-                We've scheduled your visit with{" "}
-                <span className="text-primary font-bold">{doctor?.name}</span>{" "}
+                We&apos;ve scheduled your visit with{" "}
+                <span className="text-primary font-bold">
+                  {selectedDoctor?.name}
+                </span>{" "}
                 for{" "}
                 <span className="text-neutral-dark font-bold">
-                  {new Date(selectedDate).toLocaleDateString()}
+                  {state.selectedDate.toLocaleDateString()}
                 </span>{" "}
                 at{" "}
                 <span className="text-neutral-dark font-bold">
-                  {selectedTime}
+                  {state.selectedTime}
                 </span>
                 .
               </p>
-              {appointmentId && (
+              {state.appointmentId && (
                 <div className="bg-blue-50 rounded-[12px] p-4 max-w-sm mx-auto text-left border border-blue-100">
                   <p className="text-sm text-neutral-gray mb-1">
                     Appointment ID
                   </p>
                   <p className="font-mono text-primary font-bold break-all">
-                    {appointmentId}
+                    {state.appointmentId}
                   </p>
                 </div>
               )}
@@ -138,6 +287,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
     );
   }
 
+  // ------ Main wizard ------
   return (
     <section className="py-10 px-5 sm:px-6 lg:px-8 bg-neutral-light min-h-auto">
       <div className="max-w-7xl mx-auto">
@@ -152,52 +302,91 @@ const Scheduling = ({ date = new Date() }: Props) => {
           </p>
         </div>
 
-        {/* Step Indicator */}
-        <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+        <StepIndicator currentStep={state.currentStep} totalSteps={TOTAL_STEPS} />
 
-        {/* Form Content */}
+        {/* Error banner */}
+        {state.bookingError && (
+          <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">{state.bookingError}</p>
+          </div>
+        )}
+
+        {/* Step Content */}
         <div className="min-h-auto">
-          {currentStep === 1 && (
+          {state.currentStep === 1 && (
             <ServiceStep
-              services={mockServices}
-              selectedServiceId={selectedService}
+              services={services.data}
+              selectedServiceId={state.selectedServiceId}
+              isLoading={services.loading}
               onSelect={(id) => {
-                setSelectedService(id);
-                setTimeout(handleNext, 300); // Small delay for visual feedback
-              }}
-            />
-          )}
-          {currentStep === 2 && (
-            <DoctorStep
-              doctors={mockDoctors}
-              selectedDoctorId={selectedDoctor}
-              onSelect={(id) => {
-                setSelectedDoctor(id);
+                dispatch({ type: "SELECT_SERVICE", id });
                 setTimeout(handleNext, 300);
               }}
             />
           )}
-          {currentStep === 3 && (
-            <DateTimeStep
-              selectedDoctorId={selectedDoctor}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              onDateSelect={setSelectedDate}
-              onTimeSelect={setSelectedTime}
+          {state.currentStep === 2 && (
+            <DoctorStep
+              doctors={doctors.data}
+              selectedDoctorId={state.selectedDoctorId}
+              isLoading={doctors.loading}
+              onSelect={(id) => {
+                dispatch({ type: "SELECT_DOCTOR", id });
+                setTimeout(handleNext, 300);
+              }}
             />
           )}
-          {currentStep === 4 && (
+          {state.currentStep === 3 && (
+            <DateTimeStep
+              selectedDoctorId={state.selectedDoctorId}
+              selectedDate={state.selectedDate}
+              selectedTime={state.selectedTime}
+              onDateSelect={(date) =>
+                dispatch({ type: "SELECT_DATE", date })
+              }
+              onTimeSelect={(time) =>
+                dispatch({ type: "SELECT_TIME", time })
+              }
+            />
+          )}
+          {state.currentStep === 4 && (
             <PatientStep
-              patientName={patientName}
-              patientPhone={patientPhone}
-              patientReason={patientReason}
-              doctor={doctor}
-              service={service}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              setPatientName={setPatientName}
-              setPatientPhone={setPatientPhone}
-              setPatientReason={setPatientReason}
+              patientName={state.patientName}
+              patientEmail={state.patientEmail}
+              patientPhone={state.patientPhone}
+              patientReason={state.patientReason}
+              doctor={selectedDoctor}
+              service={selectedService}
+              selectedDate={state.selectedDate}
+              selectedTime={state.selectedTime}
+              setPatientName={(v) =>
+                dispatch({
+                  type: "SET_PATIENT_FIELD",
+                  field: "patientName",
+                  value: v,
+                })
+              }
+              setPatientEmail={(v) =>
+                dispatch({
+                  type: "SET_PATIENT_FIELD",
+                  field: "patientEmail",
+                  value: v,
+                })
+              }
+              setPatientPhone={(v) =>
+                dispatch({
+                  type: "SET_PATIENT_FIELD",
+                  field: "patientPhone",
+                  value: v,
+                })
+              }
+              setPatientReason={(v) =>
+                dispatch({
+                  type: "SET_PATIENT_FIELD",
+                  field: "patientReason",
+                  value: v,
+                })
+              }
             />
           )}
         </div>
@@ -205,14 +394,14 @@ const Scheduling = ({ date = new Date() }: Props) => {
         {/* Navigation Footer */}
         <div className="mt-16">
           <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[32px] p-4 sm:p-6 flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-500">
-            {/* Left: Back Button */}
+            {/* Back */}
             <div className="w-full md:w-auto order-2 md:order-1">
               <Button
                 onClick={handleBack}
-                disabled={currentStep === 1}
+                disabled={state.currentStep === 1}
                 variant="ghost"
                 className={`w-full md:w-auto flex items-center justify-center gap-2 text-neutral-gray hover:text-neutral-dark font-bold text-lg h-14 px-8 rounded-2xl transition-all duration-300 ${
-                  currentStep === 1
+                  state.currentStep === 1
                     ? "opacity-0 pointer-events-none"
                     : "opacity-100"
                 }`}
@@ -222,24 +411,24 @@ const Scheduling = ({ date = new Date() }: Props) => {
               </Button>
             </div>
 
-            {/* Middle: Progress & Trust */}
+            {/* Progress */}
             <div className="flex flex-col items-center gap-3 order-1 md:order-2">
               <div className="flex items-center gap-3 bg-neutral-light/50 px-4 py-2 rounded-full border border-neutral-gray/10">
                 <div className="flex items-center gap-2 text-secondary font-bold text-xs uppercase tracking-widest">
                   <Shield className="w-4 h-4" />
                   Secure Booking
                 </div>
-                <div className="w-1 h-1 bg-neutral-gray/30 rounded-full"></div>
+                <div className="w-1 h-1 bg-neutral-gray/30 rounded-full" />
                 <p className="text-xs font-bold text-neutral-gray uppercase tracking-widest">
-                  Step {currentStep} of {totalSteps}
+                  Step {state.currentStep} of {TOTAL_STEPS}
                 </p>
               </div>
               <div className="hidden md:flex gap-1">
-                {Array.from({ length: totalSteps }).map((_, i) => (
+                {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                   <div
                     key={i}
                     className={`h-1 rounded-full transition-all duration-500 ${
-                      i + 1 <= currentStep
+                      i + 1 <= state.currentStep
                         ? "w-6 bg-primary"
                         : "w-2 bg-neutral-gray/20"
                     }`}
@@ -248,9 +437,9 @@ const Scheduling = ({ date = new Date() }: Props) => {
               </div>
             </div>
 
-            {/* Right: Next/Confirm Button */}
+            {/* Next / Confirm */}
             <div className="w-full md:w-auto order-3">
-              {currentStep < totalSteps ? (
+              {state.currentStep < TOTAL_STEPS ? (
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid()}
@@ -262,11 +451,20 @@ const Scheduling = ({ date = new Date() }: Props) => {
               ) : (
                 <Button
                   onClick={handleConfirmBooking}
-                  disabled={!isStepValid()}
+                  disabled={!isStepValid() || state.isSubmitting}
                   className="w-full md:w-auto group bg-secondary hover:bg-teal-700 text-white font-black py-4 px-10 rounded-2xl h-14 text-lg transition-all duration-300 shadow-[0_10px_20px_rgba(20,184,166,0.2)] hover:shadow-[0_15px_30px_rgba(20,184,166,0.3)] hover:-translate-y-0.5 disabled:bg-neutral-gray disabled:shadow-none disabled:translate-y-0"
                 >
-                  Confirm Booking
-                  <CheckCircle className="w-5 h-5 ml-2 transition-all group-hover:scale-110" />
+                  {state.isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Booking…
+                    </>
+                  ) : (
+                    <>
+                      Confirm Booking
+                      <CheckCircle className="w-5 h-5 ml-2 transition-all group-hover:scale-110" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

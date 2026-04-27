@@ -21,6 +21,7 @@ export type AppointmentColumn = {
   date: string;
   time: string;
   status: string;
+  isGuest: boolean;
   raw: any; // Keep the raw object for the modal
 };
 
@@ -28,6 +29,16 @@ export const getColumns = (onView: (appointment: any) => void): ColumnDef<Appoin
   {
     accessorKey: "patientName",
     header: "Patient",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{row.getValue("patientName")}</span>
+        {row.original.isGuest && (
+          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 h-5 px-1.5 font-bold uppercase tracking-tighter">
+            Guest
+          </Badge>
+        )}
+      </div>
+    ),
   },
   {
     accessorKey: "doctorName",

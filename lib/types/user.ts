@@ -16,6 +16,7 @@ export interface User {
   postal_code?: string | null;
   address?: string | null;
   is_active: boolean;
+  is_guest?: boolean;
   email_verified: boolean;
   created_at?: Date | string;
 }

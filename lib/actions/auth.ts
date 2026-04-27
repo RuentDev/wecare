@@ -8,6 +8,7 @@ import {
   verifyPassword,
   getCurrentUser,
   deleteSession,
+  convertGuestToRegistered,
 } from "@/lib/auth";
 import {
   signupSchema,
@@ -54,6 +55,21 @@ export async function signup(
     // Check if user already exists
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
+      if (existingUser.is_guest) {
+        // Convert guest to registered user
+        await convertGuestToRegistered(existingUser.id, password, {
+          first_name,
+          last_name,
+          phone,
+          gender,
+          date_of_birth,
+          street,
+          city,
+          state,
+          postal_code,
+        });
+        return { success: true };
+      }
       return {
         error: "User with this email already exists",
         fields,
@@ -166,6 +182,12 @@ export async function login(
     if (!user) {
       return {
         error: "Invalid email or password",
+      };
+    }
+
+    if (user.is_guest) {
+      return {
+        error: "No account found for this email. Please register to create your account.",
       };
     }
 

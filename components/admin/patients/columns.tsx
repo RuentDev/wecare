@@ -32,6 +32,7 @@ export type Patient = {
   phone: string | null;
   created_at: Date | null;
   avatar_url: string | null;
+  is_guest?: boolean | null;
   appointment_count: number;
   last_appointment: Date | null;
 };
@@ -65,9 +66,16 @@ export const getColumns = ({
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm tracking-tight text-foreground">
-              {patient.first_name} {patient.last_name}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm tracking-tight text-foreground">
+                {patient.first_name} {patient.last_name}
+              </span>
+              {patient.is_guest && (
+                <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 h-4 px-1 font-bold uppercase tracking-tighter">
+                  Guest
+                </Badge>
+              )}
+            </div>
             <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
               ID: {patient.id.slice(0, 8)}
             </span>

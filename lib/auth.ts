@@ -120,6 +120,7 @@ export async function getSession(
       postal_code: session.users.postal_code,
       address: session.users.address,
       is_active: session.users.is_active || false,
+      is_guest: session.users.is_guest || false,
       email_verified: session.users.email_verified || false,
       created_at: session.users.created_at || new Date(),
     },
@@ -247,6 +248,7 @@ export async function createUser(data: {
     postal_code: user.postal_code,
     address: user.address,
     is_active: user.is_active || false,
+    is_guest: user.is_guest || false,
     email_verified: user.email_verified || false,
     created_at: user.created_at || new Date(),
   };
@@ -279,6 +281,7 @@ export async function findUserByEmail(
     postal_code: user.postal_code,
     address: user.address,
     is_active: user.is_active || false,
+    is_guest: user.is_guest || false,
     email_verified: user.email_verified || false,
     created_at: user.created_at || new Date(),
   };
@@ -345,5 +348,120 @@ export async function usePasswordResetToken(
 
   return true;
 }
+
+// Create guest user
+export async function createGuestUser(data: {
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+}): Promise<User> {
+  // Use a non-matchable sentinel so bcrypt.compare always fails
+  const GUEST_PASSWORD_SENTINEL = "GUEST_NO_PASSWORD";
+
+  const user = await prisma.users.create({
+    data: {
+      email: data.email.toLowerCase(),
+      password_hash: GUEST_PASSWORD_SENTINEL,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      phone: data.phone || null,
+      role: "patient",
+      is_guest: true,
+    },
+  });
+
+  // Sync with RBAC roles table if it exists
+  const roleName = "patient";
+  const roleRecord = await prisma.roles.findUnique({
+    where: { name: roleName },
+  });
+
+  if (roleRecord) {
+    await prisma.user_roles.create({
+      data: {
+        user_id: user.id,
+        role_id: roleRecord.id,
+      },
+    });
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    phone: user.phone,
+    role: user.role as UserRole,
+    avatar_url: user.avatar_url,
+    gender: user.gender as any,
+    date_of_birth: user.date_of_birth,
+    street: user.street,
+    city: user.city,
+    state: user.state,
+    postal_code: user.postal_code,
+    address: user.address,
+    is_active: user.is_active || false,
+    is_guest: user.is_guest || false,
+    email_verified: user.email_verified || false,
+    created_at: user.created_at || new Date(),
+  };
+}
+
+// Convert guest to registered user
+export async function convertGuestToRegistered(
+  userId: string,
+  password: string,
+  additionalData?: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    gender?: string;
+    date_of_birth?: string | Date;
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+  },
+): Promise<User> {
+  const passwordHash = await hashPassword(password);
+
+  const updateData: any = {
+    password_hash: passwordHash,
+    is_guest: false,
+    ...additionalData,
+  };
+
+  if (additionalData?.date_of_birth) {
+    updateData.date_of_birth = new Date(additionalData.date_of_birth);
+  }
+
+  const user = await prisma.users.update({
+    where: { id: userId },
+    data: updateData,
+  });
+
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    phone: user.phone,
+    role: user.role as UserRole,
+    avatar_url: user.avatar_url,
+    gender: user.gender as any,
+    date_of_birth: user.date_of_birth,
+    street: user.street,
+    city: user.city,
+    state: user.state,
+    postal_code: user.postal_code,
+    address: user.address,
+    is_active: user.is_active || false,
+    is_guest: user.is_guest || false,
+    email_verified: user.email_verified || false,
+    created_at: user.created_at || new Date(),
+  };
+}
+
 
 export { User };

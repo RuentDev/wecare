@@ -17,6 +17,7 @@ export async function getPatients() {
         phone: true,
         created_at: true,
         avatar_url: true,
+        is_guest: true,
         _count: {
           select: { appointments: true },
         },
