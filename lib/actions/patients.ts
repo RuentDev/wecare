@@ -110,7 +110,27 @@ export async function getPatientById(id: string) {
       },
     });
 
-    return patient;
+    if (!patient) return null;
+
+    // Serialize Decimal objects for Client Component compatibility
+    const serializedAppointments = patient.appointments.map(appointment => ({
+      ...appointment,
+      services: {
+        ...appointment.services,
+        price: Number(appointment.services.price)
+      },
+      doctors: {
+        ...appointment.doctors,
+        consultation_fee: appointment.doctors.consultation_fee 
+          ? Number(appointment.doctors.consultation_fee) 
+          : null
+      }
+    }));
+
+    return {
+      ...patient,
+      appointments: serializedAppointments
+    };
   } catch (error) {
     console.error("[GET_PATIENT_BY_ID]", error);
     return null;

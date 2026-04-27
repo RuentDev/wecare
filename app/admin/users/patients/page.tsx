@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Users, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PatientsClient } from "@/components/admin/patients/patients-client";
 import { PatientsStats } from "@/components/admin/patients/patients-stats";
