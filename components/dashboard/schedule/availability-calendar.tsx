@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,11 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+import { TimeSlotDialog } from "./time-slot-dialog";
+import { getDoctorMonthlyStats, deleteTimeSlot } from "@/lib/actions/time-slots";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 interface AvailabilityCalendarProps {
   timeSlots: any[];
   doctorId: string;
@@ -23,8 +28,98 @@ interface AvailabilityCalendarProps {
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalendarProps) {
+export function AvailabilityCalendar({ timeSlots: initialTimeSlots, doctorId }: AvailabilityCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState({ month: new Date().getMonth(), year: new Date().getFullYear() });
+  const [stats, setStats] = useState({ available: 0, partial: 0, full: 0 });
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [timeSlots, setTimeSlots] = useState(initialTimeSlots);
+  const [exceptions, setExceptions] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  // Fetch monthly stats whenever the month changes
+  const fetchMonthData = async (year: number, month: number) => {
+    setIsLoadingStats(true);
+    const result = await getDoctorMonthlyStats(doctorId, year, month);
+    if (result.success && result.data) {
+      setAppointments(result.data.appointments);
+      setExceptions(result.data.exceptions);
+      setTimeSlots(result.data.timeSlots);
+      
+      // Calculate Stats
+      let availableSlots = 0;
+      let partialDays = 0;
+      let fullDays = 0;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const currentDate = new Date(year, month, d);
+        const dayOfWeek = currentDate.getDay();
+        const dateStr = currentDate.toISOString().split("T")[0];
+
+        // Check for full day exception
+        const dayExceptions = result.data.exceptions.filter(e => e.date.startsWith(dateStr));
+        const isFullDayException = dayExceptions.some(e => e.is_full_day);
+
+        // Calculate total possible slots for this day from weekly template
+        const slotsForDay = result.data.timeSlots.filter((ts: any) => ts.day_of_week === dayOfWeek);
+        
+        if (slotsForDay.length > 0) {
+          if (isFullDayException) {
+            fullDays++;
+            continue; // No available slots today
+          }
+
+          // Count appointments on this day
+          const dayAppointments = result.data.appointments.filter(a => a.appointment_date.startsWith(dateStr));
+          const bookedCount = dayAppointments.length;
+          
+          // Total slots is slotsForDay.length minus any partial day exceptions (omitted for simplicity, assume each slot is 1 appointment)
+          const totalSlots = slotsForDay.length;
+          const remainingSlots = Math.max(0, totalSlots - bookedCount);
+          
+          availableSlots += remainingSlots;
+
+          if (bookedCount >= totalSlots) {
+            fullDays++;
+          } else if (bookedCount > 0) {
+            partialDays++;
+          }
+        }
+      }
+
+      setStats({ available: availableSlots, partial: partialDays, full: fullDays });
+    }
+    setIsLoadingStats(false);
+  };
+
+  useEffect(() => {
+    fetchMonthData(currentMonth.year, currentMonth.month);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleMonthChange = (newDate: Date) => {
+    const month = newDate.getMonth();
+    const year = newDate.getFullYear();
+    if (month !== currentMonth.month || year !== currentMonth.year) {
+      setCurrentMonth({ month, year });
+      fetchMonthData(year, month);
+    }
+  };
+
+  const handleDeleteSlot = async (slotId: string) => {
+    setIsDeleting(slotId);
+    const res = await deleteTimeSlot(slotId);
+    if (res.success) {
+      toast.success("Time slot deleted");
+      fetchMonthData(currentMonth.year, currentMonth.month);
+    } else {
+      toast.error(res.error || "Failed to delete time slot");
+    }
+    setIsDeleting(null);
+  };
   
   const selectedDay = date ? date.getDay() : -1;
   const daySlots = timeSlots.filter(slot => slot.day_of_week === selectedDay);
@@ -37,10 +132,16 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
           <CardTitle className="text-lg font-bold">Select Date</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          <Calendar
+              <Calendar
             mode="single"
             selected={date}
-            onSelect={setDate}
+            onSelect={(d) => {
+              if (d) {
+                setDate(d);
+                handleMonthChange(d);
+              }
+            }}
+            onMonthChange={handleMonthChange}
             className="rounded-xl border-none"
             classNames={{
               day_selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white rounded-xl font-bold",
@@ -48,27 +149,32 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
               day: "h-10 w-10 p-0 font-bold aria-selected:opacity-100 hover:bg-slate-50 rounded-xl transition-all",
             }}
           />
-          <div className="mt-6 space-y-3 px-2">
+          <div className="mt-6 space-y-3 px-2 relative">
+            {isLoadingStats && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-xl">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              </div>
+            )}
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-slate-500 font-medium">
                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                 <span>Available</span>
               </div>
-              <span className="font-bold text-slate-700">12 slots</span>
+              <span className="font-bold text-slate-700">{stats.available} slots</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-slate-500 font-medium">
                 <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                 <span>Partially Booked</span>
               </div>
-              <span className="font-bold text-slate-700">4 slots</span>
+              <span className="font-bold text-slate-700">{stats.partial} days</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-slate-500 font-medium">
                 <div className="w-2 h-2 rounded-full bg-red-500"></div>
                 <span>Fully Booked</span>
               </div>
-              <span className="font-bold text-slate-700">2 days</span>
+              <span className="font-bold text-slate-700">{stats.full} days</span>
             </div>
           </div>
         </CardContent>
@@ -83,7 +189,11 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
             </CardTitle>
             <p className="text-sm text-slate-500 font-medium mt-1">Configured availability for this day</p>
           </div>
-          <Button variant="outline" className="rounded-xl border-slate-200 font-bold gap-2">
+          <Button 
+            variant="outline" 
+            className="rounded-xl border-slate-200 font-bold gap-2"
+            onClick={() => setIsSlotDialogOpen(true)}
+          >
             <Plus className="w-4 h-4" /> Add Slot
           </Button>
         </CardHeader>
@@ -97,7 +207,13 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
               <p className="text-slate-500 mt-1 max-w-[280px] mx-auto">
                 You haven't set any available hours for {date ? DAYS[selectedDay] : "this day"}.
               </p>
-              <Button className="mt-6 rounded-xl font-bold">Configure Availability</Button>
+              <Button 
+                className="mt-6 rounded-xl font-bold"
+                onClick={() => setIsSlotDialogOpen(true)}
+              >
+                Configure Availability
+              </Button>
+
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -120,8 +236,18 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                      onClick={() => handleDeleteSlot(slot.id)}
+                      disabled={isDeleting === slot.id}
+                    >
+                      {isDeleting === slot.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -140,13 +266,25 @@ export function AvailabilityCalendar({ timeSlots, doctorId }: AvailabilityCalend
                    <p className="text-sm text-slate-500 font-medium">This schedule repeats every {date ? DAYS[selectedDay] : "week"}.</p>
                  </div>
               </div>
-              <Button variant="ghost" className="text-primary font-bold hover:bg-primary/10 gap-2 rounded-xl">
+              <Button 
+                variant="ghost" 
+                className="text-primary font-bold hover:bg-primary/10 gap-2 rounded-xl"
+                onClick={() => setIsSlotDialogOpen(true)}
+              >
                  Edit Pattern <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+      
+      <TimeSlotDialog
+        isOpen={isSlotDialogOpen}
+        onOpenChange={setIsSlotDialogOpen}
+        doctorId={doctorId}
+        initialDayOfWeek={selectedDay !== -1 ? selectedDay : undefined}
+        onSuccess={() => fetchMonthData(currentMonth.year, currentMonth.month)}
+      />
     </div>
   );
 }

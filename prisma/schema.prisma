@@ -85,6 +85,7 @@ model doctors {
   users               users?                 @relation(fields: [user_id], references: [id], onUpdate: NoAction)
   medical_records     medical_records[]
   time_slots          time_slots[]
+  schedule_exceptions schedule_exceptions[]
 }
 
 model locations {
@@ -458,4 +459,18 @@ model vitals {
   created_at            DateTime? @default(now()) @db.Timestamptz(6)
   updated_at            DateTime? @default(now()) @db.Timestamptz(6)
   users                 users     @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model schedule_exceptions {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctor_id    String     @db.Uuid
+  date         DateTime   @db.Date
+  start_time   DateTime?  @db.Time(6)
+  end_time     DateTime?  @db.Time(6)
+  is_full_day  Boolean    @default(true)
+  reason       String?    @db.VarChar(255)
+  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
+  doctors      doctors    @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([doctor_id, date], map: "idx_schedule_exceptions_doc_date")
 }

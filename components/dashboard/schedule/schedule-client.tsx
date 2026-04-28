@@ -7,6 +7,7 @@ import { UpcomingAppointments } from "./upcoming-appointments";
 import { TelemedicineSection } from "./telemedicine-section";
 import { Calendar, List, Video, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BlockTimeDialog } from "./block-time-dialog";
 
 interface ScheduleClientProps {
   data: any;
@@ -15,6 +16,7 @@ interface ScheduleClientProps {
 
 export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
   const [activeTab, setActiveTab] = useState("calendar");
+  const [isBlockTimeOpen, setIsBlockTimeOpen] = useState(false);
 
   return (
     <div className="space-y-8 animate-in-fade">
@@ -27,7 +29,10 @@ export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
             Manage your clinical availability and monitor upcoming visits.
           </p>
         </div>
-        <Button className="rounded-xl gap-2 shadow-lg shadow-primary/20">
+        <Button 
+          className="rounded-xl gap-2 shadow-lg shadow-primary/20"
+          onClick={() => setIsBlockTimeOpen(true)}
+        >
           <Plus className="w-4 h-4" /> Block Time Slot
         </Button>
       </div>
@@ -81,6 +86,21 @@ export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
           />
         </TabsContent>
       </Tabs>
+      
+      <BlockTimeDialog
+        isOpen={isBlockTimeOpen}
+        onOpenChange={setIsBlockTimeOpen}
+        doctorId={doctorId}
+        onSuccess={() => {
+          // If we want to reload the calendar when blocked, we might just let it naturally re-fetch
+          // or we can reload the window to be simple, since the calendar does its own fetch when active
+          // The next time the calendar component remounts or the month changes it will fetch.
+          // For immediate update we can dispatch a custom event or just let it be if it's acceptable.
+          // Since it's a client component, `AvailabilityCalendar` has a fetch on mount and month change.
+          // In a real app we might use a global state or React Context, but a simple reload works well for server components.
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
