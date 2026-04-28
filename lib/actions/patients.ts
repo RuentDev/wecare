@@ -4,11 +4,25 @@ import prisma from "@/lib/prisma-db";
 import { revalidatePath } from "next/cache";
 import { serializePrisma } from "../utils";
 
-export async function getPatients() {
+type GetPatientsArgs = {
+  doctorId?: string;
+};
+type GetPatientsStatsArgs = {
+  doctorId?: string;
+};
+
+export async function getPatients(args?: GetPatientsArgs) {
   try {
     const patients = await prisma.users.findMany({
       where: {
         role: "patient",
+        ...(args?.doctorId && {
+          doctors: {
+            id: {
+              equals: args?.doctorId,
+            },
+          },
+        }),
       },
       select: {
         id: true,
@@ -37,32 +51,53 @@ export async function getPatients() {
       },
     });
 
-    return serializePrisma(patients.map((patient) => ({
-      ...patient,
-      appointment_count: patient._count.appointments,
-      last_appointment: patient.appointments[0]?.appointment_date || null,
-    })));
+    return serializePrisma(
+      patients.map((patient) => ({
+        ...patient,
+        appointment_count: patient._count.appointments,
+        last_appointment: patient.appointments[0]?.appointment_date || null,
+      })),
+    );
   } catch (error) {
     console.error("[GET_PATIENTS]", error);
     return [];
   }
 }
 
-export async function getPatientStats() {
+export async function getPatientStats(args?: GetPatientsStatsArgs) {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [totalPatients, newPatientsThisMonth, totalAppointments] = await Promise.all([
-      prisma.users.count({ where: { role: "patient" } }),
-      prisma.users.count({
-        where: {
-          role: "patient",
-          created_at: { gte: startOfMonth },
-        },
-      }),
-      prisma.appointments.count(),
-    ]);
+    const [totalPatients, newPatientsThisMonth, totalAppointments] =
+      await Promise.all([
+        prisma.users.count({
+          where: {
+            role: "patient",
+            ...(args?.doctorId && {
+              doctors: {
+                id: {
+                  equals: args?.doctorId,
+                },
+              },
+            }),
+          },
+        }),
+        prisma.users.count({
+          where: {
+            role: "patient",
+            created_at: { gte: startOfMonth },
+            ...(args?.doctorId && {
+              doctors: {
+                id: {
+                  equals: args?.doctorId,
+                },
+              },
+            }),
+          },
+        }),
+        prisma.appointments.count(),
+      ]);
 
     return {
       totalPatients,

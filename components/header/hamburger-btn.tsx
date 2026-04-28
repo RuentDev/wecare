@@ -9,7 +9,7 @@ const HamburgerBtn = () => {
     <Button
       variant="ghost"
       onClick={() => toggleMobileMenu()}
-      className="lg:hidden p-2 rounded-md text-neutral-dark hover:bg-neutral-light transition-colors"
+      className="lg:hidden p-2 rounded-md text-neutral-dark hover:bg-neutral-light hover:text-primary transition-colors cursor-pointer"
       aria-label="Toggle menu"
     >
       {mobileMenuOpen ? (

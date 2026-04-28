@@ -24,7 +24,6 @@ import {
   Plus,
   Package,
   CheckCircle2,
-  XCircle,
   TrendingUp,
 } from "lucide-react";
 
@@ -47,11 +46,11 @@ export function ServicesPageClient({
   // Dialog state
   const [formOpen, setFormOpen] = useState(false);
   const [editingService, setEditingService] = useState<AdminService | null>(
-    null
+    null,
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingService, setDeletingService] = useState<AdminService | null>(
-    null
+    null,
   );
 
   // Filter services by search query
@@ -62,7 +61,7 @@ export function ServicesPageClient({
       (s) =>
         s.name.toLowerCase().includes(query) ||
         s.description?.toLowerCase().includes(query) ||
-        s.category?.toLowerCase().includes(query)
+        s.category?.toLowerCase().includes(query),
     );
   }, [services, searchQuery]);
 
@@ -253,9 +252,7 @@ export function ServicesPageClient({
           </EmptyMedia>
           <EmptyHeader>
             <EmptyTitle>
-              {searchQuery.trim()
-                ? "No services found"
-                : "No services yet"}
+              {searchQuery.trim() ? "No services found" : "No services yet"}
             </EmptyTitle>
             <EmptyDescription>
               {searchQuery.trim()

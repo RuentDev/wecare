@@ -16,7 +16,7 @@ export function Header() {
   return (
     <HeaderProvider>
       <header className="border-b border-neutral-100 sticky top-0 z-50 backdrop-blur-sm bg-white/80">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-5 xl:px-0">
           <div className="flex justify-between items-center h-16">
             <Logo />
             <Navs links={navLinks} />

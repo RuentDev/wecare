@@ -1,7 +1,65 @@
-import React from "react";
+import { PatientsClient } from "@/components/admin/patients/patients-client";
+import { PatientsStats } from "@/components/admin/patients/patients-stats";
+import { Badge } from "@/components/ui/badge";
+import { getPatients, getPatientStats } from "@/lib/actions/patients";
+import { getCurrentUser } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
-const PatientsPage = () => {
-  return <div>PatientsPage</div>;
+const PatientsPage = async () => {
+  const user = await getCurrentUser();
+  const [patients, stats] = await Promise.all([
+    getPatients({ doctorId: user?.id }),
+    getPatientStats({ doctorId: user?.id }),
+  ]);
+
+  return (
+    <main className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <Badge
+            variant="outline"
+            className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 px-4 py-2 rounded-xl shadow-sm flex items-center gap-2 group hover:bg-emerald-500/10 transition-colors"
+          >
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold tracking-tight">Live Directory</span>
+          </Badge>
+
+          <Badge
+            variant="outline"
+            className="bg-primary/5 text-primary border-primary/20 px-4 py-2 rounded-xl shadow-sm font-bold"
+          >
+            ISR Active (60s)
+          </Badge>
+        </div>
+      </div>
+
+      <PatientsStats stats={stats} />
+
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center justify-center py-32 space-y-4 glassmorphism rounded-3xl border-none shadow-xl">
+            <div className="relative">
+              <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-foreground font-bold text-lg tracking-tight">
+                Loading Patient Records
+              </p>
+              <p className="text-muted-foreground text-sm font-medium animate-pulse">
+                Syncing with medical database...
+              </p>
+            </div>
+          </div>
+        }
+      >
+        <PatientsClient initialPatients={patients} />
+      </Suspense>
+    </main>
+  );
 };
 
 export default PatientsPage;
