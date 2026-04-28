@@ -25,9 +25,7 @@ export default async function DashboardLayout({
       <DashboardSidebar userRole={user.role} />
       <div className="transition-all duration-300 lg:pl-64">
         <DashboardTopBar user={user} />
-        <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          {children}
-        </main>
+        <main className="p-5 mx-auto">{children}</main>
       </div>
     </div>
   );
