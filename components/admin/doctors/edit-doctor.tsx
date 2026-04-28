@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UserForm } from "./user-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -29,56 +28,56 @@ import {
 import { adminSetUserPassword } from "@/lib/actions/rbac";
 import { toast } from "sonner";
 
-interface EditUserClientProps {
-  user: any;
+interface EditDoctorClientProps {
+  doctor: any;
 }
 
-export function EditUserClient({ user }: EditUserClientProps) {
+export function EditDoctorClient({ doctor }: EditDoctorClientProps) {
   const [isResetting, setIsResetting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
-  const generatePassword = () => {
-    const chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let pwd = "";
-    for (let i = 0; i < 12; i++) {
-      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setNewPassword(pwd);
-  };
+  // const generatePassword = () => {
+  //   const chars =
+  //     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  //   let pwd = "";
+  //   for (let i = 0; i < 12; i++) {
+  //     pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  //   }
+  //   setNewPassword(pwd);
+  // };
 
-  const copyToClipboard = () => {
-    if (newPassword) {
-      navigator.clipboard.writeText(newPassword);
-      toast.success("Password copied to clipboard");
-    }
-  };
+  // const copyToClipboard = () => {
+  //   if (newPassword) {
+  //     navigator.clipboard.writeText(newPassword);
+  //     toast.success("Password copied to clipboard");
+  //   }
+  // };
 
-  const handleForcePasswordReset = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
-      return;
-    }
+  // const handleForcePasswordReset = async () => {
+  //   if (!newPassword || newPassword.length < 6) {
+  //     toast.error("Password must be at least 6 characters long.");
+  //     return;
+  //   }
 
-    setIsResetting(true);
-    try {
-      const result = await adminSetUserPassword(user.id, newPassword);
-      if (result.success) {
-        toast.success("Password updated successfully", {
-          description:
-            "All active sessions have been terminated. The user can now log in with the new password.",
-          duration: 6000,
-        });
-        setNewPassword("");
-      } else {
-        toast.error("Failed to update password");
-      }
-    } catch (err) {
-      toast.error("An error occurred. Please try again.");
-    } finally {
-      setIsResetting(false);
-    }
-  };
+  //   setIsResetting(true);
+  //   try {
+  //     const result = await adminSetUserPassword(doctor.id, newPassword);
+  //     if (result.success) {
+  //       toast.success("Password updated successfully", {
+  //         description:
+  //           "All active sessions have been terminated. The user can now log in with the new password.",
+  //         duration: 6000,
+  //       });
+  //       setNewPassword("");
+  //     } else {
+  //       toast.error("Failed to update password");
+  //     }
+  //   } catch (err) {
+  //     toast.error("An error occurred. Please try again.");
+  //   } finally {
+  //     setIsResetting(false);
+  //   }
+  // };
 
   return (
     <div className="space-y-6">
@@ -99,26 +98,26 @@ export function EditUserClient({ user }: EditUserClientProps) {
             <p className="text-muted-foreground flex items-center gap-2">
               Managing{" "}
               <span className="font-semibold text-primary">
-                {user.first_name} {user.last_name}
+                {doctor.first_name} {doctor.last_name}
               </span>
               <Badge variant="outline" className="ml-2 font-mono text-[10px]">
-                ID: {user.id.substring(0, 8)}
+                ID: {doctor.id.substring(0, 8)}
               </Badge>
             </p>
           </div>
         </div>
         <Badge
           className={
-            user.is_active
+            doctor.is_active
               ? "bg-success text-white"
               : "bg-destructive text-white"
           }
         >
-          {user.is_active ? "Active Account" : "Inactive Account"}
+          {doctor.is_active ? "Active Account" : "Inactive Account"}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card className="glassmorphism-card border-none overflow-hidden rounded-[24px]">
             <CardHeader className="bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
@@ -147,7 +146,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
                   variant="secondary"
                   className="w-fit capitalize bg-primary/10 text-primary border-primary/20"
                 >
-                  {user.role}
+                  {doctor.role}
                 </Badge>
               </div>
             </CardContent>
@@ -187,7 +186,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
                           This will immediately terminate all active sessions
                           for{" "}
                           <span className="font-semibold text-foreground">
-                            {user.first_name} {user.last_name}
+                            {doctor.first_name} {doctor.last_name}
                           </span>
                           .
                         </p>
@@ -250,7 +249,7 @@ export function EditUserClient({ user }: EditUserClientProps) {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

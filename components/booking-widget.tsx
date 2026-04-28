@@ -19,7 +19,7 @@ export function BookingWidget({ onBookingStart }: BookingWidgetProps) {
 
   const availableSlots = useMemo(() => {
     if (!selectedDoctor || !selectedDate) return [];
-    return getAvailableSlots(selectedDoctor, selectedDate, 30);
+    return getAvailableSlots(selectedDoctor, new Date(selectedDate), 30);
   }, [selectedDoctor, selectedDate]);
 
   const getDaysInMonth = (date: Date) => {

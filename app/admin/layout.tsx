@@ -23,11 +23,7 @@ export default async function AdminLayout({
     redirect("/login?redirect=/admin");
   }
 
-  if (
-    user.role !== "admin" &&
-    user.role !== "staff" &&
-    user.role !== "doctor"
-  ) {
+  if (user.role !== "admin" && user.role !== "staff") {
     redirect("/dashboard");
   }
 

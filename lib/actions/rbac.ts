@@ -20,18 +20,18 @@ const fetchUsers = async () => {
       is_active: true,
       user_roles: {
         include: {
-          roles: true
-        }
-      }
+          roles: true,
+        },
+      },
     },
-    orderBy: { created_at: "desc" }
+    orderBy: { created_at: "desc" },
   });
 };
 
 const getCachedUsers = unstable_cache(
   async () => fetchUsers(),
   ["users-list"],
-  { tags: ["users"] }
+  { tags: ["users"] },
 );
 
 /**
@@ -40,10 +40,10 @@ const getCachedUsers = unstable_cache(
 export async function getUsers() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  
+
   // Ensure user has permission to view users
   await requirePermission(user.id, "users:view");
-  
+
   return await getCachedUsers();
 }
 
@@ -58,15 +58,15 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
   // Transactions are not fully supported in Neon serverless via standard Prisma
   // but for simple deletes and inserts it's usually fine or we can use raw SQL if needed.
   // Here we use Prisma's $transaction if supported by the adapter.
-  
+
   await prisma.$transaction([
     prisma.user_roles.deleteMany({ where: { user_id: userId } }),
     prisma.user_roles.createMany({
-      data: roleIds.map(roleId => ({
+      data: roleIds.map((roleId) => ({
         user_id: userId,
-        role_id: roleId
-      }))
-    })
+        role_id: roleId,
+      })),
+    }),
   ]);
 
   revalidateTag("users", "default");
@@ -82,18 +82,18 @@ const fetchRoles = async () => {
     include: {
       role_permissions: {
         include: {
-          permissions: true
-        }
-      }
+          permissions: true,
+        },
+      },
     },
-    orderBy: { name: "asc" }
+    orderBy: { name: "asc" },
   });
 };
 
 const getCachedRoles = unstable_cache(
   async () => fetchRoles(),
   ["roles-list"],
-  { tags: ["roles"] }
+  { tags: ["roles"] },
 );
 
 /**
@@ -117,14 +117,17 @@ export async function getPermissions() {
   if (!user) throw new Error("Unauthorized");
 
   return await protectedPrisma.permissions.findMany({
-    orderBy: { name: "asc" }
+    orderBy: { name: "asc" },
   });
 }
 
 /**
  * Updates a role's permissions.
  */
-export async function updateRolePermissions(roleId: string, permissionIds: string[]) {
+export async function updateRolePermissions(
+  roleId: string,
+  permissionIds: string[],
+) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
   await requirePermission(user.id, "roles:manage");
@@ -132,11 +135,11 @@ export async function updateRolePermissions(roleId: string, permissionIds: strin
   await prisma.$transaction([
     prisma.role_permissions.deleteMany({ where: { role_id: roleId } }),
     prisma.role_permissions.createMany({
-      data: permissionIds.map(permId => ({
+      data: permissionIds.map((permId) => ({
         role_id: roleId,
-        permission_id: permId
-      }))
-    })
+        permission_id: permId,
+      })),
+    }),
   ]);
 
   revalidateTag("roles", "default");
@@ -154,7 +157,7 @@ export async function toggleUserStatus(userId: string, isActive: boolean) {
 
   await protectedPrisma.users.update({
     where: { id: userId },
-    data: { is_active: isActive }
+    data: { is_active: isActive },
   });
 
   revalidateTag("users", "default");
@@ -189,10 +192,10 @@ export async function getUserById(userId: string) {
       postal_code: true,
       user_roles: {
         include: {
-          roles: true
-        }
-      }
-    }
+          roles: true,
+        },
+      },
+    },
   });
 }
 
@@ -213,24 +216,24 @@ export async function adminUpdateUser(userId: string, data: any) {
       phone: data.phone,
       role: data.role,
       is_active: data.is_active,
-    }
+    },
   });
 
   // Sync with RBAC roles if system role changed
   const roleRecord = await prisma.roles.findUnique({
-    where: { name: data.role }
+    where: { name: data.role },
   });
 
   if (roleRecord) {
     // For simplicity, we just ensure they have this role in user_roles
     // In a more complex system, we might manage this differently
     const existing = await prisma.user_roles.findUnique({
-      where: { user_id_role_id: { user_id: userId, role_id: roleRecord.id } }
+      where: { user_id_role_id: { user_id: userId, role_id: roleRecord.id } },
     });
 
     if (!existing) {
       await prisma.user_roles.create({
-        data: { user_id: userId, role_id: roleRecord.id }
+        data: { user_id: userId, role_id: roleRecord.id },
       });
     }
   }
@@ -251,7 +254,7 @@ export async function adminCreateUser(data: any) {
 
   // We reuse the auth createUser which handles hashing and RBAC sync
   const { createUser: authCreateUser } = await import("@/lib/auth");
-  
+
   const newUser = await authCreateUser({
     email: data.email,
     password: data.password || "ChangeMe123!", // Default password
@@ -270,15 +273,15 @@ export async function adminCreateUser(data: any) {
  * Admin action to set a new password for a user.
  * Invalidates all active sessions.
  */
-export async function adminSetUserPassword(userId: string, newPassword: string) {
+export async function adminSetUserPassword(
+  userId: string,
+  newPassword: string,
+) {
   const currentUser = await getCurrentUser();
   if (!currentUser) throw new Error("Unauthorized");
   await requirePermission(currentUser.id, "users:edit");
 
-  const {
-    hashPassword,
-    deleteAllUserSessions,
-  } = await import("@/lib/auth");
+  const { hashPassword, deleteAllUserSessions } = await import("@/lib/auth");
 
   // Kill all active sessions so the user is immediately signed out
   await deleteAllUserSessions(userId);
@@ -287,7 +290,7 @@ export async function adminSetUserPassword(userId: string, newPassword: string) 
 
   await protectedPrisma.users.update({
     where: { id: userId },
-    data: { password_hash: passwordHash }
+    data: { password_hash: passwordHash },
   });
 
   revalidatePath(`/admin/users/${userId}`);

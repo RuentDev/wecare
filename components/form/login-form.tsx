@@ -24,12 +24,7 @@ export function LoginForm() {
         setUser(state.user);
 
         // Role-based redirection
-        if (
-          state.user.role === "admin" ||
-          state.user.role === "staff" ||
-          state.user.role === "nurse" ||
-          state.user.role === "doctor"
-        ) {
+        if (state.user.role === "admin" || state.user.role === "staff") {
           router.push("/admin");
         } else {
           router.push("/dashboard");

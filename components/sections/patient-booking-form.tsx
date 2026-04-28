@@ -72,7 +72,7 @@ export function PatientBookingForm({ bookingData, onSuccess }: PatientBookingFor
         patientId: 'patient1', // In a real app, this would be the logged-in user
         doctorId: bookingData.doctorId,
         serviceId: bookingData.serviceId,
-        date: bookingData.date,
+        date: new Date(bookingData.date),
         time: bookingData.time,
         status: 'scheduled',
         reason: formData.reasonForVisit,

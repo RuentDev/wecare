@@ -4,23 +4,27 @@ import { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { getColumns, DoctorColumn } from "./columns";
-import { Search, Filter, Plus, Download } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useApp } from "@/contexts/app-context";
 
 interface DoctorsClientProps {
   initialDoctors: any[];
 }
 
 export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
+  const router = useRouter();
+  const { user } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [specFilter, setSpecFilter] = useState<string>("all");
 
@@ -29,7 +33,7 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
   };
 
   const handleEdit = (doctor: any) => {
-    toast.info(`Editing Dr. ${doctor.users?.first_name}`);
+    router.push(`/admin/users/${doctor.id}`);
   };
 
   const handleDelete = (id: string) => {
@@ -52,22 +56,30 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
 
   const filteredData = useMemo(() => {
     return formattedData.filter((item) => {
-      const matchesSpec = specFilter === "all" || item.specialization === specFilter;
-      const matchesSearch = 
+      const matchesSpec =
+        specFilter === "all" || item.specialization === specFilter;
+      const matchesSearch =
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.specialization.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       return matchesSpec && matchesSearch;
     });
   }, [formattedData, specFilter, searchQuery]);
 
-  const columns = getColumns(handleView, handleEdit, handleDelete);
+  const columns = getColumns(
+    user?.role || "",
+    handleView,
+    handleEdit,
+    handleDelete,
+  );
 
   // Get unique specializations for filter
   const specializations = useMemo(() => {
-    const specs = Array.from(new Set(formattedData.map(d => d.specialization)));
-    return specs.filter(s => s !== "N/A");
+    const specs = Array.from(
+      new Set(formattedData.map((d) => d.specialization)),
+    );
+    return specs.filter((s) => s !== "N/A");
   }, [formattedData]);
 
   return (
@@ -84,7 +96,10 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
                 className="pl-10 bg-white/80 border-neutral-light rounded-xl focus-visible:ring-primary/20 transition-all"
               />
             </div>
-            <Button variant="outline" className="rounded-xl border-neutral-light bg-white/80 md:hidden">
+            <Button
+              variant="outline"
+              className="rounded-xl border-neutral-light bg-white/80 md:hidden"
+            >
               <Filter className="w-4 h-4" />
             </Button>
           </div>
@@ -99,37 +114,29 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
               </SelectTrigger>
               <SelectContent className="glassmorphism border-none shadow-2xl">
                 <SelectItem value="all">All Specializations</SelectItem>
-                {specializations.map(spec => (
+                {specializations.map((spec) => (
                   <SelectItem key={spec} value={spec}>
                     {spec.replace("_", " ")}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
-            <Button className="bg-primary hover:bg-blue-900 text-white rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 gap-2 px-6">
-              <Plus className="w-4 h-4" />
-              Add Doctor
-            </Button>
-            
-            <Button variant="outline" className="rounded-xl border-neutral-light bg-white/80 h-10 w-10 p-0 hidden md:flex">
-              <Download className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
         <div className="px-2 pb-2">
-          <DataTable 
-            columns={columns} 
-            data={filteredData} 
-          />
+          <DataTable columns={columns} data={filteredData} />
           {filteredData.length === 0 && (
             <div className="py-20 text-center">
               <div className="bg-neutral-light w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-neutral-gray" />
               </div>
-              <h3 className="text-lg font-semibold text-neutral-dark">No doctors found</h3>
-              <p className="text-neutral-gray">Try adjusting your search or filters</p>
+              <h3 className="text-lg font-semibold text-neutral-dark">
+                No doctors found
+              </h3>
+              <p className="text-neutral-gray">
+                Try adjusting your search or filters
+              </p>
             </div>
           )}
         </div>

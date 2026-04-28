@@ -17,7 +17,7 @@ export default async function UserPage({ params }: UserPageProps) {
   }
 
   return (
-    <main className="p-6">
+    <main className="p-5">
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20">

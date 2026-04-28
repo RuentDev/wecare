@@ -2,15 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Eye, 
-  MoreHorizontal, 
-  UserCog, 
+import {
+  Eye,
+  MoreHorizontal,
+  UserCog,
   Trash2,
   CheckCircle2,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,6 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { USER_TABLE_ACTIONS } from "@/constant/admin";
+import Link from "next/link";
 
 export type DoctorColumn = {
   id: string;
@@ -34,9 +35,10 @@ export type DoctorColumn = {
 };
 
 export const getColumns = (
+  currentUserRole: string,
   onView: (doctor: any) => void,
   onEdit: (doctor: any) => void,
-  onDelete: (id: string) => void
+  onDelete: (id: string) => void,
 ): ColumnDef<DoctorColumn>[] => [
   {
     accessorKey: "name",
@@ -52,7 +54,9 @@ export const getColumns = (
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold text-neutral-dark">{doctor.name}</span>
+            <span className="font-semibold text-neutral-dark">
+              {doctor.name}
+            </span>
             <span className="text-xs text-neutral-gray">{doctor.email}</span>
           </div>
         </div>
@@ -65,7 +69,10 @@ export const getColumns = (
     cell: ({ row }) => {
       const spec = row.getValue("specialization") as string;
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-0.5 rounded-full">
+        <Badge
+          variant="outline"
+          className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-0.5 rounded-full"
+        >
           {spec?.replace("_", " ")}
         </Badge>
       );
@@ -74,12 +81,18 @@ export const getColumns = (
   {
     accessorKey: "experience",
     header: "Exp. (Years)",
-    cell: ({ row }) => <span className="font-medium text-neutral-dark">{row.getValue("experience")} yrs</span>,
+    cell: ({ row }) => (
+      <span className="font-medium text-neutral-dark">
+        {row.getValue("experience")} yrs
+      </span>
+    ),
   },
   {
     accessorKey: "fee",
     header: "Fee",
-    cell: ({ row }) => <span className="font-semibold text-primary">₱{row.getValue("fee")}</span>,
+    cell: ({ row }) => (
+      <span className="font-semibold text-primary">₱{row.getValue("fee")}</span>
+    ),
   },
   {
     accessorKey: "isAvailable",
@@ -94,7 +107,10 @@ export const getColumns = (
               Available
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-200 shadow-sm px-3 py-1 rounded-full gap-1">
+            <Badge
+              variant="outline"
+              className="bg-gray-100 text-gray-500 border-gray-200 shadow-sm px-3 py-1 rounded-full gap-1"
+            >
               <XCircle className="w-3.5 h-3.5" />
               Offline
             </Badge>
@@ -116,31 +132,38 @@ export const getColumns = (
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="glassmorphism border-none shadow-2xl min-w-[160px] animate-in slide-in-from-top-2 duration-200">
-            <DropdownMenuLabel className="text-neutral-gray text-xs">Manage Doctor</DropdownMenuLabel>
+          <DropdownMenuContent
+            align="end"
+            className="glassmorphism border-none shadow-2xl min-w-[160px] animate-in slide-in-from-top-2 duration-200"
+          >
+            <DropdownMenuLabel className="text-neutral-gray text-xs">
+              Manage Doctor
+            </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-neutral-light" />
-            <DropdownMenuItem 
-              onClick={() => onView(doctor.raw)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-primary/5 focus:bg-primary/5"
-            >
-              <Eye className="w-4 h-4 text-primary" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => onEdit(doctor.raw)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-primary/5 focus:bg-primary/5"
-            >
-              <UserCog className="w-4 h-4 text-primary" />
-              Edit Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-neutral-light" />
-            <DropdownMenuItem 
-              onClick={() => onDelete(doctor.id)}
-              className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 focus:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4" />
-              Remove
-            </DropdownMenuItem>
+            {USER_TABLE_ACTIONS.filter((item) =>
+              item.allowedRoles.includes(currentUserRole),
+            ).map((item) => (
+              <DropdownMenuItem
+                key={item.action}
+                className={item.className}
+                onClick={() => item.onClick && item.onClick(doctor.id)}
+              >
+                {item.href ? (
+                  <Link
+                    href={item.href(doctor.id) || "#"}
+                    className="flex gap-1 items-center"
+                  >
+                    {<item.icon className="w-4 h-4 text-primary" />}
+                    {item.action}
+                  </Link>
+                ) : (
+                  <>
+                    {<item.icon className="w-4 h-4 text-primary" />}
+                    {item.action}
+                  </>
+                )}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       );

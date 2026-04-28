@@ -10,6 +10,9 @@ import {
   Shield,
   UserCog,
   Stethoscope,
+  Eye,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 
 export interface NavItem {
@@ -113,5 +116,41 @@ export const NAVIGATIONS: NavItem[] = [
         allowedRoles: ["admin"],
       },
     ],
+  },
+];
+
+export interface TableAction {
+  action: string;
+  icon: any;
+  href?: (id: string) => string;
+  allowedRoles: string[];
+  className: string;
+  onClick?: (id?: string) => void;
+}
+
+export const USER_TABLE_ACTIONS: TableAction[] = [
+  {
+    action: "View Details",
+    icon: Eye,
+    href: (id: string) => `/admin/users/doctors/${id}`,
+    allowedRoles: ["admin", "staff", "doctor"],
+    className: "hover:bg-primary/5 focus:bg-primary/5 focus:text-primary",
+    onClick: undefined,
+  },
+  {
+    action: "Edit Profile",
+    icon: Pencil,
+    href: (id: string) => `/admin/users/doctors/${id}?edit=true`,
+    allowedRoles: ["admin"],
+    className: "hover:bg-primary/5 focus:bg-primary/5 focus:text-primary",
+    onClick: undefined,
+  },
+  {
+    action: "Remove",
+    icon: Trash2,
+    href: undefined,
+    allowedRoles: ["admin"],
+    className: "hover:bg-red-500 focus:bg-red-500 focus:text-white",
+    onClick: undefined,
   },
 ];
