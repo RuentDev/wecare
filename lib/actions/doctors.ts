@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma-db";
 import { getCurrentUser } from "../auth";
 import { requirePermission } from "../rbac";
 import { serializePrisma } from "../utils";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 /**
  * Fetches a single user by ID with their roles.
@@ -17,10 +18,32 @@ export async function getDoctorById(doctorId: string) {
     await prisma.doctors.findUnique({
       where: { id: doctorId },
       include: {
-        appointments: true,
+        appointments: {
+          include: {
+            users: {
+              select: {
+                first_name: true,
+                last_name: true,
+                email: true,
+              },
+            },
+            services: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            appointment_date: "desc",
+          },
+        },
         users: true,
         medical_records: true,
-        doctor_services: true,
+        doctor_services: {
+          include: {
+            services: true,
+          },
+        },
         time_slots: true,
         locations: true,
       },
@@ -277,5 +300,155 @@ export async function getDoctorPatientEMR(doctorId: string, patientId: string) {
   } catch (error) {
     console.error("[GET_DOCTOR_PATIENT_EMR]", error);
     throw new Error("Failed to fetch patient EMR");
+  }
+}
+
+/**
+ * Updates a doctor's profile and associated user account.
+ */
+export async function updateDoctor(doctorId: string, userId: string, data: any) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Unauthorized");
+    await requirePermission(currentUser.id, "users:edit");
+
+    const updatedDoctor = await prisma.$transaction(async (tx) => {
+      // 1. Update User info
+      await tx.users.update({
+        where: { id: userId },
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone || null,
+          is_active: data.is_active,
+        },
+      });
+
+      // 2. Update Doctor info
+      return await tx.doctors.update({
+        where: { id: doctorId },
+        data: {
+          specialization: data.specialization || null,
+          license_number: data.license_number || null,
+          bio: data.bio || null,
+          years_of_experience: parseInt(data.years_of_experience) || 0,
+          consultation_fee: parseFloat(data.consultation_fee) || 0,
+          location_id: data.location_id || null,
+          is_available: data.is_available,
+        },
+        include: {
+          users: true,
+          locations: true,
+        },
+      });
+    });
+
+    revalidatePath("/admin/users/doctors");
+    revalidatePath(`/admin/users/doctors/${doctorId}`);
+    revalidateTag("doctors", "default");
+
+    return { success: true, data: serializePrisma(updatedDoctor) };
+  } catch (error: any) {
+    console.error("[UPDATE_DOCTOR]", error);
+    return { success: false, error: error.message || "Failed to update doctor profile" };
+  }
+}
+
+/**
+ * Updates the services offered by a doctor.
+ */
+export async function updateDoctorServices(doctorId: string, serviceIds: string[]) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:edit");
+
+  try {
+    await prisma.$transaction([
+      // Remove all current services
+      prisma.doctor_services.deleteMany({
+        where: { doctor_id: doctorId },
+      }),
+      // Add new services
+      prisma.doctor_services.createMany({
+        data: serviceIds.map((serviceId) => ({
+          doctor_id: doctorId,
+          service_id: serviceId,
+        })),
+      }),
+    ]);
+
+    revalidatePath(`/admin/users/doctors/${doctorId}`);
+    revalidateTag("doctors", "default");
+
+    return { success: true };
+  } catch (error) {
+    console.error("[UPDATE_DOCTOR_SERVICES]", error);
+    return { success: false, error: "Failed to update doctor services" };
+  }
+}
+
+/**
+ * Creates a new doctor and associated user account.
+ */
+export async function createDoctor(data: any) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("Unauthorized");
+    await requirePermission(currentUser.id, "users:edit");
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Check if user already exists
+      const existingUser = await tx.users.findUnique({
+        where: { email: data.email.toLowerCase() },
+      });
+
+      if (existingUser) {
+        throw new Error("User with this email already exists");
+      }
+
+      // 2. Create User account
+      const tempPassword = data.password || "Temporary123!"; 
+      const { hashPassword } = await import("@/lib/auth");
+      const passwordHash = await hashPassword(tempPassword);
+
+      const newUser = await tx.users.create({
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email.toLowerCase(),
+          phone: data.phone || null,
+          password_hash: passwordHash,
+          role: "doctor",
+          is_active: data.is_active ?? true,
+        },
+      });
+
+      // 3. Create Doctor profile
+      return await tx.doctors.create({
+        data: {
+          user_id: newUser.id,
+          specialization: data.specialization || null,
+          license_number: data.license_number || null,
+          bio: data.bio || null,
+          years_of_experience: parseInt(data.years_of_experience) || 0,
+          consultation_fee: parseFloat(data.consultation_fee) || 0,
+          location_id: data.location_id || null,
+          is_available: data.is_available ?? true,
+        },
+        include: {
+          users: true,
+          locations: true,
+        },
+      });
+    });
+
+    revalidatePath("/admin/users/doctors");
+    revalidateTag("doctors", "default");
+
+    return { success: true, data: serializePrisma(result) };
+  } catch (error: any) {
+    console.error("[CREATE_DOCTOR]", error);
+    return { success: false, error: error.message || "Failed to create doctor profile" };
   }
 }

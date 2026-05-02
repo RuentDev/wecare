@@ -11,7 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Menu,
   Bell,
@@ -31,20 +36,142 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User as UserType } from "@/lib/auth";
-import { NAVIGATIONS } from "@/constant/admin";
+import { NAVIGATIONS, type NavItem } from "@/constant/admin";
+import { useApp } from "@/contexts/app-context";
 
 interface AdminHeaderProps {
   user?: UserType;
 }
 
+function findActiveNavItem(items: NavItem[], pathname: string): NavItem | undefined {
+  // Get all items flattened
+  const flattenItems = (navItems: NavItem[]): NavItem[] => {
+    return navItems.reduce((acc: NavItem[], item) => {
+      acc.push(item);
+      if (item.children) {
+        acc.push(...flattenItems(item.children as NavItem[]));
+      }
+      return acc;
+    }, []);
+  };
+
+  const allItems = flattenItems(items);
+
+  // Exact match first
+  const exactMatch = allItems.find((item) => item.href === pathname);
+  if (exactMatch) return exactMatch;
+
+  // Prefix match (more specific first - longest href)
+  return allItems
+    .filter((item) => item.href !== "/admin" && pathname.startsWith(item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+}
+
+function MobileNavItem({
+  item,
+  pathname,
+  onOpenChange,
+  isChild = false,
+}: {
+  item: { name: string; href: string; icon: any };
+  pathname: string;
+  onOpenChange: (open: boolean) => void;
+  isChild?: boolean;
+}) {
+  const isActive =
+    pathname === item.href ||
+    (!isChild && item.href !== "/admin" && pathname.startsWith(item.href));
+
+  return (
+    <li>
+      <Link
+        href={item.href}
+        onClick={() => onOpenChange(false)}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+          isChild && "ml-7 py-1.5",
+        )}
+      >
+        <item.icon className={cn("w-5 h-5", isChild && "w-4 h-4")} />
+        {item.name}
+      </Link>
+    </li>
+  );
+}
+
+function MobileNavGroup({
+  item,
+  pathname,
+  role,
+  onOpenChange,
+}: {
+  item: NavItem;
+  pathname: string;
+  role: string;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const isAnyChildActive = item.children?.some(
+    (child) =>
+      pathname === child.href ||
+      (child.href !== "/admin" && pathname.startsWith(child.href)),
+  );
+
+  const [isOpen, setIsOpen] = useState(isAnyChildActive);
+
+  return (
+    <li>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "flex w-full items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+              "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+              isAnyChildActive && !isOpen ? "bg-sidebar-accent/30" : "",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <item.icon className="w-5 h-5" />
+              {item.name}
+            </div>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform duration-200",
+                isOpen ? "rotate-180" : "",
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-1">
+          <ul className="space-y-1">
+            {item.children
+              ?.filter((child) => child.allowedRoles.includes(role))
+              .map((child) => (
+                <MobileNavItem
+                  key={child.name}
+                  item={child}
+                  pathname={pathname}
+                  onOpenChange={onOpenChange}
+                  isChild
+                />
+              ))}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>
+  );
+}
+
 export function DashboardHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    await logout();
   };
 
   return (
@@ -59,6 +186,7 @@ export function DashboardHeader({ user }: AdminHeaderProps) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             {/* Mobile Logo */}
             <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
               <Link
@@ -83,32 +211,28 @@ export function DashboardHeader({ user }: AdminHeaderProps) {
               </Link>
             </div>
 
-            {/* Mobile Navigation */}
             <nav className="flex-1 py-4 px-3">
               <ul className="space-y-1">
-                {NAVIGATIONS.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== "/admin" && pathname.startsWith(item.href));
-
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                        )}
-                      >
-                        <item.icon className="w-5 h-5" />
-                        {item.name}
-                      </Link>
-                    </li>
-                  );
-                })}
+                {NAVIGATIONS.filter((item) =>
+                  item.allowedRoles.includes(user?.role || ""),
+                ).map((item) =>
+                  item.children ? (
+                    <MobileNavGroup
+                      key={item.name}
+                      item={item}
+                      pathname={pathname}
+                      role={user?.role || ""}
+                      onOpenChange={setSidebarOpen}
+                    />
+                  ) : (
+                    <MobileNavItem
+                      key={item.name}
+                      item={item}
+                      pathname={pathname}
+                      onOpenChange={setSidebarOpen}
+                    />
+                  ),
+                )}
               </ul>
             </nav>
           </SheetContent>
@@ -117,11 +241,7 @@ export function DashboardHeader({ user }: AdminHeaderProps) {
         {/* Page Title - Hidden on mobile */}
         <div className="hidden lg:block">
           <h1 className="text-lg font-semibold text-foreground">
-            {NAVIGATIONS.find(
-              (n) =>
-                pathname === n.href ||
-                (n.href !== "/admin" && pathname.startsWith(n.href)),
-            )?.name || "Dashboard"}
+            {findActiveNavItem(NAVIGATIONS, pathname)?.name || "Dashboard"}
           </h1>
         </div>
 

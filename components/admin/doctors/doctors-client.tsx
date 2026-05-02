@@ -33,7 +33,7 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
   };
 
   const handleEdit = (doctor: any) => {
-    router.push(`/admin/users/${doctor.id}`);
+    router.push(`/admin/users/doctors/${doctor.id}`);
   };
 
   const handleDelete = (id: string) => {

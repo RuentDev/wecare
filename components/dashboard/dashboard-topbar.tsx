@@ -13,9 +13,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useApp } from "@/contexts/app-context";
 
 export function DashboardTopBar({ user }: { user: any }) {
   const pathname = usePathname();
+  const { logout } = useApp();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   // Simple breadcrumb logic
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -107,7 +113,10 @@ export function DashboardTopBar({ user }: { user: any }) {
               <Settings className="w-4 h-4" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg gap-2 text-red-500 focus:text-red-500 focus:bg-red-50">
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="rounded-lg gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+            >
               <LogOut className="w-4 h-4" /> Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

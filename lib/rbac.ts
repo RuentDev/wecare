@@ -7,6 +7,7 @@ import { prisma } from "./prisma-db";
 export type Permission = 
   | "users:view"
   | "users:edit"
+  | "users:create"
   | "appointments:view"
   | "appointments:edit"
   | "medical_records:view"

@@ -1,6 +1,9 @@
 import { getDoctors, getDoctorStats } from "@/lib/actions/doctors";
 import { DoctorsClient } from "@/components/admin/doctors/doctors-client";
 import { DoctorStats } from "@/components/admin/doctors/doctors-stats";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export const metadata = {
   title: "Doctors Management | WeCare Admin",
@@ -32,6 +35,12 @@ export default async function DoctorsPage() {
           <h2 className="text-xl font-bold tracking-tight text-neutral-dark">
             Practitioner List
           </h2>
+          <Button asChild className="rounded-xl shadow-lg shadow-primary/20 gap-2">
+            <Link href="/admin/users/doctors/new">
+              <Plus className="w-4 h-4" />
+              Add Doctor
+            </Link>
+          </Button>
         </div>
         <DoctorsClient initialDoctors={doctors as any} />
       </div>
