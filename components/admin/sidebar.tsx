@@ -17,8 +17,6 @@ interface SidebarProps {
   user?: User;
 }
 
-// Sub-components (SRP)
-
 function SidebarLogo() {
   return (
     <div className="flex h-16 items-center px-6 border-b border-sidebar-border">

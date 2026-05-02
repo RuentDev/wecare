@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-topbar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -21,12 +22,17 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <SidebarProvider>
       <DashboardSidebar userRole={user.role} />
-      <div className="transition-all duration-300 lg:pl-64">
+      <SidebarInset className="bg-slate-50/50">
         <DashboardTopBar user={user} />
-        <main className="p-5 mx-auto">{children}</main>
-      </div>
-    </div>
+        <main className="p-4 md:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
+

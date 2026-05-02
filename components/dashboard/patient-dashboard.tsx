@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
   Plus,
   Stethoscope,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import type { User as UserType } from "@/lib/auth";
 
@@ -39,11 +39,31 @@ interface PatientDashboardProps {
 }
 
 const statusConfig = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: AlertCircle },
-  confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800", icon: CheckCircle },
-  completed: { label: "Completed", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800", icon: XCircle },
-  no_show: { label: "No Show", color: "bg-gray-100 text-gray-800", icon: XCircle },
+  pending: {
+    label: "Pending",
+    color: "bg-yellow-100 text-yellow-800",
+    icon: AlertCircle,
+  },
+  confirmed: {
+    label: "Confirmed",
+    color: "bg-blue-100 text-blue-800",
+    icon: CheckCircle,
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-green-100 text-green-800",
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-red-100 text-red-800",
+    icon: XCircle,
+  },
+  no_show: {
+    label: "No Show",
+    color: "bg-gray-100 text-gray-800",
+    icon: XCircle,
+  },
 };
 
 export function PatientDashboard({ user }: PatientDashboardProps) {
@@ -86,11 +106,15 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
   };
 
   const upcomingAppointments = appointments.filter(
-    (a) => ["pending", "confirmed"].includes(a.status) && new Date(a.appointment_date) >= new Date()
+    (a) =>
+      ["pending", "confirmed"].includes(a.status) &&
+      new Date(a.appointment_date) >= new Date(),
   );
 
   const pastAppointments = appointments.filter(
-    (a) => ["completed", "cancelled", "no_show"].includes(a.status) || new Date(a.appointment_date) < new Date()
+    (a) =>
+      ["completed", "cancelled", "no_show"].includes(a.status) ||
+      new Date(a.appointment_date) < new Date(),
   );
 
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => {
@@ -110,7 +134,8 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
                   {appointment.service_name}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Dr. {appointment.dentist_first_name} {appointment.dentist_last_name}
+                  Dr. {appointment.dentist_first_name}{" "}
+                  {appointment.dentist_last_name}
                 </p>
               </div>
             </div>
@@ -152,7 +177,7 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
           </p>
         </div>
         <Button asChild>
-          <Link href="/book">
+          <Link href="/booking">
             <Plus className="w-4 h-4 mr-2" />
             Book Appointment
           </Link>
@@ -167,7 +192,9 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
               <Calendar className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{upcomingAppointments.length}</p>
+              <p className="text-2xl font-bold">
+                {upcomingAppointments.length}
+              </p>
               <p className="text-sm text-muted-foreground">Upcoming</p>
             </div>
           </CardContent>
@@ -214,7 +241,9 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
             <Card>
               <CardContent className="p-8 text-center">
                 <Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">Loading appointments...</p>
+                <p className="mt-2 text-muted-foreground">
+                  Loading appointments...
+                </p>
               </CardContent>
             </Card>
           ) : upcomingAppointments.length === 0 ? (
@@ -228,14 +257,17 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
                   Schedule your next dental visit today
                 </p>
                 <Button asChild>
-                  <Link href="/book">Book Appointment</Link>
+                  <Link href="/booking">Book Appointment</Link>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
               {upcomingAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                />
               ))}
             </div>
           )}
@@ -246,7 +278,9 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
             <Card>
               <CardContent className="p-8 text-center">
                 <Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">Loading appointments...</p>
+                <p className="mt-2 text-muted-foreground">
+                  Loading appointments...
+                </p>
               </CardContent>
             </Card>
           ) : pastAppointments.length === 0 ? (
@@ -264,7 +298,10 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
           ) : (
             <div className="space-y-4">
               {pastAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                />
               ))}
             </div>
           )}

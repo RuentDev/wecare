@@ -46,12 +46,6 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     roles: ["doctor"],
   },
   {
-    label: "Messages",
-    href: "/dashboard/messages",
-    icon: MessageSquare,
-    roles: ["doctor", "patient"],
-  },
-  {
     label: "Audit Logs",
     href: "/dashboard/audit-logs",
     icon: ShieldCheck,
@@ -69,13 +63,18 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     icon: Activity,
     roles: ["doctor"],
   },
-
   // Patient Routes
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["patient"],
+  },
+  {
+    label: "Messages",
+    href: "/dashboard/messages",
+    icon: MessageSquare,
+    roles: ["doctor", "patient"],
   },
   {
     label: "Appointments",
