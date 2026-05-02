@@ -54,3 +54,33 @@ export async function updateAppointmentStatus(id: string, status: any) {
     return { success: false, error: "Failed to update status" };
   }
 }
+export async function getPatientAppointments(patientId: string) {
+  try {
+    const appointments = await prisma.appointments.findMany({
+      where: {
+        patient_id: patientId,
+      },
+      include: {
+        doctors: {
+          include: {
+            users: {
+              select: {
+                first_name: true,
+                last_name: true,
+              },
+            },
+          },
+        },
+        services: true,
+      },
+      orderBy: {
+        appointment_date: "desc",
+      },
+    });
+
+    return { success: true, data: appointments };
+  } catch (error) {
+    console.error("[GET_PATIENT_APPOINTMENTS]", error);
+    return { success: false, error: "Failed to fetch appointments" };
+  }
+}

@@ -29,11 +29,11 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
   const [specFilter, setSpecFilter] = useState<string>("all");
 
   const handleView = (doctor: any) => {
-    toast.info(`Viewing details for Dr. ${doctor.users?.first_name}`);
+    router.push(`/admin/users/doctors/${doctor.id}?mode=view`);
   };
 
   const handleEdit = (doctor: any) => {
-    router.push(`/admin/users/doctors/${doctor.id}`);
+    router.push(`/admin/users/doctors/${doctor.id}?mode=edit`);
   };
 
   const handleDelete = (id: string) => {

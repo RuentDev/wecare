@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -36,6 +37,9 @@ import {
   Wallet,
   BookOpen,
   Save,
+  Edit2,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateDoctor, createDoctor } from "@/lib/actions/doctors";
@@ -45,40 +49,52 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const phoneRegex = /^(09|\+639)\d{9}$/;
 
-const doctorFormSchema = z.object({
-  // User fields
-  first_name: z.string().min(2, "First name is required"),
-  last_name: z.string().min(2, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string()
-    .refine((val) => !val || phoneRegex.test(val.replace(/\s/g, "")), {
-      message: "Invalid Philippine phone format (e.g. 09123456789 or +639123456789)",
-    })
-    .optional()
-    .nullable(),
-  is_active: z.boolean().default(true),
+const doctorFormSchema = z
+  .object({
+    // User fields
+    first_name: z.string().min(2, "First name is required"),
+    last_name: z.string().min(2, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z
+      .string()
+      .refine((val) => !val || phoneRegex.test(val.replace(/\s/g, "")), {
+        message:
+          "Invalid Philippine phone format (e.g. 09123456789 or +639123456789)",
+      })
+      .optional()
+      .nullable(),
+    is_active: z.boolean().default(true),
 
-  // Doctor fields
-  specialization: z.string().optional().nullable(),
-  license_number: z.string().optional().nullable(),
-  bio: z.string().optional().nullable(),
-  years_of_experience: z.string().or(z.number()).optional().nullable(),
-  consultation_fee: z.string().or(z.number()).optional().nullable(),
-  location_id: z.string().optional().nullable(),
-  is_available: z.boolean().default(true),
-  
-  // Optional password for creation
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
-  confirm_password: z.string().optional(),
-}).refine((data) => {
-  if (data.password && data.confirm_password) {
-    return data.password === data.confirm_password;
-  }
-  return true;
-}, {
-  message: "Passwords do not match",
-  path: ["confirm_password"],
-});
+    // Doctor fields
+    specialization: z.string().optional().nullable(),
+    license_number: z.string().optional().nullable(),
+    bio: z.string().optional().nullable(),
+    years_of_experience: z.string().or(z.number()).optional().nullable(),
+    consultation_fee: z.string().or(z.number()).optional().nullable(),
+    location_id: z.string().optional().nullable(),
+    is_available: z.boolean().default(true),
+
+    // Optional password for creation
+    password: z
+      .string()
+      .optional()
+      .refine((val) => !val || val.length >= 6, {
+        message: "Password must be at least 6 characters",
+      }),
+    confirm_password: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.password && data.confirm_password) {
+        return data.password === data.confirm_password;
+      }
+      return true;
+    },
+    {
+      message: "Passwords do not match",
+      path: ["confirm_password"],
+    },
+  );
 
 type DoctorFormValues = z.infer<typeof doctorFormSchema>;
 
@@ -89,13 +105,29 @@ interface DoctorInfoFormProps {
 }
 
 const SPECIALIZATIONS = [
-  "OB_GYN", "IM", "Pedia", "Gastro", "Liver", "Infectious", 
-  "Nephro", "Rheuma", "Surgery", "ENT", "Rehab", "Derma", "Ultrasound"
+  "OB_GYN",
+  "IM",
+  "Pedia",
+  "Gastro",
+  "Liver",
+  "Infectious",
+  "Nephro",
+  "Rheuma",
+  "Surgery",
+  "ENT",
+  "Rehab",
+  "Derma",
+  "Ultrasound",
 ];
 
-export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormProps) {
+export function DoctorInfoForm({
+  doctor,
+  locations,
+  onSuccess,
+}: DoctorInfoFormProps) {
   const router = useRouter();
   const isEditing = !!doctor;
+  const [isReadOnly, setIsReadOnly] = useState(isEditing);
 
   const form = useForm<DoctorFormValues>({
     resolver: zodResolver(doctorFormSchema),
@@ -119,6 +151,11 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
 
   const isLoading = form.formState.isSubmitting;
 
+  const handleCancel = () => {
+    form.reset();
+    setIsReadOnly(true);
+  };
+
   async function onSubmit(data: DoctorFormValues) {
     try {
       let result;
@@ -129,17 +166,23 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
       }
 
       if (result.success) {
-        toast.success(isEditing ? "Profile updated successfully" : "Doctor created successfully");
+        toast.success(
+          isEditing
+            ? "Profile updated successfully"
+            : "Doctor created successfully",
+        );
         if (onSuccess) onSuccess(result.data);
         if (!isEditing && result.data?.id) {
           router.push(`/admin/users/doctors/${result.data.id}`);
         } else {
+          setIsReadOnly(true);
           router.refresh();
         }
       } else {
         toast.error(result.error || "Failed to save doctor profile");
       }
     } catch (error) {
+      console.error("[DOCTOR_INFO_FORM_SUBMIT]", error);
       toast.error("An unexpected error occurred");
     }
   }
@@ -150,20 +193,52 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
-            {isEditing ? "General Information" : "Create New Doctor"}
+            {!isEditing
+              ? "Create New Doctor"
+              : isReadOnly
+                ? "Profile Overview"
+                : "Edit General Information"}
           </h3>
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="rounded-xl shadow-lg shadow-primary/20 gap-2 px-6"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+
+          <div className="flex gap-3">
+            {isEditing && isReadOnly ? (
+              <Button
+                type="button"
+                onClick={() => setIsReadOnly(false)}
+                className="cursor-pointer bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Profile
+              </Button>
             ) : (
-              <Save className="h-4 w-4" />
+              <>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={isLoading}
+                    className="cursor-pointer border-white/10 hover:bg-white/5"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="cursor-pointer"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {isEditing ? "Save Changes" : "Create Doctor"}
+                </Button>
+              </>
             )}
-            {isEditing ? "Save Changes" : "Create Doctor"}
-          </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -177,10 +252,16 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          First Name <span className="text-destructive ml-0.5">*</span>
+                          First Name{" "}
+                          <span className="text-destructive ml-0.5">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="John" className="glassmorphism-input" />
+                          <Input
+                            {...field}
+                            placeholder="John"
+                            className="glassmorphism-input"
+                            disabled={isReadOnly || isLoading}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -192,10 +273,16 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Last Name <span className="text-destructive ml-0.5">*</span>
+                          Last Name{" "}
+                          <span className="text-destructive ml-0.5">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Doe" className="glassmorphism-input" />
+                          <Input
+                            {...field}
+                            placeholder="Doe"
+                            className="glassmorphism-input"
+                            disabled={isReadOnly || isLoading}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -210,7 +297,8 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Email Address <span className="text-destructive ml-0.5">*</span>
+                          Email Address{" "}
+                          <span className="text-destructive ml-0.5">*</span>
                         </FormLabel>
                         <FormControl>
                           <div className="relative">
@@ -219,7 +307,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                               {...field}
                               placeholder="doctor@example.com"
                               className="glassmorphism-input pl-10"
-                              disabled={isEditing}
+                              disabled={isEditing || isReadOnly || isLoading}
                             />
                           </div>
                         </FormControl>
@@ -241,6 +329,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                               value={field.value || ""}
                               placeholder="+63 900 000 0000"
                               className="glassmorphism-input pl-10"
+                              disabled={isReadOnly || isLoading}
                             />
                           </div>
                         </FormControl>
@@ -258,7 +347,8 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Initial Password <span className="text-destructive ml-0.5">*</span>
+                            Initial Password{" "}
+                            <span className="text-destructive ml-0.5">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -266,6 +356,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                               type="password"
                               placeholder="Min. 6 characters"
                               className="glassmorphism-input"
+                              disabled={isReadOnly || isLoading}
                             />
                           </FormControl>
                           <FormDescription>
@@ -281,7 +372,8 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Confirm Password <span className="text-destructive ml-0.5">*</span>
+                            Confirm Password{" "}
+                            <span className="text-destructive ml-0.5">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -289,6 +381,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                               type="password"
                               placeholder="Repeat password"
                               className="glassmorphism-input"
+                              disabled={isReadOnly || isLoading}
                             />
                           </FormControl>
                           <FormMessage />
@@ -312,6 +405,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                           className="glassmorphism-input min-h-[150px] resize-none"
                           {...field}
                           value={field.value || ""}
+                          disabled={isReadOnly || isLoading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -332,11 +426,19 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-bold">Account Active</FormLabel>
-                          <FormDescription className="text-[10px]">Enable/Disable login</FormDescription>
+                          <FormLabel className="text-sm font-bold">
+                            Account Active
+                          </FormLabel>
+                          <FormDescription className="text-[10px]">
+                            Enable/Disable login
+                          </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isReadOnly || isLoading}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -347,11 +449,19 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-sm font-bold">Available for Booking</FormLabel>
-                          <FormDescription className="text-[10px]">Show in public booking</FormDescription>
+                          <FormLabel className="text-sm font-bold">
+                            Available for Booking
+                          </FormLabel>
+                          <FormDescription className="text-[10px]">
+                            Show in public booking
+                          </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isReadOnly || isLoading}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -362,14 +472,18 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                   <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
                     <Stethoscope className="w-4 h-4" /> Professional Profile
                   </h4>
-                  
+
                   <FormField
                     control={form.control}
                     name="specialization"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specialization</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || undefined}
+                          disabled={isReadOnly || isLoading}
+                        >
                           <FormControl>
                             <SelectTrigger className="glassmorphism-input">
                               <SelectValue placeholder="Select specialization" />
@@ -402,6 +516,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                               value={field.value || ""}
                               placeholder="PRC-0000000"
                               className="glassmorphism-input pl-10"
+                              disabled={isReadOnly || isLoading}
                             />
                           </div>
                         </FormControl>
@@ -425,6 +540,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                                 {...field}
                                 value={field.value || ""}
                                 className="glassmorphism-input pl-10"
+                                disabled={isReadOnly || isLoading}
                               />
                             </div>
                           </FormControl>
@@ -447,6 +563,7 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                                 {...field}
                                 value={field.value || ""}
                                 className="glassmorphism-input pl-10"
+                                disabled={isReadOnly || isLoading}
                               />
                             </div>
                           </FormControl>
@@ -462,7 +579,11 @@ export function DoctorInfoForm({ doctor, locations, onSuccess }: DoctorInfoFormP
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Clinic Location</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || undefined}
+                          disabled={isReadOnly || isLoading}
+                        >
                           <FormControl>
                             <SelectTrigger className="glassmorphism-input">
                               <div className="flex items-center gap-2">

@@ -14,8 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { createService, updateService } from "@/lib/actions/services";
+import { service_category } from "@/lib/generated/prisma";
 import type { AdminService } from "@/lib/types/services";
 
 interface ServiceFormDialogProps {
@@ -42,7 +50,7 @@ export function ServiceFormDialog({
     const input = {
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || null,
-      category: (formData.get("category") as string) || null,
+      category: (formData.get("category") as service_category) || null,
       duration_minutes: Number(formData.get("duration_minutes")) || 30,
       price: Number(formData.get("price")) || 0,
       is_active: formData.get("is_active") === "on",
@@ -103,12 +111,18 @@ export function ServiceFormDialog({
           {/* Category */}
           <div className="space-y-2">
             <Label htmlFor="service-category">Category</Label>
-            <Input
-              id="service-category"
-              name="category"
-              placeholder="e.g. General, Specialist, Diagnostic"
-              defaultValue={service?.category ?? ""}
-            />
+            <Select name="category" defaultValue={service?.category ?? "General"}>
+              <SelectTrigger id="service-category" className="w-full">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(service_category).map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Duration + Price (side by side) */}

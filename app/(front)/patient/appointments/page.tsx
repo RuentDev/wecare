@@ -1,45 +1,57 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Header } from "@/components/header/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  getDoctorById,
-  getServiceById,
-  mockAppointments,
-} from "@/lib/mock-data";
+import { getPatientAppointments } from "@/lib/actions/appointments";
+import { Loader2, Calendar, Clock, User, FileText } from "lucide-react";
 import Link from "next/link";
-import { Calendar, Clock, User, FileText } from "lucide-react";
 
 export default function PatientAppointments() {
-  // const { user, isAuthenticated } = useAuth();
-  // React.useEffect(() => {
-  //   if (!isAuthenticated || user?.role !== 'patient') {
-  //     router.push('/login');
-  //   }
-  // }, [isAuthenticated, user, router]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // if (!isAuthenticated || user?.role !== 'patient') {
-  //   return null;
-  // }
+  useEffect(() => {
+    // In a real app, you would get the patientId from the auth context
+    const patientId = "00000000-0000-0000-0000-000000000001"; 
+    getPatientAppointments(patientId).then(r => {
+      if (r.success && r.data) {
+        setAppointments(r.data);
+      }
+      setIsLoading(false);
+    });
+  }, []);
 
-  const patientAppointments = mockAppointments; // In a real app, filter by logged-in patient
-  const upcomingAppointments = patientAppointments.filter(
-    (apt) => apt.status === "scheduled",
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-neutral-light py-20 flex justify-center items-center">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </main>
+      </>
+    );
+  }
+
+  const upcomingAppointments = appointments.filter(
+    (apt) => apt.status === "scheduled" || apt.status === "pending",
   );
-  const pastAppointments = patientAppointments.filter(
+  const pastAppointments = appointments.filter(
     (apt) => apt.status === "completed" || apt.status === "cancelled",
   );
 
   const AppointmentCard = ({
     appointment,
   }: {
-    appointment: (typeof patientAppointments)[0];
+    appointment: any;
   }) => {
-    const doctor = getDoctorById(appointment.doctorId);
-    const service = getServiceById(appointment.serviceId);
-    const appointmentDate = new Date(appointment.date);
-    const isUpcoming = appointment.status === "scheduled";
+    const doctorName = appointment.doctors?.users 
+      ? `Dr. ${appointment.doctors.users.first_name} ${appointment.doctors.users.last_name}`
+      : "Unknown Doctor";
+    const serviceName = appointment.services?.name || "Unknown Service";
+    const appointmentDate = new Date(appointment.appointment_date);
+    const isUpcoming = appointment.status === "scheduled" || appointment.status === "pending";
 
     return (
       <Card
@@ -49,7 +61,7 @@ export default function PatientAppointments() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-lg font-semibold text-neutral-dark">
-                {service?.name}
+                {serviceName}
               </h3>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-xs font-medium capitalize ${
@@ -67,7 +79,7 @@ export default function PatientAppointments() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-neutral-gray" />
-                <span className="text-neutral-dark">{doctor?.name}</span>
+                <span className="text-neutral-dark">{doctorName}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Calendar className="w-4 h-4 text-neutral-gray" />
@@ -82,7 +94,7 @@ export default function PatientAppointments() {
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-neutral-gray" />
-                <span className="text-neutral-dark">{appointment.time}</span>
+                <span className="text-neutral-dark">{appointment.start_time ? new Date(appointment.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A"}</span>
               </div>
             </div>
 
@@ -183,7 +195,7 @@ export default function PatientAppointments() {
           )}
 
           {/* Empty State */}
-          {patientAppointments.length === 0 && (
+          {appointments.length === 0 && (
             <Card className="rounded-[12px] p-12 bg-white border border-neutral-gray text-center">
               <Calendar className="w-12 h-12 text-neutral-gray mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold text-neutral-dark mb-2">

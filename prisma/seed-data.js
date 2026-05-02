@@ -31,6 +31,7 @@ async function main() {
       country: "Philippines",
       phone: "+63 912 345 6789",
       email: "main@wecare.com",
+      google_maps_url: "https://www.google.com/maps/search/?api=1&query=123+Healthcare+Ave+Olongapo",
     },
   });
 

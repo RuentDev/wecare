@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/header/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getPatientById } from "@/lib/mock-data";
+import { getPatientById } from "@/lib/actions/patients";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import {
   Phone,
@@ -17,24 +19,44 @@ import {
 
 export default function MedicalRecord() {
   const router = useRouter();
-  // const { user, isAuthenticated } = useAuth();
+  const [patient, setPatient] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // React.useEffect(() => {
-  //   if (!isAuthenticated || user?.role !== 'patient') {
-  //     router.push('/login');
-  //   }
-  // }, [isAuthenticated, user, router]);
+  useEffect(() => {
+    // In a real app, you would get the patientId from the auth context
+    const patientId = "00000000-0000-0000-0000-000000000001";
+    getPatientById(patientId).then(r => {
+      if (r) {
+        setPatient(r);
+      }
+      setIsLoading(false);
+    });
+  }, []);
 
-  // if (!isAuthenticated || user?.role !== 'patient') {
-  //   return null;
-  // }
-
-  // In a real app, fetch the logged-in patient's data
-  const patient = getPatientById("patient1");
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-neutral-light py-20 flex justify-center items-center">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </main>
+      </>
+    );
+  }
 
   if (!patient) {
-    return null;
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-neutral-light py-20 text-center">
+          <p>Patient not found.</p>
+        </main>
+      </>
+    );
   }
+
+  const patientName = `${patient.first_name} ${patient.last_name}`;
+  const dateOfBirth = patient.date_of_birth || "1990-01-01";
 
   const calculateAge = (birthDate: string): number => {
     const today = new Date();
@@ -79,7 +101,7 @@ export default function MedicalRecord() {
                   Full Name
                 </p>
                 <p className="text-lg font-semibold text-neutral-dark">
-                  {patient.name}
+                  {patientName}
                 </p>
               </div>
               <div>
@@ -87,12 +109,12 @@ export default function MedicalRecord() {
                   Date of Birth
                 </p>
                 <p className="text-lg font-semibold text-neutral-dark">
-                  {new Date(patient.dateOfBirth).toLocaleDateString("en-US", {
+                  {new Date(dateOfBirth).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
                   })}{" "}
-                  ({calculateAge(patient.dateOfBirth)} years old)
+                  ({calculateAge(dateOfBirth)} years old)
                 </p>
               </div>
               <div>
@@ -132,7 +154,7 @@ export default function MedicalRecord() {
             </h2>
             {patient.medicalHistory && patient.medicalHistory.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {patient.medicalHistory.map((condition, idx) => (
+                {patient.medicalHistory.map((condition: string, idx: number) => (
                   <div
                     key={idx}
                     className="bg-red-50 border border-red-200 rounded-[12px] p-4"
@@ -158,7 +180,7 @@ export default function MedicalRecord() {
             </h2>
             {patient.allergies && patient.allergies.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {patient.allergies.map((allergy, idx) => (
+                {patient.allergies.map((allergy: string, idx: number) => (
                   <div
                     key={idx}
                     className="bg-orange-50 border border-orange-200 rounded-[12px] p-4"

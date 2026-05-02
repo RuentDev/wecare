@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   CalendarDays,
   BriefcaseMedical,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -49,13 +48,13 @@ export function EditDoctorClient({
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {isEditing 
+              {isEditing
                 ? `Dr. ${doctorUser?.first_name} ${doctorUser?.last_name}`
                 : "Register New Doctor"}
             </h1>
           </div>
         </div>
-        
+
         {isEditing && (
           <div className="flex gap-2">
             <Badge
@@ -83,10 +82,10 @@ export function EditDoctorClient({
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 h-14 p-1">
+        <TabsList className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 h-10">
           <TabsTrigger
             value="profile"
-            className="rounded-xl px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
+            className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
           >
             <LayoutDashboard className="h-4 w-4" />
             Information
@@ -95,7 +94,7 @@ export function EditDoctorClient({
             <>
               <TabsTrigger
                 value="appointments"
-                className="rounded-xl px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
+                className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
               >
                 <CalendarDays className="h-4 w-4" />
                 Appointments
@@ -107,7 +106,7 @@ export function EditDoctorClient({
               </TabsTrigger>
               <TabsTrigger
                 value="services"
-                className="rounded-xl px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
+                className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
               >
                 <BriefcaseMedical className="h-4 w-4" />
                 Managed Services
@@ -118,7 +117,7 @@ export function EditDoctorClient({
 
         <TabsContent value="profile" className="space-y-6">
           <DoctorInfoForm doctor={doctor} locations={locations} />
-          {isEditing && <DoctorDangerZone doctor={doctor} />}
+          {/* {isEditing && <DoctorDangerZone doctor={doctor} />} */}
         </TabsContent>
 
         {isEditing && (
@@ -127,12 +126,14 @@ export function EditDoctorClient({
               <Card className="glassmorphism-card border-none overflow-hidden rounded-[24px]">
                 <CardHeader className="bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
                   <CardTitle className="flex items-center gap-2 text-xl">
-                    <CalendarDays className="w-5 h-5 text-primary" /> Appointment
-                    History
+                    <CalendarDays className="w-5 h-5 text-primary" />{" "}
+                    Appointment History
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <DoctorAppointments appointments={doctor.appointments || []} />
+                  <DoctorAppointments
+                    appointments={doctor.appointments || []}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

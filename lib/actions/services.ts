@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma-db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { service_category } from "../generated/prisma";
 import type { AdminService, ServiceStats } from "@/lib/types/services";
 
 // ---------------------------------------------------------------------------
@@ -12,7 +13,7 @@ import type { AdminService, ServiceStats } from "@/lib/types/services";
 const serviceSchema = z.object({
   name: z.string().min(1, "Service name is required").max(255),
   description: z.string().max(1000).nullable().optional(),
-  category: z.string().max(100).nullable().optional(),
+  category: z.nativeEnum(service_category).nullable().optional(),
   duration_minutes: z.coerce.number().int().min(5).max(480).default(30),
   price: z.coerce.number().min(0),
   is_active: z.boolean().default(true),
