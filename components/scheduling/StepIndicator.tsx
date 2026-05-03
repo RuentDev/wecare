@@ -17,14 +17,15 @@ const steps = [
 
 export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (
-    <div className="mb-12 flex items-center justify-center overflow-x-auto pb-6">
-      <div className="flex items-center gap-12 relative min-w-min">
+    <div className="mb-12 flex items-center justify-start md:justify-center overflow-x-auto pb-6 scrollbar-hide px-4">
+      <div className="flex items-center gap-8 md:gap-12 relative min-w-max">
         {/* Progress Line */}
-        <div className="absolute top-12 left-0 w-full h-1 bg-neutral-gray/30 -translate-y-1/2 z-0"></div>
-        <div
-          className="absolute top-12 left-0 h-1 bg-primary -translate-y-1/2 z-0 transition-all duration-500"
-          style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
-        ></div>
+        <div className="absolute top-[24px] left-[40px] right-[40px] h-1 bg-neutral-gray/30 -translate-y-1/2 z-0">
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+          ></div>
+        </div>
 
         {/* Steps */}
         {steps.slice(0, totalSteps).map((step) => {
@@ -35,7 +36,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
           return (
             <div
               key={step.id}
-              className="relative z-10 flex flex-col items-center"
+              className="relative z-10 flex flex-col items-center min-w-[80px]"
             >
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
@@ -53,7 +54,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
                 )}
               </div>
               <span
-                className={`absolute top-16 text-xs font-semibold whitespace-nowrap transition-colors duration-300 ${
+                className={`mt-3 text-xs font-semibold whitespace-nowrap transition-colors duration-300 ${
                   isActive || isCompleted
                     ? "text-neutral-dark"
                     : "text-neutral-gray"

@@ -14,6 +14,7 @@ import { createGuestBooking } from "@/lib/actions/booking";
 import {
   getPublicDoctors,
   getPublicServices,
+  getPublicLocations,
   getDefaultLocationId,
 } from "@/lib/actions/scheduling";
 import { StepIndicator } from "../scheduling/StepIndicator";
@@ -140,39 +141,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
 
   // Fetch all remote data once on mount
   useEffect(() => {
-    // For now, create mock locations from the default location
-    locations.load(async () => {
-      const defaultId = await getDefaultLocationId();
-      // Return mock locations data - in production, this would fetch from an API
-      return defaultId.data
-        ? [
-            {
-              id: defaultId.data,
-              name: "Main Clinic",
-              address: "123 Medical Street",
-              city: "Metro Manila",
-              phone: "+63 917 123 4567",
-              email: "main@clinic.com",
-            },
-            {
-              id: `${defaultId.data}-2`,
-              name: "North Branch",
-              address: "456 Healthcare Avenue",
-              city: "Quezon City",
-              phone: "+63 917 234 5678",
-              email: "north@clinic.com",
-            },
-            {
-              id: `${defaultId.data}-3`,
-              name: "South Branch",
-              address: "789 Wellness Boulevard",
-              city: "Makati",
-              phone: "+63 917 345 6789",
-              email: "south@clinic.com",
-            },
-          ]
-        : [];
-    });
+    locations.load(() => getPublicLocations().then((r) => r.data ?? []));
     doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
     services.load(() => getPublicServices().then((r) => r.data ?? []));
     defaultLocationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));

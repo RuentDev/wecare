@@ -149,6 +149,14 @@
   .animate-in-slide-up {
     animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes fade-in {

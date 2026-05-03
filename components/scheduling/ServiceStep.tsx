@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Clock, DollarSign } from "lucide-react";
+import { Briefcase, Clock, PhilippinePeso } from "lucide-react";
 import type { SchedulingService } from "@/lib/types/scheduling";
 
 interface ServiceStepProps {
@@ -90,9 +90,11 @@ export function ServiceStep({
                   <Clock className="w-4 h-4" />
                   <span>{service.durationMinutes} mins</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-secondary" />
-                  <span className="font-black text-secondary text-lg">{service.price.toFixed(0)}</span>
+                <div className="flex items-center gap-1">
+                  <PhilippinePeso className="w-4 h-4 text-secondary" />
+                  <span className="font-black text-secondary text-lg">
+                    {service.price.toFixed(0)}
+                  </span>
                 </div>
               </div>
             </button>

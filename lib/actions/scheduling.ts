@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma-db";
-import type { SchedulingDoctor, SchedulingService } from "@/lib/types/scheduling";
+import type { SchedulingDoctor, SchedulingService, SchedulingLocation } from "@/lib/types/scheduling";
 
 /**
  * Fetches all available doctors for the public booking flow.
@@ -168,5 +168,35 @@ export async function getDefaultLocationId(): Promise<{
   } catch (error) {
     console.error("[GET_DEFAULT_LOCATION_ID]", error);
     return { success: false, error: "Failed to fetch location" };
+  }
+}
+
+/**
+ * Fetches all active clinic locations for the public booking flow.
+ */
+export async function getPublicLocations(): Promise<{
+  success: boolean;
+  data?: SchedulingLocation[];
+  error?: string;
+}> {
+  try {
+    const locations = await prisma.locations.findMany({
+      where: { is_active: true },
+      orderBy: { name: "asc" },
+    });
+
+    const data: SchedulingLocation[] = locations.map((loc) => ({
+      id: loc.id,
+      name: loc.name,
+      address: loc.address,
+      city: loc.city,
+      phone: loc.phone ?? undefined,
+      email: loc.email ?? undefined,
+    }));
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("[GET_PUBLIC_LOCATIONS]", error);
+    return { success: false, error: "Failed to load locations" };
   }
 }
