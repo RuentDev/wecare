@@ -1,5 +1,5 @@
 const PromotionsPage = () => {
-  return <div>PromotionsPage</div>;
+  return <div>Discounts</div>;
 };
 
 export default PromotionsPage;
