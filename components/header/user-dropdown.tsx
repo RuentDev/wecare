@@ -55,12 +55,12 @@ const UserDropdown = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/patient/appointments" className="cursor-pointer">
+              <Link href="/dashboard/appointments" className="cursor-pointer">
                 My Appointments
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/patient/medical-record" className="cursor-pointer">
+              <Link href="/dashboard/medical-record" className="cursor-pointer">
                 Medical Record
               </Link>
             </DropdownMenuItem>
