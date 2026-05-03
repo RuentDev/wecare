@@ -53,9 +53,11 @@ export function DateTimeStep({
     setIsLoadingSlots(true);
     setSlotsError("");
 
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+
     getAvailableTimeSlots(
       selectedDoctorId,
-      selectedDate,
+      dateStr,
       selectedLocationId,
       selectedServiceId,
     ).then((result) => {

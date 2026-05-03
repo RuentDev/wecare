@@ -96,12 +96,17 @@ export async function getPublicServices(): Promise<{
  */
 export async function getAvailableTimeSlots(
   doctorId: string,
-  date: Date,
+  dateInput: Date | string,
   locationId: string,
   serviceId: string
 ): Promise<{ success: boolean; data?: TimeSlotInfo[]; error?: string }> {
   try {
-    const dayOfWeek = date.getDay();
+    // Normalize to UTC midnight to avoid local timezone shifts
+    const date = typeof dateInput === "string" 
+      ? new Date(`${dateInput}T00:00:00Z`)
+      : new Date(dateInput);
+
+    const dayOfWeek = date.getUTCDay();
     const dateOnly = date.toISOString().split("T")[0];
 
     // 1. Fetch Service Duration
@@ -196,9 +201,9 @@ export async function getAvailableTimeSlots(
         // Check if in the past (if today)
         let isPast = false;
         if (isToday) {
-          const serverNowH = now.getHours();
-          const serverNowM = now.getMinutes();
-          if (currentH < serverNowH || (currentH === serverNowH && currentM <= serverNowM)) {
+          const nowH = now.getUTCHours();
+          const nowM = now.getUTCMinutes();
+          if (currentH < nowH || (currentH === nowH && currentM <= nowM)) {
             isPast = true;
           }
         }
