@@ -13,3 +13,18 @@ export interface ClinicLocation {
   latitude: number | null;
   longitude: number | null;
 }
+
+export interface AdminLocation extends ClinicLocation {
+  opening_time: string | null;
+  closing_time: string | null;
+  is_active: boolean;
+  doctorCount: number;
+  createdAt: Date | null;
+}
+
+export interface LocationStats {
+  total: number;
+  active: number;
+  inactive: number;
+  cities: number;
+}
