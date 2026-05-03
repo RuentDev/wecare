@@ -49,19 +49,21 @@ export async function createGuestBooking(data: {
       }
     }
 
-    // 3. Reuse existing guest record or create new one
+    // 3. Reuse existing record or create new one
     let patientId: string;
-    if (existingUser?.is_guest) {
+    if (existingUser) {
       patientId = existingUser.id;
-      // Update name/phone if changed
-      await prisma.users.update({
-        where: { id: patientId },
-        data: {
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone: data.phone,
-        },
-      });
+      // Update info only if they are a guest (don't overwrite registered user profiles)
+      if (existingUser.is_guest) {
+        await prisma.users.update({
+          where: { id: patientId },
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: data.phone,
+          },
+        });
+      }
     } else {
       const guest = await createGuestUser({
         email: data.email,
