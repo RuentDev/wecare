@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -125,15 +125,16 @@ interface Props {
   date?: Date;
 }
 
-const Scheduling = ({ date = new Date() }: Props) => {
+const Scheduling = ({ date }: Props) => {
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
 
   const [state, dispatch] = useReducer(bookingReducer, {
     currentStep: 1,
     selectedLocationId: "",
     selectedServiceId: "",
     selectedDoctorId: "",
-    selectedDate: date,
+    selectedDate: date || new Date(2025, 0, 1), // Stable default for SSR
     selectedTime: "",
     patientName: "",
     patientEmail: "",
@@ -153,10 +154,16 @@ const Scheduling = ({ date = new Date() }: Props) => {
 
   // Fetch all remote data once on mount
   useEffect(() => {
+    setMounted(true);
     locations.load(() => getPublicLocations().then((r) => r.data ?? []));
     doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
     services.load(() => getPublicServices().then((r) => r.data ?? []));
     defaultLocationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
+
+    // If no date was provided, initialize with current date on client side only
+    if (!date) {
+      dispatch({ type: "SELECT_DATE", date: new Date() });
+    }
 
     // Fetch user session for pre-filling
     getMe().then((user) => {
@@ -291,7 +298,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
                 </span>{" "}
                 for{" "}
                 <span className="text-neutral-dark font-bold">
-                  {state.selectedDate.toLocaleDateString()}
+                  {mounted ? state.selectedDate.toLocaleDateString() : ""}
                 </span>{" "}
                 at{" "}
                 <span className="text-neutral-dark font-bold">
@@ -452,10 +459,10 @@ const Scheduling = ({ date = new Date() }: Props) => {
             <div className="w-full md:w-auto order-2 md:order-1">
               <Button
                 onClick={handleBack}
-                disabled={state.currentStep === 1}
+                disabled={!mounted || state.currentStep === 1}
                 variant="ghost"
                 className={`w-full md:w-auto flex items-center justify-center gap-2 text-neutral-gray hover:text-neutral-dark font-bold text-lg h-14 px-8 rounded-2xl transition-all duration-300 ${
-                  state.currentStep === 1
+                  !mounted || state.currentStep === 1
                     ? "opacity-0 pointer-events-none"
                     : "opacity-100"
                 }`}
@@ -474,19 +481,19 @@ const Scheduling = ({ date = new Date() }: Props) => {
                 </div>
                 <div className="w-1 h-1 bg-neutral-gray/30 rounded-full" />
                 <p className="text-xs font-bold text-neutral-gray uppercase tracking-widest">
-                  Step {state.currentStep} of {TOTAL_STEPS}
+                  Step {mounted ? state.currentStep : 1} of {TOTAL_STEPS}
                 </p>
               </div>
               <div className="hidden md:flex gap-1">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 rounded-full transition-all duration-500 ${
-                      i + 1 <= state.currentStep
-                        ? "w-6 bg-primary"
-                        : "w-2 bg-neutral-gray/20"
-                    }`}
-                  />
+                    <div
+                      key={i}
+                      className={`h-1 rounded-full transition-all duration-500 ${
+                        mounted && i + 1 <= state.currentStep
+                          ? "w-6 bg-primary"
+                          : "w-2 bg-neutral-gray/20"
+                      }`}
+                    />
                 ))}
               </div>
             </div>
