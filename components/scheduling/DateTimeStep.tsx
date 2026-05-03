@@ -71,9 +71,9 @@ export function DateTimeStep({
         <h3 className="text-xl font-bold text-neutral-dark">Pick Date &amp; Time</h3>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Calendar */}
-        <Card className="p-8 rounded-[32px] border-neutral-gray bg-white shadow-sm flex flex-col items-center">
+        <Card className="p-10 rounded-[24px] border-neutral-gray bg-white shadow-md flex flex-col items-center">
           <Calendar
             mode="single"
             selected={selectedDate}
