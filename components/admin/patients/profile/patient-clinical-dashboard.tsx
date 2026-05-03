@@ -31,30 +31,24 @@ interface PatientClinicalDashboardProps {
 
 export function PatientClinicalDashboard({
   patient,
-  vitals,
+  vitals: initialVitals,
 }: PatientClinicalDashboardProps) {
-  const [consultations, setConsultations] = useState([
-    { name: "Heart Burn", type: "", details: "" },
-    { name: "Fever", type: "", details: "" },
-  ]);
-  const [diagnoses, setDiagnoses] = useState([
-    { name: "Heart Burn", type: "", details: "" },
-    { name: "Fever", type: "", details: "" },
-  ]);
-  const [medications, setMedications] = useState([
-    { name: "Pepcid AC", frequency: "", duration: "", instruction: "" },
-  ]);
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [diagnoses, setDiagnoses] = useState<any[]>([]);
+  const [medications, setMedications] = useState<any[]>([]);
   const [followUpDate, setFollowUpDate] = useState<Date>();
   const [isSaving, setIsSaving] = useState(false);
+  const [vitals, setVitals] = useState(initialVitals);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const result = await saveClinicalRecord(patient.id, {
-        diagnosis: diagnoses.map((d) => `${d.name} (${d.type})`).join(", "),
-        treatment: consultations.map((c) => c.name).join(", "),
-        prescription: medications.map((m) => m.name).join(", "),
-        raw_data: { consultations, diagnoses, medications, followUpDate },
+        diagnosis: diagnoses.map((d: any) => `${d.name} (${d.type})`).join(", "),
+        treatment: consultations.map((c: any) => c.name).join(", "),
+        prescription: medications.map((m: any) => m.name).join(", "),
+        followUpDate: followUpDate?.toISOString(),
+        raw_data: { consultations, diagnoses, medications },
       });
       if (result.success) {
         toast.success("Clinical record saved successfully");
@@ -76,7 +70,7 @@ export function PatientClinicalDashboard({
           <PatientProfileCard patient={patient} />
         </div>
         <div className="lg:col-span-3">
-          <LatestVitalsCard vitals={vitals} />
+          <LatestVitalsCard vitals={vitals} patientId={patient.id} onVitalsUpdate={setVitals} />
         </div>
       </div>
 
@@ -87,12 +81,45 @@ export function PatientClinicalDashboard({
           className="border-none shadow-sm bg-white rounded-xl overflow-hidden px-6"
         >
           <AccordionTrigger className="text-xl font-black text-slate-800 hover:no-underline py-6">
-            Past Records
+            Past Records ({patient.medical_records?.length || 0})
           </AccordionTrigger>
           <AccordionContent className="pb-6">
-            <p className="text-slate-500 font-medium">
-              No previous records found for this patient.
-            </p>
+            {patient.medical_records?.length > 0 ? (
+              <div className="space-y-4">
+                {patient.medical_records.map((record: any) => (
+                  <div key={record.id} className="p-4 bg-slate-50 rounded-xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-700">
+                        {format(new Date(record.created_at), "PPP")}
+                      </span>
+                      {record.follow_up_date && (
+                        <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">
+                          Follow-up: {format(new Date(record.follow_up_date), "PP")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-slate-400 font-bold uppercase text-[10px]">Diagnosis</p>
+                        <p className="font-medium text-slate-600">{record.diagnosis || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400 font-bold uppercase text-[10px]">Treatment</p>
+                        <p className="font-medium text-slate-600">{record.treatment || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400 font-bold uppercase text-[10px]">Prescription</p>
+                        <p className="font-medium text-slate-600">{record.prescription || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 font-medium">
+                No previous records found for this patient.
+              </p>
+            )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>

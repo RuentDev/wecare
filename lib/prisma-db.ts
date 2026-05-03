@@ -25,3 +25,5 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
+
+// Force reload for schema update: 2026-05-04

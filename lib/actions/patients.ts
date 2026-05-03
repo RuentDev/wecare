@@ -227,6 +227,33 @@ export async function sendPatientNotification(data: {
   }
 }
 
+export async function getVitalsHistory(patientId: string) {
+  try {
+    const history = await prisma.vitals.findMany({
+      where: { patient_id: patientId },
+      orderBy: { created_at: "desc" },
+    });
+    return history;
+  } catch (error) {
+    console.error("[GET_VITALS_HISTORY]", error);
+    return [];
+  }
+}
+
+export async function updatePatientAvatar(patientId: string, avatarUrl: string) {
+  try {
+    await prisma.users.update({
+      where: { id: patientId },
+      data: { avatar_url: avatarUrl },
+    });
+    revalidatePath(`/admin/users/patients/${patientId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[UPDATE_PATIENT_AVATAR]", error);
+    return { success: false, error: "Failed to update avatar" };
+  }
+}
+
 export async function getLatestVitals(patientId: string) {
   try {
     const latestVitals = await prisma.vitals.findFirst({
@@ -258,8 +285,6 @@ export async function updateVitals(patientId: string, data: any) {
 
 export async function saveClinicalRecord(patientId: string, data: any) {
   try {
-    // For now, we update medical_records or handle specific consultation/diagnosis/medication fields
-    // This is a placeholder for a more complex multi-table update if needed
     await prisma.medical_records.create({
       data: {
         patient_id: patientId,
@@ -267,7 +292,7 @@ export async function saveClinicalRecord(patientId: string, data: any) {
         treatment: data.treatment,
         prescription: data.prescription,
         notes: data.notes,
-        // We could store the JSON structure in attachments if we want to preserve the exact UI state
+        follow_up_date: data.followUpDate ? new Date(data.followUpDate) : null,
         attachments: data.raw_data || null,
       },
     });
