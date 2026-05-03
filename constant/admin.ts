@@ -13,6 +13,9 @@ import {
   Eye,
   Trash2,
   Pencil,
+  DollarSign,
+  TagIcon,
+  Newspaper,
 } from "lucide-react";
 
 export interface NavItem {
@@ -80,15 +83,15 @@ export const NAVIGATIONS: NavItem[] = [
     allowedRoles: ["admin", "staff"],
   },
   {
-    name: "Promotions",
-    href: "/admin/promotions",
-    icon: Tag,
+    name: "Discounts",
+    href: "/admin/discounts",
+    icon: TagIcon,
     allowedRoles: ["admin", "staff"],
   },
   {
     name: "Articles",
     href: "/admin/articles",
-    icon: FileText,
+    icon: Newspaper,
     allowedRoles: ["admin", "staff"],
   },
   {
