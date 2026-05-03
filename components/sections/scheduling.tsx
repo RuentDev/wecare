@@ -17,13 +17,14 @@ import {
   getDefaultLocationId,
 } from "@/lib/actions/scheduling";
 import { StepIndicator } from "../scheduling/StepIndicator";
+import { LocationStep } from "../scheduling/LocationStep";
 import { ServiceStep } from "../scheduling/ServiceStep";
 import { DoctorStep } from "../scheduling/DoctorStep";
 import { DateTimeStep } from "../scheduling/DateTimeStep";
 import { PatientStep } from "../scheduling/PatientStep";
 import { useToast } from "@/hooks/use-toast";
 import { useAsyncState } from "@/hooks/use-async-state";
-import type { SchedulingDoctor, SchedulingService } from "@/lib/types/scheduling";
+import type { SchedulingDoctor, SchedulingService, SchedulingLocation } from "@/lib/types/scheduling";
 
 // ---------------------------------------------------------------------------
 // State shape & reducer
@@ -31,6 +32,7 @@ import type { SchedulingDoctor, SchedulingService } from "@/lib/types/scheduling
 
 interface BookingState {
   currentStep: number;
+  selectedLocationId: string;
   selectedServiceId: string;
   selectedDoctorId: string;
   selectedDate: Date;
@@ -47,6 +49,7 @@ interface BookingState {
 
 type BookingAction =
   | { type: "SET_STEP"; step: number }
+  | { type: "SELECT_LOCATION"; id: string }
   | { type: "SELECT_SERVICE"; id: string }
   | { type: "SELECT_DOCTOR"; id: string }
   | { type: "SELECT_DATE"; date: Date }
@@ -70,6 +73,8 @@ function bookingReducer(
   switch (action.type) {
     case "SET_STEP":
       return { ...state, currentStep: action.step };
+    case "SELECT_LOCATION":
+      return { ...state, selectedLocationId: action.id };
     case "SELECT_SERVICE":
       return { ...state, selectedServiceId: action.id };
     case "SELECT_DOCTOR":
@@ -97,7 +102,7 @@ function bookingReducer(
   }
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -112,6 +117,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
 
   const [state, dispatch] = useReducer(bookingReducer, {
     currentStep: 1,
+    selectedLocationId: "",
     selectedServiceId: "",
     selectedDoctorId: "",
     selectedDate: date,
@@ -127,15 +133,49 @@ const Scheduling = ({ date = new Date() }: Props) => {
   });
 
   // Remote data via useAsyncState
+  const locations = useAsyncState<SchedulingLocation[]>([]);
   const doctors = useAsyncState<SchedulingDoctor[]>([]);
   const services = useAsyncState<SchedulingService[]>([]);
-  const locationId = useAsyncState<string>("");
+  const defaultLocationId = useAsyncState<string>("");
 
   // Fetch all remote data once on mount
   useEffect(() => {
+    // For now, create mock locations from the default location
+    locations.load(async () => {
+      const defaultId = await getDefaultLocationId();
+      // Return mock locations data - in production, this would fetch from an API
+      return defaultId.data
+        ? [
+            {
+              id: defaultId.data,
+              name: "Main Clinic",
+              address: "123 Medical Street",
+              city: "Metro Manila",
+              phone: "+63 917 123 4567",
+              email: "main@clinic.com",
+            },
+            {
+              id: `${defaultId.data}-2`,
+              name: "North Branch",
+              address: "456 Healthcare Avenue",
+              city: "Quezon City",
+              phone: "+63 917 234 5678",
+              email: "north@clinic.com",
+            },
+            {
+              id: `${defaultId.data}-3`,
+              name: "South Branch",
+              address: "789 Wellness Boulevard",
+              city: "Makati",
+              phone: "+63 917 345 6789",
+              email: "south@clinic.com",
+            },
+          ]
+        : [];
+    });
     doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
     services.load(() => getPublicServices().then((r) => r.data ?? []));
-    locationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
+    defaultLocationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -162,12 +202,14 @@ const Scheduling = ({ date = new Date() }: Props) => {
   const isStepValid = (): boolean => {
     switch (state.currentStep) {
       case 1:
-        return !!state.selectedServiceId;
+        return !!state.selectedLocationId;
       case 2:
-        return !!state.selectedDoctorId;
+        return !!state.selectedServiceId;
       case 3:
-        return !!state.selectedDate && !!state.selectedTime;
+        return !!state.selectedDoctorId;
       case 4:
+        return !!state.selectedDate && !!state.selectedTime;
+      case 5:
         return (
           !!state.patientName &&
           !!state.patientEmail &&
@@ -200,7 +242,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
         reason: state.patientReason,
         doctorId: state.selectedDoctorId,
         serviceId: state.selectedServiceId,
-        locationId: locationId.data,
+        locationId: state.selectedLocationId,
         appointmentDate: state.selectedDate.toISOString(),
         startTime: state.selectedTime,
         endTime,
@@ -315,6 +357,17 @@ const Scheduling = ({ date = new Date() }: Props) => {
         {/* Step Content */}
         <div className="min-h-auto">
           {state.currentStep === 1 && (
+            <LocationStep
+              locations={locations.data}
+              selectedLocationId={state.selectedLocationId}
+              isLoading={locations.loading}
+              onSelect={(id) => {
+                dispatch({ type: "SELECT_LOCATION", id });
+                setTimeout(handleNext, 300);
+              }}
+            />
+          )}
+          {state.currentStep === 2 && (
             <ServiceStep
               services={services.data}
               selectedServiceId={state.selectedServiceId}
@@ -325,7 +378,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
               }}
             />
           )}
-          {state.currentStep === 2 && (
+          {state.currentStep === 3 && (
             <DoctorStep
               doctors={doctors.data}
               selectedDoctorId={state.selectedDoctorId}
@@ -336,7 +389,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
               }}
             />
           )}
-          {state.currentStep === 3 && (
+          {state.currentStep === 4 && (
             <DateTimeStep
               selectedDoctorId={state.selectedDoctorId}
               selectedDate={state.selectedDate}
@@ -349,7 +402,7 @@ const Scheduling = ({ date = new Date() }: Props) => {
               }
             />
           )}
-          {state.currentStep === 4 && (
+          {state.currentStep === 5 && (
             <PatientStep
               patientName={state.patientName}
               patientEmail={state.patientEmail}

@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { User, Phone, Mail, ClipboardList, Shield, Info } from "lucide-react";
+import { User, Phone, Mail, ClipboardList, Shield, Info, MapPin, Briefcase, Users, Clock } from "lucide-react";
 import type { SchedulingDoctor, SchedulingService } from "@/lib/types/scheduling";
 
 interface PatientStepProps {
@@ -48,10 +48,10 @@ export function PatientStep({
         <h3 className="text-xl font-bold text-neutral-dark">Patient Information</h3>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Form */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="p-8 rounded-[24px] border-neutral-gray bg-white shadow-sm space-y-6">
+          <Card className="p-10 rounded-[24px] border-neutral-gray bg-white shadow-md space-y-6">
             <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-2 text-xs font-bold text-neutral-gray uppercase tracking-widest mb-3">
@@ -126,64 +126,67 @@ export function PatientStep({
 
         {/* Booking Summary */}
         <div className="lg:col-span-1">
-          <Card className="p-6 rounded-[24px] text-white shadow-xl sticky top-6">
-            <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-secondary" />
+          <Card className="p-8 rounded-[24px] bg-gradient-to-br from-primary to-primary/90 text-white shadow-xl sticky top-6">
+            <h4 className="text-xl font-black mb-8 flex items-center gap-3">
+              <ClipboardList className="w-6 h-6 text-secondary" />
               Booking Summary
             </h4>
 
-            <div className="space-y-6">
+            <div className="space-y-8">
               {service && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                    Selected Service
+                <div className="space-y-2 pb-6 border-b border-white/20">
+                  <p className="text-[11px] font-bold text-blue-100 uppercase tracking-widest">
+                    <Briefcase className="w-3 h-3 inline mr-1" />
+                    Service
                   </p>
-                  <p className="font-bold text-secondary">{service.name}</p>
-                  <p className="text-xs text-neutral-500">
-                    {service.durationMinutes} Minutes • ₱{service.price.toFixed(0)}
+                  <p className="font-black text-lg text-white">{service.name}</p>
+                  <p className="text-sm text-blue-50">
+                    {service.durationMinutes} minutes
                   </p>
                 </div>
               )}
 
               {doctor && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                    Healthcare Provider
+                <div className="space-y-2 pb-6 border-b border-white/20">
+                  <p className="text-[11px] font-bold text-blue-100 uppercase tracking-widest">
+                    <Users className="w-3 h-3 inline mr-1" />
+                    Doctor
                   </p>
-                  <p className="font-bold text-secondary">{doctor.name}</p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="font-black text-lg text-white">{doctor.name}</p>
+                  <p className="text-sm text-blue-50">
                     {doctor.specialization ?? "General Practitioner"}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                  Date &amp; Time
+              <div className="space-y-2 pb-6 border-b border-white/20">
+                <p className="text-[11px] font-bold text-blue-100 uppercase tracking-widest">
+                  <Clock className="w-3 h-3 inline mr-1" />
+                  Schedule
                 </p>
-                <p className="font-bold text-secondary">
+                <p className="font-black text-lg text-white">
                   {selectedDate.toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "long",
+                    month: "short",
                     day: "numeric",
+                    year: "numeric",
                   })}
                 </p>
                 {selectedTime && (
-                  <p className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit mt-1">
+                  <p className="text-sm font-bold text-secondary bg-white/20 px-3 py-2 rounded-lg w-fit">
                     {formatTime(selectedTime)}
                   </p>
                 )}
               </div>
 
               {service && (
-                <div className="pt-6 border-t border-white/10 mt-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-neutral-500">Consultation Fee</span>
-                    <span className="font-bold">₱{service.price.toFixed(0)}</span>
+                <div className="pt-2">
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
+                    <span className="text-sm text-blue-100">Consultation Fee</span>
+                    <span className="font-bold text-secondary">₱{service.price.toFixed(0)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>Total Amount</span>
-                    <span className="text-secondary">₱{service.price.toFixed(0)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-black">Total</span>
+                    <span className="text-3xl font-black text-secondary">₱{service.price.toFixed(0)}</span>
                   </div>
                 </div>
               )}
