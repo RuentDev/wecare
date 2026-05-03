@@ -23,6 +23,11 @@ export async function getPublicDoctors(): Promise<{
             avatar_url: true,
           },
         },
+        doctor_services: {
+          select: {
+            service_id: true,
+          },
+        },
       },
       orderBy: { created_at: "asc" },
     });
@@ -40,6 +45,7 @@ export async function getPublicDoctors(): Promise<{
         ? Number(doc.consultation_fee)
         : null,
       isAvailable: doc.is_available ?? false,
+      serviceIds: doc.doctor_services.map((ds) => ds.service_id),
     }));
 
     return { success: true, data };

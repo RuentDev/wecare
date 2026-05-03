@@ -13,6 +13,7 @@ export type SchedulingDoctor = {
   yearsOfExperience: number | null;
   consultationFee: number | null;
   isAvailable: boolean;
+  serviceIds: string[];
 };
 
 export type SchedulingService = {

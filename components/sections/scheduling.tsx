@@ -17,6 +17,7 @@ import {
   getPublicLocations,
   getDefaultLocationId,
 } from "@/lib/actions/scheduling";
+import { getMe } from "@/lib/actions/auth";
 import { StepIndicator } from "../scheduling/StepIndicator";
 import { LocationStep } from "../scheduling/LocationStep";
 import { ServiceStep } from "../scheduling/ServiceStep";
@@ -65,7 +66,11 @@ type BookingAction =
     }
   | { type: "SUBMIT_START" }
   | { type: "SUBMIT_SUCCESS"; appointmentId: string }
-  | { type: "SUBMIT_ERROR"; error: string };
+  | { type: "SUBMIT_ERROR"; error: string }
+  | {
+      type: "SET_USER_DATA";
+      data: { name: string; email: string; phone: string };
+    };
 
 function bookingReducer(
   state: BookingState,
@@ -77,7 +82,7 @@ function bookingReducer(
     case "SELECT_LOCATION":
       return { ...state, selectedLocationId: action.id };
     case "SELECT_SERVICE":
-      return { ...state, selectedServiceId: action.id };
+      return { ...state, selectedServiceId: action.id, selectedDoctorId: "" };
     case "SELECT_DOCTOR":
       return { ...state, selectedDoctorId: action.id };
     case "SELECT_DATE":
@@ -98,6 +103,13 @@ function bookingReducer(
       };
     case "SUBMIT_ERROR":
       return { ...state, isSubmitting: false, bookingError: action.error };
+    case "SET_USER_DATA":
+      return {
+        ...state,
+        patientName: action.data.name,
+        patientEmail: action.data.email,
+        patientPhone: action.data.phone,
+      };
     default:
       return state;
   }
@@ -145,6 +157,20 @@ const Scheduling = ({ date = new Date() }: Props) => {
     doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
     services.load(() => getPublicServices().then((r) => r.data ?? []));
     defaultLocationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
+
+    // Fetch user session for pre-filling
+    getMe().then((user) => {
+      if (user) {
+        dispatch({
+          type: "SET_USER_DATA",
+          data: {
+            name: `${user.first_name} ${user.last_name}`,
+            email: user.email,
+            phone: user.phone ?? "",
+          },
+        });
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -349,7 +375,11 @@ const Scheduling = ({ date = new Date() }: Props) => {
           )}
           {state.currentStep === 3 && (
             <DoctorStep
-              doctors={doctors.data}
+              doctors={doctors.data.filter((doc) =>
+                state.selectedServiceId
+                  ? doc.serviceIds.includes(state.selectedServiceId)
+                  : true
+              )}
               selectedDoctorId={state.selectedDoctorId}
               isLoading={doctors.loading}
               onSelect={(id) => {

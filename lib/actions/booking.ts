@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma-db";
-import { createGuestUser, findUserByEmail } from "@/lib/auth";
+import { createGuestUser, findUserByEmail, getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { guestBookingSchema } from "@/lib/validations/booking";
 
@@ -32,15 +32,21 @@ export async function createGuestBooking(data: {
   }
 
   try {
-    // 2. Check if email already exists
+    // 2. Check if user already exists
     const existingUser = await findUserByEmail(data.email);
+    const currentUser = await getCurrentUser();
 
+    // If there's an existing registered user that is NOT the current user, block it
     if (existingUser && !existingUser.is_guest) {
-      return {
-        success: false,
-        error: "An account with this email exists. Please log in to book.",
-        requiresLogin: true,
-      };
+      const isCurrentUser = currentUser && currentUser.id === existingUser.id;
+      
+      if (!isCurrentUser) {
+        return {
+          success: false,
+          error: "An account with this email exists. Please log in to book.",
+          requiresLogin: true,
+        };
+      }
     }
 
     // 3. Reuse existing guest record or create new one
