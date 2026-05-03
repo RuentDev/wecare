@@ -29,7 +29,7 @@ export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
             Manage your clinical availability and monitor upcoming visits.
           </p>
         </div>
-        <Button 
+        <Button
           className="rounded-xl gap-2 shadow-lg shadow-primary/20"
           onClick={() => setIsBlockTimeOpen(true)}
         >
@@ -67,6 +67,7 @@ export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
           <AvailabilityCalendar
             timeSlots={data.timeSlots}
             doctorId={doctorId}
+            locations={data.activeLocations}
           />
         </TabsContent>
 
@@ -86,7 +87,7 @@ export function ScheduleClient({ data, doctorId }: ScheduleClientProps) {
           />
         </TabsContent>
       </Tabs>
-      
+
       <BlockTimeDialog
         isOpen={isBlockTimeOpen}
         onOpenChange={setIsBlockTimeOpen}

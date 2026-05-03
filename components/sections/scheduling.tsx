@@ -361,6 +361,8 @@ const Scheduling = ({ date = new Date() }: Props) => {
           {state.currentStep === 4 && (
             <DateTimeStep
               selectedDoctorId={state.selectedDoctorId}
+              selectedLocationId={state.selectedLocationId}
+              selectedServiceId={state.selectedServiceId}
               selectedDate={state.selectedDate}
               selectedTime={state.selectedTime}
               onDateSelect={(date) =>

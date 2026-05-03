@@ -82,8 +82,8 @@ export function BlockTimeDialog({
       let endDateTime = null;
 
       if (!values.isFullDay && values.startTime && values.endTime) {
-        startDateTime = new Date(`${values.date}T${values.startTime}:00`).toISOString();
-        endDateTime = new Date(`${values.date}T${values.endTime}:00`).toISOString();
+        startDateTime = values.startTime;
+        endDateTime = values.endTime;
       }
 
       const result = await blockTimeSlot({

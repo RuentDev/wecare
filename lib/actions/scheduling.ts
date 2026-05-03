@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma-db";
-import type { SchedulingDoctor, SchedulingService, SchedulingLocation } from "@/lib/types/scheduling";
+import type { SchedulingDoctor, SchedulingService, SchedulingLocation, TimeSlotInfo } from "@/lib/types/scheduling";
 
 /**
  * Fetches all available doctors for the public booking flow.
@@ -90,54 +90,128 @@ export async function getPublicServices(): Promise<{
  */
 export async function getAvailableTimeSlots(
   doctorId: string,
-  date: Date
-): Promise<{ success: boolean; data?: string[]; error?: string }> {
+  date: Date,
+  locationId: string,
+  serviceId: string
+): Promise<{ success: boolean; data?: TimeSlotInfo[]; error?: string }> {
   try {
-    // 0 = Sunday … 6 = Saturday (JS Date convention)
     const dayOfWeek = date.getDay();
     const dateOnly = date.toISOString().split("T")[0];
 
-    // 1. Doctor's configured slots for that day of week
-    const timeSlots = await prisma.time_slots.findMany({
+    // 1. Fetch Service Duration
+    const service = await prisma.services.findUnique({
+      where: { id: serviceId },
+      select: { duration_minutes: true },
+    });
+    const durationMinutes = service?.duration_minutes ?? 30;
+
+    // 2. Doctor's configured availability blocks for this day & location
+    const availabilityBlocks = await prisma.time_slots.findMany({
       where: {
         doctor_id: doctorId,
+        location_id: locationId,
         day_of_week: dayOfWeek,
         is_available: true,
       },
       orderBy: { start_time: "asc" },
     });
 
-    if (timeSlots.length === 0) {
+    if (availabilityBlocks.length === 0) {
       return { success: true, data: [] };
     }
 
-    // 2. Already booked appointments for that doctor on that date
+    // 3. Already booked appointments for that doctor on that date
     const bookedAppointments = await prisma.appointments.findMany({
       where: {
         doctor_id: doctorId,
         appointment_date: new Date(dateOnly),
         status: { notIn: ["cancelled"] },
       },
-      select: { start_time: true },
+      select: { start_time: true, end_time: true },
     });
 
-    // Extract booked HH:mm strings
-    const bookedTimes = new Set(
-      bookedAppointments.map((apt) => {
-        const t = apt.start_time;
-        return `${String(t.getUTCHours()).padStart(2, "0")}:${String(t.getUTCMinutes()).padStart(2, "0")}`;
-      })
-    );
+    // 4. Also check for Full Day Exceptions
+    const exceptions = await prisma.schedule_exceptions.findMany({
+      where: {
+        doctor_id: doctorId,
+        date: new Date(dateOnly),
+      },
+    });
 
-    // 3. Build available slot list
-    const available: string[] = timeSlots
-      .map((slot) => {
-        const t = slot.start_time;
-        return `${String(t.getUTCHours()).padStart(2, "0")}:${String(t.getUTCMinutes()).padStart(2, "0")}`;
-      })
-      .filter((time) => !bookedTimes.has(time));
+    if (exceptions.some((e) => e.is_full_day)) {
+      return { success: true, data: [] };
+    }
 
-    return { success: true, data: available };
+    // Helper to format minutes as HH:mm
+    const toHHmm = (h: number, m: number) =>
+      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+    const slots: TimeSlotInfo[] = [];
+    const now = new Date();
+    const isToday = dateOnly === now.toISOString().split("T")[0];
+
+    // 5. Generate discrete 30-minute intervals from blocks
+    for (const block of availabilityBlocks) {
+      const startH = block.start_time.getUTCHours();
+      const startM = block.start_time.getUTCMinutes();
+      const endH = block.end_time.getUTCHours();
+      const endM = block.end_time.getUTCMinutes();
+
+      let currentH = startH;
+      let currentM = startM;
+
+      while (true) {
+        // Stop if current time + service duration exceeds block end
+        const currentTotalMinutes = currentH * 60 + currentM;
+        const endTotalMinutes = endH * 60 + endM;
+        if (currentTotalMinutes + durationMinutes > endTotalMinutes) break;
+
+        const timeStr = toHHmm(currentH, currentM);
+        const slotStartTotal = currentTotalMinutes;
+        const slotEndTotal = currentTotalMinutes + durationMinutes;
+
+        // Check against booked appointments (OVERLAP logic)
+        // Appointment: [A_start, A_end], Slot: [S_start, S_end]
+        // Overlap if: S_start < A_end AND A_start < S_end
+        const isBooked = bookedAppointments.some((apt) => {
+          const aStart = apt.start_time.getUTCHours() * 60 + apt.start_time.getUTCMinutes();
+          const aEnd = apt.end_time.getUTCHours() * 60 + apt.end_time.getUTCMinutes();
+          return slotStartTotal < aEnd && aStart < slotEndTotal;
+        });
+
+        // Check against Partial Exceptions
+        const isBlockedByException = exceptions.some((e) => {
+          if (e.is_full_day || !e.start_time || !e.end_time) return false;
+          const eStart = e.start_time.getUTCHours() * 60 + e.start_time.getUTCMinutes();
+          const eEnd = e.end_time.getUTCHours() * 60 + e.end_time.getUTCMinutes();
+          return slotStartTotal < eEnd && eStart < slotEndTotal;
+        });
+
+        // Check if in the past (if today)
+        let isPast = false;
+        if (isToday) {
+          const serverNowH = now.getHours();
+          const serverNowM = now.getMinutes();
+          if (currentH < serverNowH || (currentH === serverNowH && currentM <= serverNowM)) {
+            isPast = true;
+          }
+        }
+
+        slots.push({
+          time: timeStr,
+          status: isBooked || isBlockedByException ? "booked" : isPast ? "past" : "available",
+        });
+
+        // Increment by 30 mins
+        currentM += 30;
+        if (currentM >= 60) {
+          currentH += 1;
+          currentM -= 60;
+        }
+      }
+    }
+
+    return { success: true, data: slots };
   } catch (error) {
     console.error("[GET_AVAILABLE_TIME_SLOTS]", error);
     return { success: false, error: "Failed to load time slots" };

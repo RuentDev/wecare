@@ -34,6 +34,7 @@ import { Loader2 } from "lucide-react";
 
 const timeSlotSchema = z.object({
   dayOfWeek: z.string(),
+  locationId: z.string().min(1, "Please select a location"),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
 }).refine((data) => {
@@ -47,6 +48,7 @@ interface TimeSlotDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   doctorId: string;
+  locations: any[];
   initialDayOfWeek?: number;
   onSuccess?: () => void;
 }
@@ -57,6 +59,7 @@ export function TimeSlotDialog({
   isOpen,
   onOpenChange,
   doctorId,
+  locations,
   initialDayOfWeek,
   onSuccess,
 }: TimeSlotDialogProps) {
@@ -66,6 +69,7 @@ export function TimeSlotDialog({
     resolver: zodResolver(timeSlotSchema),
     defaultValues: {
       dayOfWeek: initialDayOfWeek !== undefined ? initialDayOfWeek.toString() : "1",
+      locationId: locations?.[0]?.id || "",
       startTime: "09:00",
       endTime: "17:00",
     },
@@ -81,16 +85,13 @@ export function TimeSlotDialog({
   const onSubmit = async (values: z.infer<typeof timeSlotSchema>) => {
     setIsSubmitting(true);
     try {
-      // Convert HH:mm to full ISO date string for Prisma DateTime
-      const today = new Date().toISOString().split("T")[0];
-      const startDateTime = new Date(`${today}T${values.startTime}:00`).toISOString();
-      const endDateTime = new Date(`${today}T${values.endTime}:00`).toISOString();
-
+      // Send raw HH:mm strings — the server action handles UTC-safe storage
       const result = await createTimeSlot({
         doctorId,
+        locationId: values.locationId,
         dayOfWeek: parseInt(values.dayOfWeek),
-        startTime: startDateTime,
-        endTime: endDateTime,
+        startTime: values.startTime,
+        endTime: values.endTime,
       });
 
       if (result.success) {
@@ -139,6 +140,34 @@ export function TimeSlotDialog({
                       {DAYS.map((day, index) => (
                         <SelectItem key={index} value={index.toString()}>
                           {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="locationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Clinic Location</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Select a location" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

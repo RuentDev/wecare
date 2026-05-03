@@ -68,8 +68,8 @@ export async function createGuestBooking(data: {
 
     // 4. Create the appointment — convert time strings to full Date objects for DB
     const dateOnly = data.appointmentDate.split("T")[0];
-    const startDateTime = new Date(`${dateOnly}T${data.startTime}:00`);
-    const endDateTime = new Date(`${dateOnly}T${data.endTime}:00`);
+    const startDateTime = new Date(`1970-01-01T${data.startTime}:00Z`);
+    const endDateTime = new Date(`1970-01-01T${data.endTime}:00Z`);
 
     const appointment = await prisma.appointments.create({
       data: {

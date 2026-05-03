@@ -6,9 +6,10 @@ import { revalidatePath } from "next/cache";
 
 export async function createTimeSlot(data: {
   doctorId: string;
+  locationId: string;
   dayOfWeek: number;
-  startTime: string; // ISO DateTime or valid Date string
-  endTime: string; // ISO DateTime or valid Date string
+  startTime: string; // Raw "HH:mm" string (e.g. "07:00")
+  endTime: string; // Raw "HH:mm" string (e.g. "12:00")
 }) {
   const user = await getCurrentUser();
   if (!user || user.role !== "doctor") {
@@ -16,12 +17,19 @@ export async function createTimeSlot(data: {
   }
 
   try {
+    // Build UTC dates from raw HH:mm to avoid timezone shifts.
+    // Using "1970-01-01T{HH:mm}:00Z" ensures the time stored in
+    // the @db.Time(6) column is exactly what the doctor entered.
+    const startTimeUTC = new Date(`1970-01-01T${data.startTime}:00Z`);
+    const endTimeUTC = new Date(`1970-01-01T${data.endTime}:00Z`);
+
     const timeSlot = await prisma.time_slots.create({
       data: {
         doctor_id: data.doctorId,
+        location_id: data.locationId,
         day_of_week: data.dayOfWeek,
-        start_time: new Date(data.startTime),
-        end_time: new Date(data.endTime),
+        start_time: startTimeUTC,
+        end_time: endTimeUTC,
         is_available: true,
       },
     });
@@ -56,8 +64,8 @@ export async function deleteTimeSlot(slotId: string) {
 export async function blockTimeSlot(data: {
   doctorId: string;
   date: Date;
-  startTime?: string | null;
-  endTime?: string | null;
+  startTime?: string | null; // Raw "HH:mm" string (e.g. "09:00")
+  endTime?: string | null; // Raw "HH:mm" string (e.g. "17:00")
   isFullDay: boolean;
   reason?: string;
 }) {
@@ -67,12 +75,20 @@ export async function blockTimeSlot(data: {
   }
 
   try {
+    // Build UTC dates from raw HH:mm to avoid timezone shifts
+    const startTimeUTC = data.startTime
+      ? new Date(`1970-01-01T${data.startTime}:00Z`)
+      : null;
+    const endTimeUTC = data.endTime
+      ? new Date(`1970-01-01T${data.endTime}:00Z`)
+      : null;
+
     const exception = await prisma.schedule_exceptions.create({
       data: {
         doctor_id: data.doctorId,
         date: data.date,
-        start_time: data.startTime ? new Date(data.startTime) : null,
-        end_time: data.endTime ? new Date(data.endTime) : null,
+        start_time: startTimeUTC,
+        end_time: endTimeUTC,
         is_full_day: data.isFullDay,
         reason: data.reason,
       },

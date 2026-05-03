@@ -32,3 +32,10 @@ export type SchedulingLocation = {
   phone?: string;
   email?: string;
 };
+
+export type TimeSlotStatus = "available" | "booked" | "past";
+
+export type TimeSlotInfo = {
+  time: string; // HH:mm
+  status: TimeSlotStatus;
+};

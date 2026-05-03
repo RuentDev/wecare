@@ -6,9 +6,12 @@ import { Calendar as CalendarIcon, Clock, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { getAvailableTimeSlots } from "@/lib/actions/scheduling";
 import { cn } from "@/lib/utils";
+import type { TimeSlotInfo } from "@/lib/types/scheduling";
 
 interface DateTimeStepProps {
   selectedDoctorId: string;
+  selectedLocationId: string;
+  selectedServiceId: string;
   selectedDate: Date;
   selectedTime: string;
   onDateSelect: (date: Date) => void;
@@ -25,12 +28,14 @@ function formatTimeLabel(value: string): string {
 
 export function DateTimeStep({
   selectedDoctorId,
+  selectedLocationId,
+  selectedServiceId,
   selectedDate,
   selectedTime,
   onDateSelect,
   onTimeSelect,
 }: DateTimeStepProps) {
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlotInfo[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState("");
 
@@ -48,7 +53,12 @@ export function DateTimeStep({
     setIsLoadingSlots(true);
     setSlotsError("");
 
-    getAvailableTimeSlots(selectedDoctorId, selectedDate).then((result) => {
+    getAvailableTimeSlots(
+      selectedDoctorId,
+      selectedDate,
+      selectedLocationId,
+      selectedServiceId,
+    ).then((result) => {
       if (cancelled) return;
       if (result.success && result.data) {
         setAvailableSlots(result.data);
@@ -62,13 +72,15 @@ export function DateTimeStep({
     return () => {
       cancelled = true;
     };
-  }, [selectedDoctorId, selectedDate]);
+  }, [selectedDoctorId, selectedDate, selectedLocationId, selectedServiceId]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-4">
         <Clock className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-bold text-neutral-dark">Pick Date &amp; Time</h3>
+        <h3 className="text-xl font-bold text-neutral-dark">
+          Pick Date &amp; Time
+        </h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -88,10 +100,10 @@ export function DateTimeStep({
               caption_label: "text-2xl font-black text-neutral-dark",
               nav: "flex items-center gap-3",
               button_previous: cn(
-                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm"
+                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm",
               ),
               button_next: cn(
-                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm"
+                "h-10 w-10 bg-white p-0 opacity-50 hover:opacity-100 transition-all rounded-full border border-neutral-gray flex items-center justify-center hover:bg-neutral-light shadow-sm",
               ),
               month_grid: "w-full border-collapse",
               weekdays: "flex w-full justify-between mb-6",
@@ -99,7 +111,7 @@ export function DateTimeStep({
                 "text-neutral-gray w-full font-bold text-[11px] uppercase tracking-[0.2em] text-center",
               week: "flex w-full mt-4 justify-between",
               day: cn(
-                "h-12 w-12 p-0 font-bold aria-selected:opacity-100 rounded-xl transition-all hover:bg-secondary hover:text-white flex items-center justify-center text-base"
+                "h-12 w-12 p-0 font-bold aria-selected:opacity-100 rounded-xl transition-all hover:bg-secondary hover:text-white flex items-center justify-center text-base",
               ),
               day_button: "w-full h-full flex items-center justify-center",
               selected:
@@ -116,11 +128,16 @@ export function DateTimeStep({
         <Card className="p-6 rounded-[24px] border-neutral-gray bg-white shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <Clock className="w-4 h-4 text-primary" />
-            <h4 className="text-lg font-bold text-neutral-dark">Available Slots</h4>
+            <h4 className="text-lg font-bold text-neutral-dark">
+              Available Slots
+            </h4>
           </div>
 
           {!selectedDate ? (
-            <EmptyPlaceholder icon={<CalendarIcon />} message="Please select a date first" />
+            <EmptyPlaceholder
+              icon={<CalendarIcon />}
+              message="Please select a date first"
+            />
           ) : isLoadingSlots ? (
             <div className="h-[280px] flex flex-col items-center justify-center gap-3 text-neutral-gray">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -129,26 +146,44 @@ export function DateTimeStep({
           ) : slotsError ? (
             <EmptyPlaceholder icon={<Clock />} message={slotsError} />
           ) : availableSlots.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+            <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-full pr-2 custom-scrollbar">
               {availableSlots.map((slot) => {
-                const isSelected = selectedTime === slot;
+                const isSelected = selectedTime === slot.time;
+                const isBooked = slot.status === "booked";
+                const isPast = slot.status === "past";
+                const isDisabled = isBooked || isPast;
+
                 return (
                   <button
-                    key={slot}
-                    onClick={() => onTimeSelect(slot)}
-                    className={`p-3 rounded-xl border-2 transition-all text-xs font-bold ${
+                    key={slot.time}
+                    onClick={() => !isDisabled && onTimeSelect(slot.time)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "p-3 rounded-xl border-2 transition-all text-xs font-bold relative overflow-hidden",
                       isSelected
                         ? "border-primary bg-primary text-white shadow-md"
-                        : "border-neutral-gray bg-white text-neutral-dark hover:border-secondary hover:text-secondary"
-                    }`}
+                        : isDisabled
+                          ? "border-neutral-gray/10 bg-neutral-light/30 text-neutral-gray/40 cursor-not-allowed"
+                          : "border-neutral-gray bg-white text-neutral-dark hover:border-secondary hover:text-secondary",
+                    )}
                   >
-                    {formatTimeLabel(slot)}
+                    <span className={cn(isBooked && "opacity-40")}>
+                      {formatTimeLabel(slot.time)}
+                    </span>
+                    {isBooked && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-red-50/10 text-[8px] uppercase tracking-tighter text-red-500 font-black rotate-[-15deg] pointer-events-none">
+                        Occupied
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           ) : (
-            <EmptyPlaceholder icon={<Clock />} message="No slots available for this day" />
+            <EmptyPlaceholder
+              icon={<Clock />}
+              message="No slots available for this day"
+            />
           )}
         </Card>
       </div>

@@ -26,13 +26,8 @@ export default async function DashboardLayout({
       <DashboardSidebar userRole={user.role} />
       <SidebarInset className="bg-slate-50/50">
         <DashboardTopBar user={user} />
-        <main className="p-4 md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
-            {children}
-          </div>
-        </main>
+        <main className="p-5">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
-

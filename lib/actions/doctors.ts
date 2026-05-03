@@ -199,7 +199,7 @@ export async function getDoctorScheduleData(doctorId: string) {
     const now = new Date();
     const startOfToday = new Date(now.setHours(0, 0, 0, 0));
 
-    const [todayAppointments, upcomingAppointments, timeSlots] = await Promise.all([
+    const [todayAppointments, upcomingAppointments, timeSlots, activeLocations] = await Promise.all([
       prisma.appointments.findMany({
         where: {
           doctor_id: doctorId,
@@ -248,7 +248,12 @@ export async function getDoctorScheduleData(doctorId: string) {
       }),
       prisma.time_slots.findMany({
         where: { doctor_id: doctorId },
+        include: { locations: true },
         orderBy: { day_of_week: "asc" },
+      }),
+      prisma.locations.findMany({
+        where: { is_active: true },
+        orderBy: { name: "asc" },
       }),
     ]);
 
@@ -256,6 +261,7 @@ export async function getDoctorScheduleData(doctorId: string) {
       todayAppointments,
       upcomingAppointments,
       timeSlots,
+      activeLocations,
     });
   } catch (error) {
     console.error("[GET_DOCTOR_SCHEDULE_DATA]", error);
