@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma-db";
 import { revalidatePath } from "next/cache";
+import { serializePrisma } from "@/lib/utils";
 
 export async function getAppointments() {
   try {
@@ -34,7 +35,7 @@ export async function getAppointments() {
       },
     });
 
-    return appointments;
+    return serializePrisma(appointments);
   } catch (error) {
     console.error("[GET_APPOINTMENTS]", error);
     return [];
@@ -78,7 +79,7 @@ export async function getPatientAppointments(patientId: string) {
       },
     });
 
-    return { success: true, data: appointments };
+    return { success: true, data: serializePrisma(appointments) };
   } catch (error) {
     console.error("[GET_PATIENT_APPOINTMENTS]", error);
     return { success: false, error: "Failed to fetch appointments" };
