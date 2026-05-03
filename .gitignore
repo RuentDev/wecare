@@ -11,6 +11,10 @@ next.user-config.*
 .env*.local
 .env
 
+# AI AGENTS
+.agents/
+.claude/
+
 # Common ignores
 node_modules
 .next/
