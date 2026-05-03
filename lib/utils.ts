@@ -38,3 +38,17 @@ export function serializePrisma<T>(data: T): T {
 
   return data;
 }
+
+export function formatCurrency(amount: number, currency: string = "PHP") {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: currency,
+  }).format(amount);
+}
+
+export function formatDate(date: Date | string) {
+  return new Intl.DateTimeFormat("en-PH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(date));
+}
