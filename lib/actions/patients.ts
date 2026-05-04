@@ -12,16 +12,45 @@ type GetPatientsStatsArgs = {
 };
 
 export async function getPatients(args?: GetPatientsArgs) {
+  console.log(args);
   try {
+    let doctorId = args?.doctorId;
+    
+    // If doctorId is provided, we need to find the actual doctor profile ID
+    // as appointments and medical_records link to the doctor_id (UUID from doctors table)
+    if (doctorId) {
+      const doctorProfile = await prisma.doctors.findFirst({
+        where: {
+          OR: [
+            { id: doctorId },
+            { user_id: doctorId }
+          ]
+        },
+        select: { id: true }
+      });
+      doctorId = doctorProfile?.id;
+    }
+
     const patients = await prisma.users.findMany({
       where: {
         role: "patient",
-        ...(args?.doctorId && {
-          doctors: {
-            id: {
-              equals: args?.doctorId,
+        ...(doctorId && {
+          OR: [
+            {
+              appointments: {
+                some: {
+                  doctor_id: doctorId,
+                },
+              },
             },
-          },
+            {
+              medical_records: {
+                some: {
+                  doctor_id: doctorId,
+                },
+              },
+            },
+          ],
         }),
       },
       select: {
@@ -69,17 +98,30 @@ export async function getPatientStats(args?: GetPatientsStatsArgs) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    let doctorId = args?.doctorId;
+    if (doctorId) {
+      const doctorProfile = await prisma.doctors.findFirst({
+        where: {
+          OR: [
+            { id: doctorId },
+            { user_id: doctorId }
+          ]
+        },
+        select: { id: true }
+      });
+      doctorId = doctorProfile?.id;
+    }
+
     const [totalPatients, newPatientsThisMonth, totalAppointments] =
       await Promise.all([
         prisma.users.count({
           where: {
             role: "patient",
-            ...(args?.doctorId && {
-              doctors: {
-                id: {
-                  equals: args?.doctorId,
-                },
-              },
+            ...(doctorId && {
+              OR: [
+                { appointments: { some: { doctor_id: doctorId } } },
+                { medical_records: { some: { doctor_id: doctorId } } },
+              ],
             }),
           },
         }),
@@ -87,16 +129,19 @@ export async function getPatientStats(args?: GetPatientsStatsArgs) {
           where: {
             role: "patient",
             created_at: { gte: startOfMonth },
-            ...(args?.doctorId && {
-              doctors: {
-                id: {
-                  equals: args?.doctorId,
-                },
-              },
+            ...(doctorId && {
+              OR: [
+                { appointments: { some: { doctor_id: doctorId } } },
+                { medical_records: { some: { doctor_id: doctorId } } },
+              ],
             }),
           },
         }),
-        prisma.appointments.count(),
+        prisma.appointments.count({
+          where: {
+            ...(doctorId && { doctor_id: doctorId }),
+          },
+        }),
       ]);
 
     return {
@@ -240,7 +285,10 @@ export async function getVitalsHistory(patientId: string) {
   }
 }
 
-export async function updatePatientAvatar(patientId: string, avatarUrl: string) {
+export async function updatePatientAvatar(
+  patientId: string,
+  avatarUrl: string,
+) {
   try {
     await prisma.users.update({
       where: { id: patientId },

@@ -62,6 +62,10 @@ export function PatientQuickView({ patientId, isOpen, onClose }: PatientQuickVie
       <SheetContent className="sm:max-w-md border-none glassmorphism shadow-2xl p-0">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Loading Patient Details</SheetTitle>
+              <SheetDescription>Please wait while we fetch the patient records from the database.</SheetDescription>
+            </SheetHeader>
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground font-medium">Fetching details...</p>
           </div>
@@ -194,7 +198,13 @@ export function PatientQuickView({ patientId, isOpen, onClose }: PatientQuickVie
             </div>
           </ScrollArea>
         ) : (
-          <div className="p-6 text-center text-muted-foreground">Patient not found</div>
+          <div className="p-6 text-center text-muted-foreground">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Patient Not Found</SheetTitle>
+              <SheetDescription>The requested patient record could not be found in the system.</SheetDescription>
+            </SheetHeader>
+            Patient not found
+          </div>
         )}
       </SheetContent>
     </Sheet>

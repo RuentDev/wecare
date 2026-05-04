@@ -8,9 +8,10 @@ import { Suspense } from "react";
 
 const PatientsPage = async () => {
   const user = await getCurrentUser();
-  const [patients, stats] = await Promise.all([
-    getPatients({ doctorId: user?.id }),
-    getPatientStats({ doctorId: user?.id }),
+  const isDoctor = user?.role === "doctor";
+  const [stats, patients] = await Promise.all([
+    getPatientStats({ doctorId: isDoctor ? user?.id : undefined }),
+    getPatients({ doctorId: isDoctor ? user?.id : undefined }),
   ]);
 
   return (

@@ -11,43 +11,61 @@ import {
   Scale, 
   Ruler, 
   Thermometer,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase,
+  Activity
 } from "lucide-react";
 import { format, differenceInYears } from "date-fns";
+import { ImageUploadDialog } from "./image-upload-dialog";
+import { useState } from "react";
 
 interface PatientEMRHeaderProps {
   patient: any;
   vitals: any;
 }
 
-export function PatientEMRHeader({ patient, vitals }: PatientEMRHeaderProps) {
+export function PatientEMRHeader({ patient: initialPatient, vitals }: PatientEMRHeaderProps) {
+  const [patient, setPatient] = useState(initialPatient);
   const age = patient.date_of_birth ? differenceInYears(new Date(), new Date(patient.date_of_birth)) : "N/A";
+
+  const handleAvatarUpdate = (newUrl: string) => {
+    setPatient({ ...patient, avatar_url: newUrl });
+  };
 
   return (
     <Card className="border-none shadow-xl bg-white overflow-hidden rounded-[32px]">
       <CardContent className="p-0">
         <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-8 md:p-12 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="flex items-center gap-8">
-            <div className="relative">
-              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white/10 rounded-[40px]">
-                <AvatarImage src={patient.avatar_url || ""} />
-                <AvatarFallback className="bg-primary/20 text-white font-black text-3xl">
-                  {patient.first_name?.[0]}{patient.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-2 -right-2 bg-emerald-500 p-2 rounded-2xl border-4 border-slate-900">
-                <ShieldCheck className="w-5 h-5 text-white" />
+            <ImageUploadDialog patientId={patient.id} onSuccess={handleAvatarUpdate}>
+              <div className="relative group cursor-pointer">
+                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white/10 rounded-[40px] transition-all group-hover:border-primary/50 group-hover:scale-105">
+                  <AvatarImage src={patient.avatar_url || ""} className="object-cover" />
+                  <AvatarFallback className="bg-primary/20 text-white font-black text-3xl">
+                    {patient.first_name?.[0]}{patient.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 p-2 rounded-2xl border-4 border-slate-900 shadow-lg group-hover:bg-primary transition-colors">
+                  <Activity className="w-5 h-5 text-white" />
+                </div>
+                <div className="absolute inset-0 bg-black/40 rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white">Change Photo</p>
+                </div>
               </div>
-            </div>
+            </ImageUploadDialog>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl md:text-4xl font-black">{patient.first_name} {patient.last_name}</h1>
                 {patient.is_guest && <Badge className="bg-white/10 text-white border-white/20 font-black tracking-widest uppercase text-[10px]">Guest Patient</Badge>}
+                {patient.blood_type && <Badge className="bg-red-500 text-white border-none font-black text-xs px-3 py-1 rounded-lg">Type {patient.blood_type}</Badge>}
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-400 font-bold text-sm">
                 <span className="flex items-center gap-2 capitalize"><Droplets className="w-4 h-4 text-primary" /> {patient.gender?.toLowerCase() || "Not specified"}</span>
                 <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> {age} years old</span>
+                <span className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-primary" /> {patient.occupation || "Unemployed"}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-400 font-bold text-sm">
                 <span className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> {patient.phone || "No phone"}</span>
                 <span className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> {patient.email}</span>
               </div>

@@ -18,7 +18,7 @@ export default async function DashboardLayout({
   // Ensure role-based access - only doctors and patients should be here
   // Admin/Staff should generally use the /admin portal, but we'll allow them here for testing
   if (user.role === "admin" || user.role === "staff") {
-    // Optionally redirect admins to /admin, but let's keep it flexible for now
+    redirect("/admin");
   }
 
   return (

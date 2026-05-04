@@ -274,11 +274,15 @@ export async function getDoctorScheduleData(doctorId: string) {
  */
 export async function getDoctorPatientEMR(doctorId: string, patientId: string) {
   try {
-    const [patient, history, vitals] = await Promise.all([
+    const [patient, history, vitals, insuranceData] = await Promise.all([
       prisma.users.findUnique({
         where: { id: patientId },
         include: {
           _count: { select: { appointments: true } },
+          appointments: {
+            orderBy: { appointment_date: "desc" },
+            take: 1,
+          }
         },
       }),
       prisma.medical_records.findMany({
@@ -296,13 +300,21 @@ export async function getDoctorPatientEMR(doctorId: string, patientId: string) {
         },
         orderBy: { created_at: "desc" },
       }),
-      prisma.vitals.findFirst({
+      prisma.vitals.findMany({
         where: { patient_id: patientId },
         orderBy: { created_at: "desc" },
       }),
+      prisma.insurances.findFirst({
+        where: { patient_id: patientId },
+      }),
     ]);
 
-    return serializePrisma({ patient, history, vitals });
+    return serializePrisma({ 
+      patient, 
+      history, 
+      vitals, 
+      insurance: insuranceData 
+    });
   } catch (error) {
     console.error("[GET_DOCTOR_PATIENT_EMR]", error);
     throw new Error("Failed to fetch patient EMR");

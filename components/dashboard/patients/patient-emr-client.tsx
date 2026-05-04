@@ -6,12 +6,19 @@ import { PatientEMRHeader } from "./patient-emr-header";
 import { MedicalHistoryTimeline } from "./medical-history-timeline";
 import { TreatmentLogEditor } from "./treatment-log-editor";
 import { PrescriptionManager } from "./prescription-manager";
-import { History, FileText, Pill, Activity, ArrowLeft } from "lucide-react";
+import { InsuranceDetails } from "./insurance-details";
+import { VitalsHistoryTable } from "./vitals-history-table";
+import { History, FileText, Pill, Activity, ArrowLeft, Shield, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 interface PatientEMRClientProps {
-  data: any;
+  data: {
+    patient: any;
+    history: any[];
+    vitals: any[];
+    insurance: any;
+  };
   doctorId: string;
 }
 
@@ -28,20 +35,26 @@ export function PatientEMRClient({ data, doctorId }: PatientEMRClientProps) {
         </Button>
       </div>
 
-      <PatientEMRHeader patient={data.patient} vitals={data.vitals} />
+      <PatientEMRHeader patient={data.patient} vitals={data.vitals[0]} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white p-1 rounded-2xl border border-slate-100 shadow-sm h-14">
-          <TabsTrigger value="overview" className="rounded-xl px-8 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2">
-            <Activity className="w-4 h-4" /> Clinical Overview
+        <TabsList className="bg-white p-1 rounded-2xl border border-slate-100 shadow-sm h-14 overflow-x-auto flex-nowrap justify-start md:justify-center">
+          <TabsTrigger value="overview" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
+            <Activity className="w-4 h-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-xl px-8 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2">
+          <TabsTrigger value="vitals" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
+            <LineChart className="w-4 h-4" /> Vitals History
+          </TabsTrigger>
+          <TabsTrigger value="insurance" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
+            <Shield className="w-4 h-4" /> Insurance
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
             <History className="w-4 h-4" /> Medical History
           </TabsTrigger>
-          <TabsTrigger value="notes" className="rounded-xl px-8 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2">
+          <TabsTrigger value="notes" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
             <FileText className="w-4 h-4" /> Treatment Logs
           </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="rounded-xl px-8 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2">
+          <TabsTrigger value="prescriptions" className="rounded-xl px-6 h-12 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all gap-2 flex-shrink-0">
             <Pill className="w-4 h-4" /> Prescriptions
           </TabsTrigger>
         </TabsList>
@@ -53,6 +66,14 @@ export function PatientEMRClient({ data, doctorId }: PatientEMRClientProps) {
                 <PrescriptionManager history={data.history} compact />
               </div>
            </div>
+        </TabsContent>
+
+        <TabsContent value="vitals" className="outline-none">
+          <VitalsHistoryTable vitals={data.vitals} />
+        </TabsContent>
+
+        <TabsContent value="insurance" className="outline-none">
+          <InsuranceDetails insurance={data.insurance} />
         </TabsContent>
 
         <TabsContent value="history" className="outline-none">
