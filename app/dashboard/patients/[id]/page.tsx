@@ -10,7 +10,6 @@ interface PatientEMRPageProps {
 export default async function PatientEMRPage({ params }: PatientEMRPageProps) {
   const { id } = await params;
   const user = await getCurrentUser();
-  
   if (!user || user.role !== "doctor") redirect("/dashboard");
 
   const doctor = await getDoctorByUserId(user.id);

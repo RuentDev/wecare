@@ -49,6 +49,7 @@ export async function updateAppointmentStatus(id: string, status: any) {
       data: { status },
     });
     revalidatePath("/admin/appointments");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("[UPDATE_APPOINTMENT_STATUS]", error);

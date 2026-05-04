@@ -470,3 +470,21 @@ export async function createDoctor(data: any) {
     return { success: false, error: error.message || "Failed to create doctor profile" };
   }
 }
+
+/**
+ * Updates a doctor's shift status.
+ */
+export async function updateDoctorShiftStatus(doctorId: string, isOnShift: boolean) {
+  try {
+    const updatedDoctor = await prisma.doctors.update({
+      where: { id: doctorId },
+      data: { is_on_shift: isOnShift },
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true, data: serializePrisma(updatedDoctor) };
+  } catch (error) {
+    console.error("[UPDATE_DOCTOR_SHIFT_STATUS]", error);
+    return { success: false, error: "Failed to update shift status" };
+  }
+}
