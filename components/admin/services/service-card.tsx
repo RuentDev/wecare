@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Coins, Edit, Trash2, Users } from "lucide-react";
 import type { AdminService } from "@/lib/types/services";
+import { cn } from "@/lib/utils";
 
 interface ServiceCardProps {
   service: AdminService;
@@ -15,11 +16,10 @@ interface ServiceCardProps {
 export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
   return (
     <Card
-      className={`group relative overflow-hidden rounded-xl border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
-        service.isActive
-          ? "bg-card border-border"
-          : "bg-muted/40 border-border/60 opacity-75"
-      }`}
+      className={cn(
+        "group relative overflow-hidden rounded-xl border transition-all duration-200 hover:shadow-md gap-0 p-0 cursor-pointer",
+        service.isActive ? "bg-card border-border" : "bg-muted/40 border-border/60 opacity-75"
+      )}
     >
       <CardContent className="p-5">
         {/* Header: Name + Status Badge */}
@@ -91,7 +91,7 @@ export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
         {service.category && (
           <div className="mb-4">
             <Badge variant="secondary" className="text-xs font-normal">
-              {service.category}
+              {service.category.name}
             </Badge>
           </div>
         )}

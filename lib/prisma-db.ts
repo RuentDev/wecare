@@ -5,7 +5,7 @@ import ws from "ws";
 
 neonConfig.webSocketConstructor = ws;
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as { prisma_v2: PrismaClient };
 
 const connectionString = process.env.DATABASE_URL!;
 
@@ -13,7 +13,7 @@ const poolConfig = { connectionString };
 const adapter = new PrismaNeon(poolConfig);
 
 export const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma_v2 ||
   new PrismaClient({
     adapter,
     log:
@@ -22,7 +22,7 @@ export const prisma =
         : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma_v2 = prisma;
 
 export default prisma;
 

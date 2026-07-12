@@ -25,26 +25,31 @@ import {
   Package,
   CheckCircle2,
   TrendingUp,
+  Upload,
 } from "lucide-react";
 
 import { ServiceCard } from "@/components/admin/services/service-card";
 import { ServiceFormDialog } from "@/components/admin/services/service-form-dialog";
 import { DeleteServiceDialog } from "@/components/admin/services/delete-service-dialog";
+import { ImportServicesDialog } from "@/components/admin/services/import-services-dialog";
 import type { AdminService, ServiceStats } from "@/lib/types/services";
 
 interface ServicesPageClientProps {
   services: AdminService[];
+  categories: { id: string; name: string }[];
   stats: ServiceStats;
 }
 
 export function ServicesPageClient({
   services,
+  categories,
   stats,
 }: ServicesPageClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Dialog state
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingService, setEditingService] = useState<AdminService | null>(
     null,
   );
@@ -61,7 +66,7 @@ export function ServicesPageClient({
       (s) =>
         s.name.toLowerCase().includes(query) ||
         s.description?.toLowerCase().includes(query) ||
-        s.category?.toLowerCase().includes(query),
+        s.category?.name.toLowerCase().includes(query),
     );
   }, [services, searchQuery]);
 
@@ -69,7 +74,7 @@ export function ServicesPageClient({
   const groupedServices = useMemo(() => {
     const groups: Record<string, AdminService[]> = {};
     for (const service of filteredServices) {
-      const key = service.category || "Uncategorized";
+      const key = service.category?.name || "Uncategorized";
       if (!groups[key]) groups[key] = [];
       groups[key].push(service);
     }
@@ -109,14 +114,25 @@ export function ServicesPageClient({
             Manage your clinic&apos;s services and pricing
           </p>
         </div>
-        <Button
-          id="add-service-button"
-          onClick={handleAddNew}
-          className="gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add Service
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            id="import-service-button"
+            variant="outline"
+            onClick={() => setImportOpen(true)}
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
+          <Button
+            id="add-service-button"
+            onClick={handleAddNew}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Service
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -277,6 +293,7 @@ export function ServicesPageClient({
           if (!open) setEditingService(null);
         }}
         service={editingService}
+        categories={categories}
       />
 
       <DeleteServiceDialog
@@ -286,6 +303,11 @@ export function ServicesPageClient({
           if (!open) setDeletingService(null);
         }}
         service={deletingService}
+      />
+
+      <ImportServicesDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
       />
     </div>
   );

@@ -23,34 +23,50 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { createService, updateService } from "@/lib/actions/services";
-import { service_category } from "@/lib/generated/prisma";
 import type { AdminService } from "@/lib/types/services";
+
+import { PlusCircle } from "lucide-react";
 
 interface ServiceFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** If provided, the dialog is in "edit" mode. Otherwise "create" mode. */
   service?: AdminService | null;
+  categories: { id: string; name: string }[];
 }
 
 export function ServiceFormDialog({
   open,
   onOpenChange,
   service,
+  categories,
 }: ServiceFormDialogProps) {
   const isEditing = !!service;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isNewCategory, setIsNewCategory] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const categoryValue = formData.get("category_id") as string;
+
+    let category_id = null;
+    let new_category_name = undefined;
+
+    if (isNewCategory) {
+      new_category_name = formData.get("new_category_name") as string;
+    } else {
+      category_id = categoryValue || null;
+    }
+
     const input = {
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || null,
-      category: (formData.get("category") as service_category) || null,
+      category_id,
+      new_category_name,
       duration_minutes: Number(formData.get("duration_minutes")) || 30,
       price: Number(formData.get("price")) || 0,
       is_active: formData.get("is_active") === "on",
@@ -63,6 +79,7 @@ export function ServiceFormDialog({
 
       if (result.success) {
         onOpenChange(false);
+        setIsNewCategory(false);
       } else {
         setError(result.error ?? "Something went wrong");
       }
@@ -70,7 +87,10 @@ export function ServiceFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => {
+      onOpenChange(val);
+      if (!val) setIsNewCategory(false);
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -110,19 +130,41 @@ export function ServiceFormDialog({
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="service-category">Category</Label>
-            <Select name="category" defaultValue={service?.category ?? "General"}>
-              <SelectTrigger id="service-category" className="w-full">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(service_category).map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="service-category">Category</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => setIsNewCategory(!isNewCategory)}
+              >
+                {isNewCategory ? "Select Existing" : <><PlusCircle className="w-3 h-3 mr-1" /> New Category</>}
+              </Button>
+            </div>
+
+            {isNewCategory ? (
+              <Input
+                id="new-category-name"
+                name="new_category_name"
+                required
+                placeholder="e.g. Cardiology"
+                autoFocus
+              />
+            ) : (
+              <Select name="category_id" defaultValue={service?.category?.id ?? ""}>
+                <SelectTrigger id="service-category" className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Duration + Price (side by side) */}
