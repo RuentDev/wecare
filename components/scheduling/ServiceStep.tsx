@@ -43,18 +43,22 @@ export function ServiceStep({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => <ServiceCardSkeleton key={i} />)
+          Array.from({ length: 6 }).map((_, i) => (
+            <ServiceCardSkeleton key={i} />
+          ))
         ) : services.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-neutral-gray bg-neutral-light/50 rounded-[24px] border-2 border-dashed border-neutral-gray/30">
             <Briefcase className="w-16 h-16 mb-4 opacity-20" />
-            <p className="text-base font-medium">No services available at this time</p>
+            <p className="text-base font-medium">
+              No services available at this time
+            </p>
           </div>
         ) : (
           services.map((service) => (
             <button
               key={service.id}
               onClick={() => onSelect(service.id)}
-              className={`group p-8 rounded-[20px] border-2 transition-all text-left flex flex-col h-full hover:-translate-y-1 ${
+              className={` cursor-pointer group p-8 rounded-[20px] border-2 transition-all text-left flex flex-col h-full hover:-translate-y-1 ${
                 selectedServiceId === service.id
                   ? "border-primary bg-blue-50 shadow-lg ring-2 ring-primary/20"
                   : "border-neutral-gray bg-white hover:border-secondary hover:shadow-md"
@@ -82,7 +86,9 @@ export function ServiceStep({
               </h4>
 
               {service.description && (
-                <p className="text-sm text-neutral-gray grow mb-4">{service.description}</p>
+                <p className="text-sm text-neutral-gray grow mb-4">
+                  {service.description}
+                </p>
               )}
 
               <div className="pt-6 border-t border-neutral-gray/20 flex items-center justify-between">
@@ -90,12 +96,12 @@ export function ServiceStep({
                   <Clock className="w-4 h-4" />
                   <span>{service.durationMinutes} mins</span>
                 </div>
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <PhilippinePeso className="w-4 h-4 text-secondary" />
                   <span className="font-black text-secondary text-lg">
                     {service.price.toFixed(0)}
                   </span>
-                </div>
+                </div> */}
               </div>
             </button>
           ))

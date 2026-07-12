@@ -26,7 +26,11 @@ import { DateTimeStep } from "../scheduling/DateTimeStep";
 import { PatientStep } from "../scheduling/PatientStep";
 import { useToast } from "@/hooks/use-toast";
 import { useAsyncState } from "@/hooks/use-async-state";
-import type { SchedulingDoctor, SchedulingService, SchedulingLocation } from "@/lib/types/scheduling";
+import type {
+  SchedulingDoctor,
+  SchedulingService,
+  SchedulingLocation,
+} from "@/lib/types/scheduling";
 
 // ---------------------------------------------------------------------------
 // State shape & reducer
@@ -74,7 +78,7 @@ type BookingAction =
 
 function bookingReducer(
   state: BookingState,
-  action: BookingAction
+  action: BookingAction,
 ): BookingState {
   switch (action.type) {
     case "SET_STEP":
@@ -158,7 +162,9 @@ const Scheduling = ({ date }: Props) => {
     locations.load(() => getPublicLocations().then((r) => r.data ?? []));
     doctors.load(() => getPublicDoctors().then((r) => r.data ?? []));
     services.load(() => getPublicServices().then((r) => r.data ?? []));
-    defaultLocationId.load(() => getDefaultLocationId().then((r) => r.data ?? ""));
+    defaultLocationId.load(() =>
+      getDefaultLocationId().then((r) => r.data ?? ""),
+    );
 
     // If no date was provided, initialize with current date on client side only
     if (!date) {
@@ -183,10 +189,11 @@ const Scheduling = ({ date }: Props) => {
 
   // Derived: find the currently selected doctor/service objects
   const selectedDoctor = doctors.data.find(
-    (d) => d.id === state.selectedDoctorId
+    (d) => d.id === state.selectedDoctorId,
   );
+
   const selectedService = services.data.find(
-    (s) => s.id === state.selectedServiceId
+    (s) => s.id === state.selectedServiceId,
   );
 
   // Navigation
@@ -194,9 +201,11 @@ const Scheduling = ({ date }: Props) => {
     dispatch({ type: "SET_STEP", step });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
   const handleNext = () => {
     if (state.currentStep < TOTAL_STEPS) goToStep(state.currentStep + 1);
   };
+
   const handleBack = () => {
     if (state.currentStep > 1) goToStep(state.currentStep - 1);
   };
@@ -237,8 +246,7 @@ const Scheduling = ({ date }: Props) => {
 
       const result = await createGuestBooking({
         firstName: state.patientName.split(" ")[0],
-        lastName:
-          state.patientName.split(" ").slice(1).join(" ") || "Guest",
+        lastName: state.patientName.split(" ").slice(1).join(" ") || "Guest",
         email: state.patientEmail,
         phone: state.patientPhone,
         reason: state.patientReason,
@@ -346,7 +354,10 @@ const Scheduling = ({ date }: Props) => {
           </p>
         </div>
 
-        <StepIndicator currentStep={state.currentStep} totalSteps={TOTAL_STEPS} />
+        <StepIndicator
+          currentStep={state.currentStep}
+          totalSteps={TOTAL_STEPS}
+        />
 
         {/* Error banner */}
         {state.bookingError && (
@@ -385,7 +396,7 @@ const Scheduling = ({ date }: Props) => {
               doctors={doctors.data.filter((doc) =>
                 state.selectedServiceId
                   ? doc.serviceIds.includes(state.selectedServiceId)
-                  : true
+                  : true,
               )}
               selectedDoctorId={state.selectedDoctorId}
               isLoading={doctors.loading}
@@ -402,12 +413,8 @@ const Scheduling = ({ date }: Props) => {
               selectedServiceId={state.selectedServiceId}
               selectedDate={state.selectedDate}
               selectedTime={state.selectedTime}
-              onDateSelect={(date) =>
-                dispatch({ type: "SELECT_DATE", date })
-              }
-              onTimeSelect={(time) =>
-                dispatch({ type: "SELECT_TIME", time })
-              }
+              onDateSelect={(date) => dispatch({ type: "SELECT_DATE", date })}
+              onTimeSelect={(time) => dispatch({ type: "SELECT_TIME", time })}
             />
           )}
           {state.currentStep === 5 && (
@@ -486,14 +493,14 @@ const Scheduling = ({ date }: Props) => {
               </div>
               <div className="hidden md:flex gap-1">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 rounded-full transition-all duration-500 ${
-                        mounted && i + 1 <= state.currentStep
-                          ? "w-6 bg-primary"
-                          : "w-2 bg-neutral-gray/20"
-                      }`}
-                    />
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all duration-500 ${
+                      mounted && i + 1 <= state.currentStep
+                        ? "w-6 bg-primary"
+                        : "w-2 bg-neutral-gray/20"
+                    }`}
+                  />
                 ))}
               </div>
             </div>
