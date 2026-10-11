@@ -92,7 +92,7 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     label: "Services",
     href: "/dashboard/services",
     icon: Settings,
-    roles: ["doctor"],
+    roles: ["admin"],
   },
   {
     label: "Profile",
