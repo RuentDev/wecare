@@ -390,3 +390,110 @@ export async function sendPasswordResetLink(
   const { subject, html, text } = passwordResetEmail(data);
   return sendEmail({ to: email, subject, html, text });
 }
+
+export function doctorUnavailableEmail(data: {
+  patientName: string;
+  doctorName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  serviceName: string;
+  reason?: string;
+}) {
+  const subject = `Notice: Doctor Schedule Change for Appointment on ${data.appointmentDate}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 26px;">WeCare Clinic</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Practitioner Availability Notice</p>
+  </div>
+  
+  <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
+    <h2 style="color: #be123c; margin-top: 0;">Notice of Doctor Unavailability</h2>
+    
+    <p>Dear ${data.patientName},</p>
+    
+    <p>We are writing to inform you that <strong>${data.doctorName}</strong> is unavailable on <strong>${data.appointmentDate}</strong> due to scheduled clinical leave.</p>
+    
+    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #be123c; margin: 20px 0;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #666; width: 140px;">Original Date:</td>
+          <td style="padding: 8px 0; font-weight: 600;">${data.appointmentDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Time:</td>
+          <td style="padding: 8px 0; font-weight: 600;">${data.appointmentTime}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Service:</td>
+          <td style="padding: 8px 0; font-weight: 600;">${data.serviceName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Practitioner:</td>
+          <td style="padding: 8px 0; font-weight: 600;">${data.doctorName}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p>As a result, your scheduled appointment has been cancelled and our care team is ready to assist you in rescheduling at your convenience.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://wecare.clinic"}/booking" style="background: #18afd3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
+        Reschedule Appointment Online
+      </a>
+    </div>
+
+    <p>We sincerely apologize for any inconvenience this may cause to your schedule.</p>
+    
+    <p style="margin-bottom: 0;">Best regards,<br><strong>WeCare Clinic Care Team</strong></p>
+  </div>
+  
+  <div style="background: #1e293b; padding: 20px; text-align: center; border-radius: 0 0 10px 10px;">
+    <p style="color: #94a3b8; margin: 0; font-size: 14px;">
+      WeCare Clinic<br>
+      This is an automated operational notice.
+    </p>
+  </div>
+</body>
+</html>
+  `;
+
+  const text = `
+Important: Doctor Schedule Update for Your Visit on ${data.appointmentDate}
+
+Dear ${data.patientName},
+
+We are writing to inform you that ${data.doctorName} will not be available on ${data.appointmentDate} due to scheduled leave.
+
+Original Appointment Details:
+- Date: ${data.appointmentDate}
+- Time: ${data.appointmentTime}
+- Service: ${data.serviceName}
+- Practitioner: ${data.doctorName}
+
+Your appointment has been cancelled. Please visit our booking portal or contact clinic reception to reschedule at your convenience:
+${process.env.NEXT_PUBLIC_APP_URL || "https://wecare.clinic"}/booking
+
+We apologize for any inconvenience.
+
+Best regards,
+WeCare Clinic Care Team
+  `;
+
+  return { subject, html, text };
+}
+
+export async function sendDoctorUnavailableNotice(
+  email: string,
+  data: Parameters<typeof doctorUnavailableEmail>[0],
+) {
+  const { subject, html, text } = doctorUnavailableEmail(data);
+  return sendEmail({ to: email, subject, html, text });
+}

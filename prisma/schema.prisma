@@ -89,6 +89,7 @@ model doctors {
   medical_records     medical_records[]
   schedule_exceptions schedule_exceptions[]
   time_slots          time_slots[]
+  doctor_leave_requests doctor_leave_requests[]
 }
 
 model locations {
@@ -306,6 +307,7 @@ model users {
   sessions                sessions[]
   user_roles              user_roles[]
   vitals                  vitals[]
+  reviewed_leave_requests doctor_leave_requests[] @relation("LeaveReviewer")
 
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
@@ -503,6 +505,34 @@ enum invoice_status {
   PAID
   VOID
   PARTIAL
+}
+
+enum leave_request_status {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+model doctor_leave_requests {
+  id               String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctor_id        String               @db.Uuid
+  start_date       DateTime             @db.Date
+  end_date         DateTime             @db.Date
+  is_full_day      Boolean              @default(true)
+  start_time       DateTime?            @db.Time(6)
+  end_time         DateTime?            @db.Time(6)
+  reason           String               @db.VarChar(255)
+  status           leave_request_status @default(pending)
+  rejection_reason String?              @db.VarChar(255)
+  reviewed_by      String?              @db.Uuid
+  reviewed_at      DateTime?            @db.Timestamptz(6)
+  created_at       DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?            @default(now()) @db.Timestamptz(6)
+  doctors          doctors              @relation(fields: [doctor_id], references: [id], onDelete: Cascade)
+  reviewer         users?               @relation("LeaveReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
+
+  @@index([doctor_id, status], map: "idx_leave_requests_doc_status")
 }
 
 
