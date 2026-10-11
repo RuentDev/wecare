@@ -11,6 +11,7 @@ next.user-config.*
 .docs/
 GEMINI.md
 
+
 # Environment variables
 .env*.local
 .env*.example
