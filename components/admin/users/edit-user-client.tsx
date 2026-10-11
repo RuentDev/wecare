@@ -19,6 +19,7 @@ import {
   MapPin,
   CircleDollarSign,
   Award,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -37,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DoctorInfoForm } from "@/components/admin/doctors/doctor-info-form";
 import { DoctorServicesManager } from "@/components/admin/doctors/doctor-services-manager";
 import { DoctorAppointments } from "@/components/admin/doctors/doctor-appointments";
+import { DoctorScheduleManager } from "@/components/admin/doctors/doctor-schedule-manager";
 import { adminSetUserPassword } from "@/lib/actions/rbac";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -397,6 +399,18 @@ export function EditUserClient({
               Managed Services
             </TabsTrigger>
             <TabsTrigger
+              value="schedule"
+              className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2 rounded-xl text-sm font-semibold"
+            >
+              <Clock className="h-4 w-4" />
+              Clinic Schedule
+              {doctor?.time_slots && doctor.time_slots.length > 0 && (
+                <Badge className="ml-1 bg-white/20 text-white border-none text-[10px] h-4 px-1.5 min-w-4 flex justify-center">
+                  {doctor.time_slots.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
               value="appointments"
               className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2 rounded-xl text-sm font-semibold"
             >
@@ -445,6 +459,17 @@ export function EditUserClient({
                 doctorId={doctor.id}
                 allServices={allServices}
                 currentServices={doctor.doctor_services || []}
+              />
+            ) : null}
+          </TabsContent>
+
+          <TabsContent value="schedule">
+            {doctor?.id ? (
+              <DoctorScheduleManager
+                doctorId={doctor.id}
+                initialTimeSlots={doctor.time_slots || []}
+                initialExceptions={doctor.schedule_exceptions || []}
+                locations={locations}
               />
             ) : null}
           </TabsContent>

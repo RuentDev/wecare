@@ -231,6 +231,26 @@ export async function getUserById(
               appointment_date: "desc",
             },
           },
+          time_slots: {
+            include: {
+              locations: {
+                select: {
+                  id: true,
+                  name: true,
+                  city: true,
+                },
+              },
+            },
+            orderBy: [
+              { day_of_week: "asc" },
+              { start_time: "asc" },
+            ],
+          },
+          schedule_exceptions: {
+            orderBy: {
+              date: "asc",
+            },
+          },
         },
       },
     },
@@ -271,6 +291,18 @@ export async function getUserById(
             appointment_date: "desc",
           },
         },
+        time_slots: {
+          include: {
+            locations: {
+              select: {
+                id: true,
+                name: true,
+                city: true,
+              },
+            },
+          },
+        },
+        schedule_exceptions: true,
       },
     });
     user.doctors = newDoctor;

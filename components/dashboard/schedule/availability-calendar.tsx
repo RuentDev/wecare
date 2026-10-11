@@ -79,9 +79,15 @@ export function AvailabilityCalendar({
         const dateStr = currentDate.toISOString().split("T")[0];
 
         // Check for full day exception
-        const dayExceptions = result.data.exceptions.filter((e) =>
-          e.date.startsWith(dateStr),
-        );
+        const dayExceptions = result.data.exceptions.filter((e) => {
+          const excDateStr =
+            typeof e.date === "string"
+              ? e.date
+              : e.date instanceof Date
+                ? e.date.toISOString()
+                : String(e.date);
+          return excDateStr.startsWith(dateStr);
+        });
         const isFullDayException = dayExceptions.some((e) => e.is_full_day);
 
         // Calculate total possible slots for this day from weekly template

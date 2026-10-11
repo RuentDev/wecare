@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma-db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { serializePrisma } from "@/lib/utils";
+import type { DoctorMonthlyStatsData } from "@/lib/types/scheduling";
 
 export async function createTimeSlot(data: {
   doctorId: string;
@@ -12,14 +14,14 @@ export async function createTimeSlot(data: {
   endTime: string; // Raw "HH:mm" string (e.g. "12:00")
 }) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "doctor") {
+  if (!user || (user.role !== "doctor" && user.role !== "admin")) {
     return { success: false, error: "Unauthorized" };
   }
 
   try {
     // Build UTC dates from raw HH:mm to avoid timezone shifts.
     // Using "1970-01-01T{HH:mm}:00Z" ensures the time stored in
-    // the @db.Time(6) column is exactly what the doctor entered.
+    // the @db.Time(6) column is exactly what was entered.
     const startTimeUTC = new Date(`1970-01-01T${data.startTime}:00Z`);
     const endTimeUTC = new Date(`1970-01-01T${data.endTime}:00Z`);
 
@@ -32,10 +34,21 @@ export async function createTimeSlot(data: {
         end_time: endTimeUTC,
         is_available: true,
       },
+      include: {
+        locations: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+          },
+        },
+      },
     });
 
     revalidatePath("/dashboard/schedule");
-    return { success: true, data: timeSlot };
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/doctors/${data.doctorId}`);
+    return { success: true, data: serializePrisma(timeSlot) };
   } catch (error) {
     console.error("[CREATE_TIME_SLOT]", error);
     return { success: false, error: "Failed to create time slot" };
@@ -44,16 +57,20 @@ export async function createTimeSlot(data: {
 
 export async function deleteTimeSlot(slotId: string) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "doctor") {
+  if (!user || (user.role !== "doctor" && user.role !== "admin")) {
     return { success: false, error: "Unauthorized" };
   }
 
   try {
-    await prisma.time_slots.delete({
+    const deletedSlot = await prisma.time_slots.delete({
       where: { id: slotId },
     });
 
     revalidatePath("/dashboard/schedule");
+    revalidatePath("/admin/users");
+    if (deletedSlot.doctor_id) {
+      revalidatePath(`/admin/users/doctors/${deletedSlot.doctor_id}`);
+    }
     return { success: true };
   } catch (error) {
     console.error("[DELETE_TIME_SLOT]", error);
@@ -70,7 +87,7 @@ export async function blockTimeSlot(data: {
   reason?: string;
 }) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "doctor") {
+  if (!user || (user.role !== "doctor" && user.role !== "admin")) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -95,7 +112,9 @@ export async function blockTimeSlot(data: {
     });
 
     revalidatePath("/dashboard/schedule");
-    return { success: true, data: exception };
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/doctors/${data.doctorId}`);
+    return { success: true, data: serializePrisma(exception) };
   } catch (error) {
     console.error("[BLOCK_TIME_SLOT]", error);
     return { success: false, error: "Failed to block time" };
@@ -104,16 +123,20 @@ export async function blockTimeSlot(data: {
 
 export async function deleteBlockedTime(exceptionId: string) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "doctor") {
+  if (!user || (user.role !== "doctor" && user.role !== "admin")) {
     return { success: false, error: "Unauthorized" };
   }
 
   try {
-    await prisma.schedule_exceptions.delete({
+    const deletedException = await prisma.schedule_exceptions.delete({
       where: { id: exceptionId },
     });
 
     revalidatePath("/dashboard/schedule");
+    revalidatePath("/admin/users");
+    if (deletedException.doctor_id) {
+      revalidatePath(`/admin/users/doctors/${deletedException.doctor_id}`);
+    }
     return { success: true };
   } catch (error) {
     console.error("[DELETE_BLOCKED_TIME]", error);
@@ -121,9 +144,13 @@ export async function deleteBlockedTime(exceptionId: string) {
   }
 }
 
-export async function getDoctorMonthlyStats(doctorId: string, year: number, month: number) {
+export async function getDoctorMonthlyStats(
+  doctorId: string,
+  year: number,
+  month: number,
+): Promise<{ success: boolean; data?: DoctorMonthlyStatsData; error?: string }> {
   const user = await getCurrentUser();
-  if (!user || user.role !== "doctor") {
+  if (!user || (user.role !== "doctor" && user.role !== "admin")) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -155,34 +182,53 @@ export async function getDoctorMonthlyStats(doctorId: string, year: number, mont
             lte: endDate,
           },
         },
+        orderBy: {
+          date: "asc",
+        },
       }),
       prisma.time_slots.findMany({
         where: { doctor_id: doctorId },
+        include: {
+          locations: {
+            select: {
+              id: true,
+              name: true,
+              city: true,
+            },
+          },
+        },
+        orderBy: [
+          { day_of_week: "asc" },
+          { start_time: "asc" },
+        ],
       }),
     ]);
 
     // Format the response for easier client-side consumption
     const serializedAppointments = appointments.map((apt) => ({
-      ...apt,
       appointment_date: apt.appointment_date.toISOString(),
       start_time: apt.start_time.toISOString(),
       end_time: apt.end_time.toISOString(),
     }));
 
     const serializedExceptions = exceptions.map((exc) => ({
-      ...exc,
+      id: exc.id,
+      doctor_id: exc.doctor_id,
       date: exc.date.toISOString(),
       start_time: exc.start_time?.toISOString() || null,
       end_time: exc.end_time?.toISOString() || null,
+      is_full_day: exc.is_full_day,
+      reason: exc.reason,
+      created_at: exc.created_at?.toISOString() || null,
     }));
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         appointments: serializedAppointments,
         exceptions: serializedExceptions,
-        timeSlots,
-      }
+        timeSlots: serializePrisma(timeSlots),
+      },
     };
   } catch (error) {
     console.error("[GET_DOCTOR_MONTHLY_STATS]", error);

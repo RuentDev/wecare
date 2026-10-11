@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   BriefcaseMedical,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import { DoctorInfoForm } from "./doctor-info-form";
 import { DoctorDangerZone } from "./doctor-danger-zone";
 import { DoctorAppointments } from "./doctor-appointments";
 import { DoctorServicesManager } from "./doctor-services-manager";
+import { DoctorScheduleManager } from "./doctor-schedule-manager";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ClinicLocation } from "@/lib/types/locations";
@@ -124,6 +126,18 @@ export function EditDoctorClient({
                 <BriefcaseMedical className="h-4 w-4" />
                 Managed Services
               </TabsTrigger>
+              <TabsTrigger
+                value="schedule"
+                className="cursor-pointer px-5 h-full data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Clinic Schedule
+                {doctor?.time_slots && doctor.time_slots.length > 0 && (
+                  <Badge className="ml-1 bg-white/20 text-white border-none text-[10px] h-4 px-1.5 min-w-4 flex justify-center">
+                    {doctor.time_slots.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </>
           )}
         </TabsList>
@@ -156,6 +170,15 @@ export function EditDoctorClient({
                 doctorId={doctor.id}
                 allServices={allServices}
                 currentServices={doctor.doctor_services || []}
+              />
+            </TabsContent>
+
+            <TabsContent value="schedule">
+              <DoctorScheduleManager
+                doctorId={doctor.id}
+                initialTimeSlots={doctor.time_slots || []}
+                initialExceptions={doctor.schedule_exceptions || []}
+                locations={locations}
               />
             </TabsContent>
           </>

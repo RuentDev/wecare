@@ -1,4 +1,5 @@
 import type { Prisma } from "@/lib/generated/prisma";
+import type { DoctorTimeSlot, DoctorScheduleException } from "./scheduling";
 
 export type UserRole = "admin" | "doctor" | "nurse" | "staff" | "patient";
 
@@ -67,6 +68,8 @@ export interface DoctorUserRelation {
       name: string;
     } | null;
   }[];
+  time_slots?: DoctorTimeSlot[];
+  schedule_exceptions?: DoctorScheduleException[];
 }
 
 export interface UserWithDoctorDetails {
