@@ -170,10 +170,10 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-            Welcome back, {user.first_name}!
+            Good Day, {user.first_name}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage your dental appointments
+            Quick view of your appointments
           </p>
         </div>
         <Button asChild>
@@ -182,47 +182,6 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
             Book Appointment
           </Link>
         </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">
-                {upcomingAppointments.length}
-              </p>
-              <p className="text-sm text-muted-foreground">Upcoming</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">
-                {appointments.filter((a) => a.status === "completed").length}
-              </p>
-              <p className="text-sm text-muted-foreground">Completed</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{appointments.length}</p>
-              <p className="text-sm text-muted-foreground">Total Visits</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Appointments Tabs */}

@@ -10,12 +10,13 @@ import {
   User,
   CreditCard,
   Settings,
+  type LucideIcon,
 } from "lucide-react";
 
 export interface SidebarItem {
   label: string;
   href: string;
-  icon: any;
+  icon: LucideIcon;
   roles: string[];
 }
 
@@ -43,7 +44,7 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     label: "Lab Results",
     href: "/dashboard/labs",
     icon: FlaskConical,
-    roles: ["doctor"],
+    roles: ["patient"],
   },
   {
     label: "Audit Logs",
@@ -79,7 +80,7 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     label: "Appointments",
     href: "/dashboard/appointments",
     icon: Calendar,
-    roles: ["patient"],
+    roles: ["doctor"],
   },
   {
     label: "Billing",
@@ -91,7 +92,7 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     label: "Services",
     href: "/dashboard/services",
     icon: Settings,
-    roles: ["patient"],
+    roles: ["doctor"],
   },
   {
     label: "Profile",

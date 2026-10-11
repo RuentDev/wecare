@@ -1,9 +1,10 @@
 import { appointments, doctors, users, medical_records, invoices, audit_logs, notification_logs, services, locations, time_slots } from "@/lib/generated/prisma";
 
 export interface DoctorScheduleData {
-  todayAppointments: DoctorAppointmentView[];
-  upcomingAppointments: DoctorAppointmentView[];
-  timeSlots: time_slots[];
+  appointments: DoctorAppointmentView[];
+  todayAppointments?: DoctorAppointmentView[];
+  upcomingAppointments?: DoctorAppointmentView[];
+  timeSlots?: time_slots[];
 }
 
 export interface DoctorAppointmentView extends appointments {
@@ -13,6 +14,7 @@ export interface DoctorAppointmentView extends appointments {
     email: string;
     phone: string | null;
     avatar_url: string | null;
+    is_guest?: boolean | null;
   };
   services: services;
   locations: locations;

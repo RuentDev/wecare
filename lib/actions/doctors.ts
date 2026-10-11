@@ -196,72 +196,32 @@ export async function getDoctorDashboardData(doctorId: string) {
  */
 export async function getDoctorScheduleData(doctorId: string) {
   try {
-    const now = new Date();
-    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-
-    const [todayAppointments, upcomingAppointments, timeSlots, activeLocations] = await Promise.all([
-      prisma.appointments.findMany({
-        where: {
-          doctor_id: doctorId,
-          appointment_date: {
-            gte: startOfToday,
-            lte: new Date(now.setHours(23, 59, 59, 999)),
+    const appointments = await prisma.appointments.findMany({
+      where: {
+        doctor_id: doctorId,
+      },
+      include: {
+        users: {
+          select: {
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone: true,
+            avatar_url: true,
+            is_guest: true,
           },
         },
-        include: {
-          users: {
-            select: {
-              first_name: true,
-              last_name: true,
-              email: true,
-              phone: true,
-              avatar_url: true,
-            },
-          },
-          services: true,
-          locations: true,
-        },
-        orderBy: { start_time: "asc" },
-      }),
-      prisma.appointments.findMany({
-        where: {
-          doctor_id: doctorId,
-          appointment_date: {
-            gt: new Date(now.setHours(23, 59, 59, 999)),
-          },
-        },
-        include: {
-          users: {
-            select: {
-              first_name: true,
-              last_name: true,
-              email: true,
-              phone: true,
-              avatar_url: true,
-            },
-          },
-          services: true,
-          locations: true,
-        },
-        orderBy: { appointment_date: "asc" },
-        take: 20,
-      }),
-      prisma.time_slots.findMany({
-        where: { doctor_id: doctorId },
-        include: { locations: true },
-        orderBy: { day_of_week: "asc" },
-      }),
-      prisma.locations.findMany({
-        where: { is_active: true },
-        orderBy: { name: "asc" },
-      }),
-    ]);
+        services: true,
+        locations: true,
+      },
+      orderBy: [
+        { appointment_date: "desc" },
+        { start_time: "desc" },
+      ],
+    });
 
     return serializePrisma({
-      todayAppointments,
-      upcomingAppointments,
-      timeSlots,
-      activeLocations,
+      appointments,
     });
   } catch (error) {
     console.error("[GET_DOCTOR_SCHEDULE_DATA]", error);

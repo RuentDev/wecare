@@ -23,9 +23,18 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
-  const filteredItems = SIDEBAR_NAVS.filter((item) =>
+  const navItems = SIDEBAR_NAVS.filter((item) =>
     item.roles.includes(userRole),
-  );
+  ).sort((a, b) => {
+    const isDashboardA =
+      a.href === "/dashboard" || a.label.toLowerCase() === "dashboard";
+    const isDashboardB =
+      b.href === "/dashboard" || b.label.toLowerCase() === "dashboard";
+
+    if (isDashboardA && !isDashboardB) return -1;
+    if (!isDashboardA && isDashboardB) return 1;
+    return a.label.localeCompare(b.label);
+  });
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200">
@@ -35,38 +44,38 @@ export function DashboardSidebar({ userRole }: { userRole: string }) {
 
       <SidebarContent className="bg-white p-2">
         <SidebarMenu className="gap-1">
-          {filteredItems.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  tooltip={item.label}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-6 rounded-xl transition-all duration-200 group",
-                    isActive
-                      ? "bg-primary/10 text-primary font-bold hover:bg-primary/15 hover:text-primary"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
-                  )}
-                >
-                  <Link href={item.href}>
-                    <item.icon
-                      className={cn(
-                        "w-5 h-5 shrink-0",
-                        isActive
-                          ? "text-primary"
-                          : "text-slate-400 group-hover:text-slate-600",
-                      )}
-                    />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
+          {navItems.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={item.label}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-6 rounded-xl transition-all duration-200 group",
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold hover:bg-primary/15 hover:text-primary"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+                    )}
+                  >
+                    <Link href={item.href}>
+                      <item.icon
+                        className={cn(
+                          "w-5 h-5 shrink-0",
+                          isActive
+                            ? "text-primary"
+                            : "text-slate-400 group-hover:text-slate-600",
+                        )}
+                      />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
         </SidebarMenu>
       </SidebarContent>
 

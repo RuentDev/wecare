@@ -12,5 +12,10 @@ export default async function SchedulePage() {
 
   const scheduleData = await getDoctorScheduleData(doctor.id);
 
-  return <ScheduleClient data={scheduleData} doctorId={doctor.id} />;
+  return (
+    <ScheduleClient
+      initialAppointments={scheduleData.appointments}
+      doctorId={doctor.id}
+    />
+  );
 }
