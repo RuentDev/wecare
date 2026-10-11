@@ -5,6 +5,8 @@ import { protectedPrisma } from "@/lib/protected-prisma";
 import { revalidatePath, unstable_cache, revalidateTag } from "next/cache";
 import { requirePermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/lib/auth";
+import { serializePrisma } from "@/lib/utils";
+import type { UserWithDoctorDetails } from "@/lib/types/user";
 
 /**
  * Fetches all users from DB (Internal use for caching)
@@ -21,6 +23,11 @@ const fetchUsers = async () => {
       user_roles: {
         include: {
           roles: true,
+        },
+      },
+      doctors: {
+        select: {
+          id: true,
         },
       },
     },
@@ -168,12 +175,14 @@ export async function toggleUserStatus(userId: string, isActive: boolean) {
 /**
  * Fetches a single user by ID with their roles.
  */
-export async function getUserById(userId: string) {
+export async function getUserById(
+  userId: string,
+): Promise<UserWithDoctorDetails | null> {
   const currentUser = await getCurrentUser();
   if (!currentUser) throw new Error("Unauthorized");
   await requirePermission(currentUser.id, "users:view");
 
-  return await prisma.users.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -195,8 +204,79 @@ export async function getUserById(userId: string) {
           roles: true,
         },
       },
+      doctors: {
+        include: {
+          locations: true,
+          doctor_services: {
+            include: {
+              services: true,
+            },
+          },
+          appointments: {
+            include: {
+              users: {
+                select: {
+                  first_name: true,
+                  last_name: true,
+                  email: true,
+                },
+              },
+              services: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+            orderBy: {
+              appointment_date: "desc",
+            },
+          },
+        },
+      },
     },
   });
+
+  if (!user) return null;
+
+  // If user has role 'doctor' but no doctor record exists yet, lazily create one
+  if (user.role === "doctor" && !user.doctors) {
+    const newDoctor = await prisma.doctors.create({
+      data: {
+        user_id: user.id,
+        is_available: true,
+      },
+      include: {
+        locations: true,
+        doctor_services: {
+          include: {
+            services: true,
+          },
+        },
+        appointments: {
+          include: {
+            users: {
+              select: {
+                first_name: true,
+                last_name: true,
+                email: true,
+              },
+            },
+            services: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            appointment_date: "desc",
+          },
+        },
+      },
+    });
+    user.doctors = newDoctor;
+  }
+
+  return serializePrisma(user);
 }
 
 /**

@@ -1,3 +1,5 @@
+import type { Prisma } from "@/lib/generated/prisma";
+
 export interface ClinicLocation {
   id: string;
   name: string;
@@ -10,8 +12,8 @@ export interface ClinicLocation {
   email: string | null;
   image_url: string | null;
   google_maps_url: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: Prisma.Decimal | number | null;
+  longitude: Prisma.Decimal | number | null;
 }
 
 export interface AdminLocation extends ClinicLocation {

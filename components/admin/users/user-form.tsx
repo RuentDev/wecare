@@ -36,7 +36,8 @@ import {
   Wand2,
   Copy,
   Eye,
-  EyeOff
+  EyeOff,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { adminCreateUser, adminUpdateUser } from "@/lib/actions/rbac";
@@ -61,8 +62,18 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
+export interface UserFormInitialData {
+  id?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  is_active?: boolean | null;
+}
+
 interface UserFormProps {
-  initialData?: any;
+  initialData?: UserFormInitialData;
   mode?: "create" | "edit";
   onSuccess?: () => void;
 }
@@ -76,7 +87,7 @@ export function UserForm({ initialData, mode = "create", onSuccess }: UserFormPr
       last_name: initialData.last_name || "",
       email: initialData.email || "",
       phone: initialData.phone || "",
-      role: initialData.role || "patient",
+      role: (initialData.role as UserFormValues["role"]) || "patient",
       is_active: initialData.is_active ?? true,
     } : {
       first_name: "",
@@ -130,6 +141,10 @@ export function UserForm({ initialData, mode = "create", onSuccess }: UserFormPr
         await adminCreateUser(data);
         toast.success("User created successfully");
       } else {
+        if (!initialData?.id) {
+          toast.error("User ID is missing");
+          return;
+        }
         await adminUpdateUser(initialData.id, data);
         toast.success("User updated successfully");
       }
@@ -145,7 +160,7 @@ export function UserForm({ initialData, mode = "create", onSuccess }: UserFormPr
     }
   }
 
-  const roleIcons: Record<string, any> = {
+  const roleIcons: Record<string, LucideIcon> = {
     admin: Shield,
     staff: UserCircle,
     patient: User,

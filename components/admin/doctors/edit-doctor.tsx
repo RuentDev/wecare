@@ -17,11 +17,24 @@ import { DoctorAppointments } from "./doctor-appointments";
 import { DoctorServicesManager } from "./doctor-services-manager";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ClinicLocation } from "@/lib/types/locations";
+import type { AdminService } from "@/lib/types/services";
+import type { DoctorUserRelation } from "@/lib/types/user";
 
 interface EditDoctorClientProps {
-  doctor?: any;
-  locations: any[];
-  allServices: any[];
+  doctor?:
+    | (DoctorUserRelation & {
+        users?: {
+          first_name?: string | null;
+          last_name?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          is_active?: boolean | null;
+        } | null;
+      })
+    | null;
+  locations: ClinicLocation[];
+  allServices: AdminService[];
 }
 
 export function EditDoctorClient({
@@ -98,7 +111,7 @@ export function EditDoctorClient({
               >
                 <CalendarDays className="h-4 w-4" />
                 Appointments
-                {doctor.appointments?.length > 0 && (
+                {doctor?.appointments && doctor.appointments.length > 0 && (
                   <Badge className="ml-1 bg-white/20 text-white border-none text-[10px] h-4 px-1.5 min-w-4 flex justify-center">
                     {doctor.appointments.length}
                   </Badge>
