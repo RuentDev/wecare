@@ -32,6 +32,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   onRowClick?: (row: TData) => void;
+  pageSize?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -39,6 +40,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   onRowClick,
+  pageSize,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -47,6 +49,16 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: pageSize ?? 1000,
+  });
+
+  React.useEffect(() => {
+    if (pageSize !== undefined) {
+      setPagination((prev) => ({ ...prev, pageSize }));
+    }
+  }, [pageSize]);
 
   const table = useReactTable({
     data,
@@ -59,11 +71,13 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
   });
 

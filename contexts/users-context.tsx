@@ -32,6 +32,14 @@ export interface UsersContextType {
   hasActiveFilters: boolean;
   resetFilters: () => void;
 
+  // Pagination State
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalPages: number;
+  paginatedUsers: User[];
+
   // Role Assignment Modal
   selectedUser: User | null;
   isRoleModalOpen: boolean;
@@ -78,6 +86,10 @@ export function UsersProvider({
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
   // Modal states
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -117,10 +129,26 @@ export function UsersProvider({
   const hasActiveFilters =
     searchQuery !== "" || selectedRole !== "all" || selectedStatus !== "all";
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedRole, selectedStatus]);
+
+  // Pagination calculation
+  const totalFilteredCount = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (validCurrentPage - 1) * pageSize;
+    return filteredUsers.slice(startIndex, startIndex + pageSize);
+  }, [filteredUsers, validCurrentPage, pageSize]);
+
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedRole("all");
     setSelectedStatus("all");
+    setCurrentPage(1);
   };
 
   const openRoleModal = (user: User) => {
@@ -186,9 +214,15 @@ export function UsersProvider({
     selectedStatus,
     setSelectedStatus,
     filteredUsers,
-    totalFilteredCount: filteredUsers.length,
+    totalFilteredCount,
     hasActiveFilters,
     resetFilters,
+    currentPage: validCurrentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    paginatedUsers,
     selectedUser,
     isRoleModalOpen,
     openRoleModal,

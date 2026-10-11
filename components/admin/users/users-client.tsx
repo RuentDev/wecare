@@ -9,6 +9,7 @@ import { UserRoleModal } from "./user-role-modal";
 import { AddUserModal } from "./add-user-modal";
 import { DeleteUserModal } from "./delete-user-modal";
 import { UsersFilters } from "./users-filters";
+import { UsersPagination } from "./users-pagination";
 import { UsersProvider, useUsers } from "@/contexts/users-context";
 
 interface UsersClientProps {
@@ -20,7 +21,8 @@ interface UsersClientProps {
 
 function UsersContent() {
   const {
-    filteredUsers,
+    paginatedUsers,
+    pageSize,
     roles,
     currentUserRole,
     currentUserId,
@@ -68,7 +70,7 @@ function UsersContent() {
           <Button
             id="add-user-button"
             onClick={() => setAddModalOpen(true)}
-            className="gap-2 text-xs font-semibold shadow-xs shrink-0"
+            className="gap-2 text-xs font-semibold shadow-xs shrink-0 cursor-pointer"
           >
             <UserPlus className="w-3.5 h-3.5" />
             Add User Account
@@ -76,10 +78,11 @@ function UsersContent() {
         )}
       </div>
 
-      {/* Main Table Container with Filter Toolbar */}
+      {/* Main Table Container with Filter Toolbar & Pagination */}
       <div className="space-y-4">
         <UsersFilters />
-        <DataTable columns={columns} data={filteredUsers} />
+        <DataTable columns={columns} data={paginatedUsers} pageSize={pageSize} />
+        <UsersPagination />
       </div>
 
       <UserRoleModal
