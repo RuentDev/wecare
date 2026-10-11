@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Calendar,
   Clock,
@@ -16,6 +17,10 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
+  ChevronRight,
+  FileText,
+  CreditCard,
+  Building,
 } from "lucide-react";
 import type { User as UserType } from "@/lib/auth";
 import type {
@@ -23,6 +28,7 @@ import type {
   PatientAppointmentStatus,
 } from "@/lib/types/patient-dashboard";
 import { getPatientDashboardAppointments } from "@/lib/actions/appointments";
+import { formatCurrency } from "@/lib/utils";
 
 interface PatientDashboardProps {
   user: UserType;
@@ -33,38 +39,57 @@ const statusConfig: Record<
   PatientAppointmentStatus,
   {
     label: string;
-    color: string;
+    badgeStyle: string;
+    cardStyle: string;
     icon: typeof CheckCircle;
   }
 > = {
   pending: {
-    label: "Pending",
-    color: "bg-yellow-100 text-yellow-800",
+    label: "Pending Confirmation",
+    badgeStyle:
+      "bg-amber-100/90 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700/60 font-semibold",
+    cardStyle:
+      "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/90 dark:border-amber-800/40 border-l-4 border-l-amber-500 hover:bg-amber-50/90 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-700 shadow-amber-500/5",
     icon: AlertCircle,
   },
   confirmed: {
     label: "Confirmed",
-    color: "bg-blue-100 text-blue-800",
+    badgeStyle:
+      "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
+    cardStyle:
+      "bg-card border-border/70 border-l-4 border-l-primary hover:border-primary/50",
     icon: CheckCircle,
   },
   checked_in: {
     label: "Checked In",
-    color: "bg-emerald-100 text-emerald-800",
+    badgeStyle:
+      "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+    cardStyle:
+      "bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40 border-l-4 border-l-emerald-500 hover:border-emerald-500/60",
     icon: CheckCircle,
   },
   completed: {
     label: "Completed",
-    color: "bg-green-100 text-green-800",
+    badgeStyle:
+      "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+    cardStyle:
+      "bg-card border-border/70 border-l-4 border-l-emerald-600/80 hover:border-border",
     icon: CheckCircle,
   },
   cancelled: {
     label: "Cancelled",
-    color: "bg-red-100 text-red-800",
+    badgeStyle:
+      "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+    cardStyle:
+      "bg-card/70 border-border/60 border-l-4 border-l-destructive/60 opacity-80 hover:opacity-100",
     icon: XCircle,
   },
   no_show: {
     label: "No Show",
-    color: "bg-gray-100 text-gray-800",
+    badgeStyle:
+      "bg-gray-100 text-gray-800 border-gray-200 dark:bg-muted dark:text-muted-foreground",
+    cardStyle:
+      "bg-card/70 border-border/60 border-l-4 border-l-muted-foreground/40 opacity-75 hover:opacity-100",
     icon: XCircle,
   },
 };
@@ -154,54 +179,135 @@ export function PatientDashboard({
   }) => {
     const status = statusConfig[appointment.status] || statusConfig.pending;
     const StatusIcon = status.icon;
+    const isPending = appointment.status === "pending";
+
+    const doctorInitials = `${appointment.dentist_first_name?.[0] || ""}${
+      appointment.dentist_last_name?.[0] || ""
+    }`.toUpperCase();
 
     return (
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground">
-                    {appointment.service_name}
-                  </h3>
-                  {appointment.appointment_number && (
-                    <Badge variant="outline" className="font-mono text-xs">
+      <Link
+        href={`/dashboard/appointments/${appointment.appointment_number}`}
+        className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+      >
+        <Card
+          className={`transition-all duration-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer border ${status.cardStyle}`}
+        >
+          <CardContent className="p-5 md:p-6 space-y-4">
+            {/* Top Row: Service info, status badge, and chevron */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3.5 min-w-0">
+                <Avatar className="w-12 h-12 rounded-xl border border-border/60 shrink-0 bg-primary/10">
+                  <AvatarImage
+                    src={appointment.dentist_avatar_url || ""}
+                    alt={`Dr. ${appointment.dentist_first_name}`}
+                  />
+                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-sm">
+                    {doctorInitials || <Stethoscope className="w-5 h-5 text-primary" />}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-base md:text-lg text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
+                      {appointment.service_name}
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[11px] px-2 py-0.5 bg-background/80 shrink-0 border-border/80"
+                    >
                       {appointment.appointment_number}
                     </Badge>
-                  )}
+                  </div>
+
+                  <p className="text-sm font-medium text-foreground/80 flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      Dr. {appointment.dentist_first_name}{" "}
+                      {appointment.dentist_last_name}
+                    </span>
+                    {appointment.specialization && (
+                      <>
+                        <span className="text-muted-foreground/60">•</span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {appointment.specialization.replace("_", " ")}
+                        </span>
+                      </>
+                    )}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Dr. {appointment.dentist_first_name}{" "}
-                  {appointment.dentist_last_name}
-                </p>
+              </div>
+
+              {/* Status Badge & Chevron indicator */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge
+                  variant="outline"
+                  className={`text-xs px-3 py-1 rounded-full border shadow-2xs flex items-center gap-1.5 ${status.badgeStyle}`}
+                >
+                  <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{status.label}</span>
+                </Badge>
+                <div className="w-8 h-8 rounded-full bg-background/60 border border-border/60 flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-background transition-colors shrink-0">
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </div>
               </div>
             </div>
-            <Badge className={status.color}>
-              <StatusIcon className="w-3 h-3 mr-1" />
-              {status.label}
-            </Badge>
-          </div>
 
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              {formatDate(appointment.appointment_date)}
+            {/* Quick Metadata Bar: Date, Time, Location, Duration, Price */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate">{formatDate(appointment.appointment_date)}</span>
+              </div>
+
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
+                <Clock className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate">
+                  {formatTime(appointment.start_time)}
+                  {appointment.duration_minutes ? ` (${appointment.duration_minutes}m)` : ""}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
+                <MapPin className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate">
+                  {appointment.location_name}
+                  {appointment.city ? `, ${appointment.city}` : ""}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
+                <CreditCard className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate font-semibold">
+                  {formatCurrency(appointment.service_price)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              {formatTime(appointment.start_time)}
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              {appointment.location_name}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            {/* Patient notes / reason preview if available */}
+            {appointment.notes && (
+              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-background/40 border border-border/40 text-xs text-muted-foreground">
+                <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground/80 shrink-0" />
+                <p className="line-clamp-1 italic text-foreground/75">
+                  &ldquo;{appointment.notes}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Bottom micro-bar for Pending Guidance */}
+            {isPending && (
+              <div className="flex items-center justify-between text-xs text-amber-800 dark:text-amber-300/90 pt-1 border-t border-amber-200/60 dark:border-amber-800/40">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  Awaiting clinic reception confirmation
+                </span>
+                <span className="text-[11px] font-semibold underline underline-offset-2 group-hover:text-amber-900 transition-colors">
+                  View appointment details &rarr;
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Link>
     );
   };
 
@@ -214,10 +320,10 @@ export function PatientDashboard({
             Good Day, {user.first_name}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Quick view of your appointments
+            Track and manage your upcoming and past dental visits
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="rounded-xl shadow-xs">
           <Link href="/booking">
             <Plus className="w-4 h-4 mr-2" />
             Book Appointment
@@ -227,36 +333,38 @@ export function PatientDashboard({
 
       {/* Appointments Tabs */}
       <Tabs defaultValue="upcoming" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="upcoming">
+        <TabsList className="bg-muted/60 p-1 rounded-xl">
+          <TabsTrigger value="upcoming" className="rounded-lg">
             Upcoming ({upcomingAppointments.length})
           </TabsTrigger>
-          <TabsTrigger value="past">
+          <TabsTrigger value="past" className="rounded-lg">
             Past ({pastAppointments.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming" className="space-y-4">
           {isLoading ? (
-            <Card>
-              <CardContent className="p-8 text-center">
+            <Card className="rounded-2xl border-border/70">
+              <CardContent className="p-10 text-center">
                 <Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-muted-foreground text-sm font-medium">
                   Loading appointments...
                 </p>
               </CardContent>
             </Card>
           ) : upcomingAppointments.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">
+            <Card className="rounded-2xl border-border/70 bg-card">
+              <CardContent className="p-10 text-center max-w-md mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-lg text-foreground mb-2">
                   No upcoming appointments
                 </h3>
-                <p className="text-muted-foreground mb-4">
-                  Schedule your next dental visit today
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  You don&apos;t have any scheduled appointments right now. Schedule your next dental consultation in minutes.
                 </p>
-                <Button asChild>
+                <Button asChild className="rounded-xl">
                   <Link href="/booking">Book Appointment</Link>
                 </Button>
               </CardContent>
@@ -275,23 +383,25 @@ export function PatientDashboard({
 
         <TabsContent value="past" className="space-y-4">
           {isLoading ? (
-            <Card>
-              <CardContent className="p-8 text-center">
+            <Card className="rounded-2xl border-border/70">
+              <CardContent className="p-10 text-center">
                 <Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-muted-foreground text-sm font-medium">
                   Loading appointments...
                 </p>
               </CardContent>
             </Card>
           ) : pastAppointments.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">
+            <Card className="rounded-2xl border-border/70 bg-card">
+              <CardContent className="p-10 text-center max-w-md mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-lg text-foreground mb-2">
                   No past appointments
                 </h3>
-                <p className="text-muted-foreground">
-                  Your appointment history will appear here
+                <p className="text-sm text-muted-foreground">
+                  Your appointment history and clinical records will appear here after completion.
                 </p>
               </CardContent>
             </Card>

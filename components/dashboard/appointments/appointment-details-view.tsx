@@ -40,10 +40,12 @@ export type AppointmentDetailData = NonNullable<
 
 interface AppointmentDetailsViewProps {
   initialAppointment: AppointmentDetailData;
+  userRole?: "doctor" | "patient" | "admin";
 }
 
 export function AppointmentDetailsView({
   initialAppointment,
+  userRole = "doctor",
 }: AppointmentDetailsViewProps) {
   const [appointment, setAppointment] =
     useState<AppointmentDetailData>(initialAppointment);
@@ -105,6 +107,11 @@ export function AppointmentDetailsView({
     ? format(new Date(appointment.end_time), "hh:mm a")
     : "N/A";
 
+  const backLink =
+    userRole === "patient" ? "/dashboard" : "/dashboard/appointments";
+  const backLabel =
+    userRole === "patient" ? "Back to Dashboard" : "Back to Appointments";
+
   return (
     <div className="space-y-6 pb-12 animate-in-fade max-w-6xl mx-auto">
       {/* Top Header & Breadcrumb */}
@@ -116,37 +123,41 @@ export function AppointmentDetailsView({
             size="sm"
             className="rounded-xl gap-1.5 h-9 bg-card border-border/80 shadow-xs"
           >
-            <Link href="/dashboard/appointments">
+            <Link href={backLink}>
               <ArrowLeft className="w-4 h-4" />
-              Back to Appointments
+              {backLabel}
             </Link>
           </Button>
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          {appointment.status === "pending" && (
-            <Button
-              onClick={() => handleStatusChange("confirmed")}
-              disabled={isPending}
-              size="sm"
-              className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs"
-            >
-              <CalendarCheck className="w-4 h-4" />
-              Confirm Appointment
-            </Button>
-          )}
+          {userRole !== "patient" && (
+            <>
+              {appointment.status === "pending" && (
+                <Button
+                  onClick={() => handleStatusChange("confirmed")}
+                  disabled={isPending}
+                  size="sm"
+                  className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  Confirm Appointment
+                </Button>
+              )}
 
-          {appointment.status === "confirmed" && (
-            <Button
-              onClick={() => handleStatusChange("completed")}
-              disabled={isPending}
-              size="sm"
-              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Mark as Completed
-            </Button>
+              {appointment.status === "confirmed" && (
+                <Button
+                  onClick={() => handleStatusChange("completed")}
+                  disabled={isPending}
+                  size="sm"
+                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Mark as Completed
+                </Button>
+              )}
+            </>
           )}
 
           {appointment.status !== "cancelled" &&
@@ -159,7 +170,9 @@ export function AppointmentDetailsView({
                 className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 rounded-xl shadow-xs"
               >
                 <XCircle className="w-4 h-4" />
-                Cancel Appointment
+                {userRole === "patient"
+                  ? "Cancel Appointment"
+                  : "Cancel Appointment"}
               </Button>
             )}
         </div>

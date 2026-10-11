@@ -16,8 +16,12 @@ export interface PatientDashboardAppointment {
   notes: string | null;
   service_name: string;
   service_price: number;
+  duration_minutes?: number | null;
   dentist_first_name: string;
   dentist_last_name: string;
+  dentist_avatar_url?: string | null;
+  specialization?: string | null;
   location_name: string;
   location_address?: string | null;
+  city?: string | null;
 }

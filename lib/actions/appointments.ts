@@ -114,13 +114,14 @@ export async function getDoctorAppointments(doctorId: string) {
 
 export async function getAppointmentByNumber(
   appointmentNumber: string,
-  doctorId?: string
+  filter?: { doctorId?: string; patientId?: string }
 ) {
   try {
     const appointment = await prisma.appointments.findFirst({
       where: {
         appointment_number: appointmentNumber,
-        ...(doctorId ? { doctor_id: doctorId } : {}),
+        ...(filter?.doctorId ? { doctor_id: filter.doctorId } : {}),
+        ...(filter?.patientId ? { patient_id: filter.patientId } : {}),
       },
       include: {
         users: {
@@ -144,6 +145,7 @@ export async function getAppointmentByNumber(
                 last_name: true,
                 email: true,
                 phone: true,
+                avatar_url: true,
               },
             },
           },
@@ -219,6 +221,7 @@ export async function getPatientDashboardAppointments(
               select: {
                 first_name: true,
                 last_name: true,
+                avatar_url: true,
               },
             },
           },
@@ -243,10 +246,14 @@ export async function getPatientDashboardAppointments(
       notes: apt.notes,
       service_name: apt.services.name,
       service_price: Number(apt.services.price),
+      duration_minutes: apt.services.duration_minutes,
       dentist_first_name: apt.doctors.users?.first_name || "Doctor",
       dentist_last_name: apt.doctors.users?.last_name || "",
+      dentist_avatar_url: apt.doctors.users?.avatar_url || null,
+      specialization: apt.doctors.specialization || null,
       location_name: apt.locations.name,
       location_address: apt.locations.address,
+      city: apt.locations.city || null,
     }));
   } catch (error) {
     console.error("[GET_PATIENT_DASHBOARD_APPOINTMENTS]", error);
