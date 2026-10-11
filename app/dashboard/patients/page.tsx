@@ -35,8 +35,6 @@ const PatientsPage = async () => {
         </div>
       </div>
 
-      <PatientsStats stats={stats} />
-
       <Suspense
         fallback={
           <div className="flex flex-col items-center justify-center py-32 space-y-4 glassmorphism rounded-3xl border-none shadow-xl">

@@ -22,7 +22,12 @@ export default async function UsersPage() {
           </div>
         }
       >
-        <UsersClient initialUsers={users} roles={roles} currentUserRole={currentUser?.role} />
+        <UsersClient
+          initialUsers={users}
+          roles={roles}
+          currentUserRole={currentUser?.role}
+          currentUserId={currentUser?.id}
+        />
       </Suspense>
     </main>
   );

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Shield, UserCog, UserMinus, UserCheck } from "lucide-react";
+import { MoreHorizontal, Shield, UserCog, UserMinus, UserCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export type Role = {
@@ -41,13 +41,17 @@ export type User = {
 interface ColumnProps {
   onAssignRoles: (user: User) => void;
   onToggleStatus: (userId: string, currentStatus: boolean | null) => void;
+  onDeleteUser: (user: User) => void;
   currentUserRole?: string;
+  currentUserId?: string;
 }
 
 export const getColumns = ({
   onAssignRoles,
   onToggleStatus,
+  onDeleteUser,
   currentUserRole,
+  currentUserId,
 }: ColumnProps): ColumnDef<User>[] => [
   {
     accessorKey: "user",
@@ -179,6 +183,18 @@ export const getColumns = ({
               <UserCog className="mr-2 h-4 w-4" />
               Force Password Reset
             </DropdownMenuItem>
+            {currentUserRole === "admin" && user.id !== currentUserId && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDeleteUser(user)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete User
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

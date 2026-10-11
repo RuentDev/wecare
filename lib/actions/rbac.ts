@@ -296,3 +296,86 @@ export async function adminSetUserPassword(
   revalidatePath(`/admin/users/${userId}`);
   return { success: true };
 }
+
+/**
+ * Admin action to permanently delete a user (admin, doctor, or patient).
+ */
+export async function deleteUser(userId: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+  await requirePermission(currentUser.id, "users:edit");
+
+  if (currentUser.role !== "admin") {
+    throw new Error("Only administrators can delete users.");
+  }
+
+  if (currentUser.id === userId) {
+    throw new Error("You cannot delete your own account.");
+  }
+
+  // 1. Articles: nullify author_id so published articles are preserved without breaking FK
+  await prisma.articles.updateMany({
+    where: { author_id: userId },
+    data: { author_id: null },
+  });
+
+  // 2. Audit logs: nullify user_id to preserve audit trail integrity
+  await prisma.audit_logs.updateMany({
+    where: { user_id: userId },
+    data: { user_id: null },
+  });
+
+  // 3. Notification logs: nullify user_id
+  await prisma.notification_logs.updateMany({
+    where: { user_id: userId },
+    data: { user_id: null },
+  });
+
+  // 4. Insurances: remove patient insurance profiles
+  await prisma.insurances.deleteMany({
+    where: { patient_id: userId },
+  });
+
+  // 5. Delete associated doctor record first if one exists, because the relation
+  // on users <-> doctors does not have onDelete: Cascade in Prisma schema.
+  const doctor = await prisma.doctors.findUnique({
+    where: { user_id: userId },
+    select: { id: true },
+  });
+
+  if (doctor) {
+    // Disassociate doctor on medical records so patient medical notes remain intact
+    await prisma.medical_records.updateMany({
+      where: { doctor_id: doctor.id },
+      data: { doctor_id: null },
+    });
+
+    // Delete doctor-specific records that might not cascade automatically
+    await prisma.doctor_services.deleteMany({
+      where: { doctor_id: doctor.id },
+    });
+    await prisma.time_slots.deleteMany({
+      where: { doctor_id: doctor.id },
+    });
+    await prisma.schedule_exceptions.deleteMany({
+      where: { doctor_id: doctor.id },
+    });
+    await prisma.doctors.delete({
+      where: { id: doctor.id },
+    });
+  }
+
+  // 6. Delete user sessions to invalidate any active sessions
+  const { deleteAllUserSessions } = await import("@/lib/auth");
+  await deleteAllUserSessions(userId);
+
+  // 7. Delete the user record (dependent appointments, vitals, invoices, consents, etc. cascade)
+  await protectedPrisma.users.delete({
+    where: { id: userId },
+  });
+
+  revalidateTag("users", "default");
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
