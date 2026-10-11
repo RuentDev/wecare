@@ -19,11 +19,16 @@ import { updateDoctorServices } from "@/lib/actions/doctors";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { AdminService } from "@/lib/types/services";
 
-interface DoctorServicesManagerProps {
+export interface DoctorAssignedServiceItem {
+  service_id: string;
+}
+
+export interface DoctorServicesManagerProps {
   doctorId: string;
-  allServices: any[];
-  currentServices: any[];
+  allServices: AdminService[];
+  currentServices: DoctorAssignedServiceItem[];
 }
 
 export function DoctorServicesManager({
@@ -45,13 +50,19 @@ export function DoctorServicesManager({
 
   // Services available to be added (filtered by search)
   const availableServices = useMemo(() => {
+    const query = searchTerm.toLowerCase().trim();
     return allServices
       .filter((s) => !selectedServiceIds.includes(s.id))
-      .filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.category?.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      .filter((s) => {
+        if (!query) return true;
+        const nameMatch = s.name.toLowerCase().includes(query);
+        const categoryName =
+          typeof s.category === "string" ? s.category : s.category?.name;
+        const categoryMatch = categoryName
+          ? categoryName.toLowerCase().includes(query)
+          : false;
+        return nameMatch || categoryMatch;
+      });
   }, [allServices, selectedServiceIds, searchTerm]);
 
   const addService = (serviceId: string) => {
@@ -144,7 +155,9 @@ export function DoctorServicesManager({
                             variant="outline"
                             className="text-[9px] px-1.5 py-0 border-white/20 bg-white/5"
                           >
-                            {service.category || "General"}
+                            {typeof service.category === "string"
+                              ? service.category
+                              : service.category?.name || "General"}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground">
                             ₱{service.price}
@@ -192,9 +205,19 @@ export function DoctorServicesManager({
                       className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10 group animate-in-fade animate-in-slide-up"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-primary">
-                          {service.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-primary truncate">
+                            {service.name}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] px-1.5 py-0 border-primary/20 bg-primary/10 text-primary shrink-0"
+                          >
+                            {typeof service.category === "string"
+                              ? service.category
+                              : service.category?.name || "General"}
+                          </Badge>
+                        </div>
                         <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
                           {service.description || "No description"}
                         </p>

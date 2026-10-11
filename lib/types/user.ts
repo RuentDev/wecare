@@ -56,6 +56,7 @@ export interface DoctorUserRelation {
     appointment_number?: string | null;
     appointment_date: string | Date;
     start_time: string | Date;
+    end_time: string | Date;
     status: string | null;
     users?: {
       first_name: string;

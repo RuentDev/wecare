@@ -11,9 +11,14 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { appointmentColumns, type AppointmentColumn } from "./appointment-columns";
+import type { DoctorUserRelation } from "@/lib/types/user";
+
+export type DoctorAppointmentRelationItem = NonNullable<
+  DoctorUserRelation["appointments"]
+>[number];
 
 interface DoctorAppointmentsProps {
-  appointments: any[];
+  appointments: DoctorAppointmentRelationItem[];
 }
 
 export function DoctorAppointments({ appointments }: DoctorAppointmentsProps) {
