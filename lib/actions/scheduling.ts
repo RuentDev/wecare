@@ -66,6 +66,7 @@ export async function getPublicServices(): Promise<{
   try {
     const services = await prisma.services.findMany({
       where: { is_active: true },
+      include: { service_categories: true },
       orderBy: { name: "asc" },
     });
 
@@ -75,7 +76,7 @@ export async function getPublicServices(): Promise<{
       description: svc.description ?? null,
       durationMinutes: svc.duration_minutes ?? 30,
       price: Number(svc.price),
-      category: svc.category ?? null,
+      category: svc.service_categories?.name ?? null,
     }));
 
     return { success: true, data };

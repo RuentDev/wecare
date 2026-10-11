@@ -3,8 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { mockDoctors, mockServices, getAvailableSlots, type MockDoctor, type MockService } from '@/lib/mock-data';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { mockDoctors, mockServices, getAvailableSlots } from '@/lib/mock-data';
 
 interface BookingWidgetProps {
   onBookingStart: (data: { doctorId: string; serviceId: string; date: string; time: string }) => void;
@@ -53,13 +53,12 @@ export function BookingWidget({ onBookingStart }: BookingWidgetProps) {
           key={day}
           onClick={() => !isDisabled && setSelectedDate(dateStr)}
           disabled={isDisabled}
-          className={`h-10 rounded-lg text-sm font-medium transition-colors ${
-            isDisabled
-              ? 'text-neutral-gray cursor-not-allowed'
-              : isSelected
+          className={`h-10 rounded-lg text-sm font-medium transition-colors ${isDisabled
+            ? 'text-neutral-gray cursor-not-allowed'
+            : isSelected
               ? 'bg-primary text-white'
               : 'bg-neutral-light text-neutral-dark hover:bg-secondary hover:text-white'
-          }`}
+            }`}
         >
           {day}
         </button>
@@ -91,15 +90,14 @@ export function BookingWidget({ onBookingStart }: BookingWidgetProps) {
             Select a Doctor
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {mockDoctors.map(doctor => (
+            {mockDoctors.map((doctor: MockDoctor) => (
               <button
                 key={doctor.id}
                 onClick={() => setSelectedDoctor(doctor.id)}
-                className={`p-4 rounded-[12px] border-2 transition-all text-left ${
-                  selectedDoctor === doctor.id
-                    ? 'border-primary bg-blue-50'
-                    : 'border-neutral-gray bg-white hover:border-secondary'
-                }`}
+                className={`p-4 rounded-[12px] border-2 transition-all text-left ${selectedDoctor === doctor.id
+                  ? 'border-primary bg-blue-50'
+                  : 'border-neutral-gray bg-white hover:border-secondary'
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-2xl">{doctor.avatar}</div>
@@ -120,15 +118,14 @@ export function BookingWidget({ onBookingStart }: BookingWidgetProps) {
             Select a Service
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {mockServices.map(service => (
+            {mockServices.map((service: MockService) => (
               <button
                 key={service.id}
                 onClick={() => setSelectedService(service.id)}
-                className={`p-4 rounded-[12px] border-2 transition-all text-left ${
-                  selectedService === service.id
-                    ? 'border-primary bg-blue-50'
-                    : 'border-neutral-gray bg-white hover:border-secondary'
-                }`}
+                className={`p-4 rounded-[12px] border-2 transition-all text-left ${selectedService === service.id
+                  ? 'border-primary bg-blue-50'
+                  : 'border-neutral-gray bg-white hover:border-secondary'
+                  }`}
               >
                 <p className="font-semibold text-neutral-dark">{service.name}</p>
                 <p className="text-xs text-neutral-gray mt-1">{service.duration} min • ${service.price}</p>
@@ -186,15 +183,14 @@ export function BookingWidget({ onBookingStart }: BookingWidgetProps) {
             </label>
             {availableSlots.length > 0 ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {availableSlots.map(time => (
+                {availableSlots.map((time: string) => (
                   <button
                     key={time}
                     onClick={() => setSelectedTime(time)}
-                    className={`p-3 rounded-[12px] border-2 transition-all text-sm font-medium ${
-                      selectedTime === time
-                        ? 'border-primary bg-blue-50 text-primary'
-                        : 'border-neutral-gray bg-white text-neutral-dark hover:border-secondary'
-                    }`}
+                    className={`p-3 rounded-[12px] border-2 transition-all text-sm font-medium ${selectedTime === time
+                      ? 'border-primary bg-blue-50 text-primary'
+                      : 'border-neutral-gray bg-white text-neutral-dark hover:border-secondary'
+                      }`}
                   >
                     {time}
                   </button>

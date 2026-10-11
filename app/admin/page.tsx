@@ -1,12 +1,14 @@
-import Stats from "@/components/admin/stats";
-import Appointments from "@/components/dashboard/appointments";
+import { getAdminDashboardData } from "@/lib/actions/admin-dashboard";
+import { DashboardLiveContainer } from "@/components/admin/dashboard/dashboard-live-container";
 
-export default function AdminDashboardPage() {
-  const date = new Date();
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboardPage() {
+  const initialData = await getAdminDashboardData();
+
   return (
-    <div className="space-y-6">
-      <Stats />
-      <Appointments date={date} />
-    </div>
+    <main>
+      <DashboardLiveContainer initialData={initialData} />
+    </main>
   );
 }

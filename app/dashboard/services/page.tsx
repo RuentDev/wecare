@@ -1,13 +1,15 @@
-import { getServices, getServiceStats } from "@/lib/actions/services";
+import { getServices, getServiceStats, getServiceCategories } from "@/lib/actions/services";
 import { ServicesPageClient } from "@/components/admin/services/services-page-client";
 
 export default async function ServicesManagement() {
-  const [servicesResult, statsResult] = await Promise.all([
+  const [servicesResult, statsResult, categoriesResult] = await Promise.all([
     getServices(),
     getServiceStats(),
+    getServiceCategories(),
   ]);
 
   const services = servicesResult.data ?? [];
+  const categories = categoriesResult.data ?? [];
   const stats = statsResult.data ?? {
     total: 0,
     active: 0,
@@ -18,7 +20,7 @@ export default async function ServicesManagement() {
 
   return (
     <main className="min-h-full">
-      <ServicesPageClient services={services} stats={stats} />
+      <ServicesPageClient services={services} categories={categories} stats={stats} />
     </main>
   );
 }
