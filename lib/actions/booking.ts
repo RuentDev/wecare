@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma-db";
 import { createGuestUser, findUserByEmail, getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { guestBookingSchema } from "@/lib/validations/booking";
+import { generateUniqueAppointmentNumber } from "@/lib/appointment-number";
 
 export async function createGuestBooking(data: {
   // Patient info
@@ -76,16 +77,19 @@ export async function createGuestBooking(data: {
 
     // 4. Create the appointment — convert time strings to full Date objects for DB
     const dateOnly = data.appointmentDate.split("T")[0];
+    const appointmentDateObj = new Date(dateOnly);
     const startDateTime = new Date(`1970-01-01T${data.startTime}:00Z`);
     const endDateTime = new Date(`1970-01-01T${data.endTime}:00Z`);
+    const appointmentNumber = await generateUniqueAppointmentNumber(appointmentDateObj);
 
     const appointment = await prisma.appointments.create({
       data: {
+        appointment_number: appointmentNumber,
         patient_id: patientId,
         doctor_id: data.doctorId,
         service_id: data.serviceId,
         location_id: data.locationId,
-        appointment_date: new Date(dateOnly),
+        appointment_date: appointmentDateObj,
         start_time: startDateTime,
         end_time: endDateTime,
         status: "pending",
@@ -94,6 +98,7 @@ export async function createGuestBooking(data: {
     });
 
     revalidatePath("/admin/appointments");
+    revalidatePath("/dashboard/appointments");
 
     return {
       success: true,

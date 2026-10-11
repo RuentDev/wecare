@@ -12,6 +12,7 @@ model appointments {
   patient_id          String              @db.Uuid
   service_id          String              @db.Uuid
   location_id         String              @db.Uuid
+  appointment_number  String?             @unique @db.VarChar(50)
   appointment_date    DateTime            @db.Date
   start_time          DateTime            @db.Time(6)
   end_time            DateTime            @db.Time(6)
@@ -31,6 +32,7 @@ model appointments {
   notification_logs   notification_logs[]
   payments            payments[]
 
+  @@index([appointment_number], map: "idx_appointments_number")
   @@index([appointment_date], map: "idx_appointments_date")
   @@index([doctor_id], map: "idx_appointments_doctor_id")
   @@index([patient_id], map: "idx_appointments_patient_id")
