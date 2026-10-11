@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Calendar,
   Clock,
   MapPin,
-  User,
   Plus,
   Stethoscope,
   CheckCircle,
@@ -19,26 +18,25 @@ import {
   Loader2,
 } from "lucide-react";
 import type { User as UserType } from "@/lib/auth";
-
-interface Appointment {
-  id: string;
-  appointment_date: string;
-  start_time: string;
-  end_time: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
-  notes: string | null;
-  service_name: string;
-  service_price: number;
-  dentist_first_name: string;
-  dentist_last_name: string;
-  location_name: string;
-}
+import type {
+  PatientDashboardAppointment,
+  PatientAppointmentStatus,
+} from "@/lib/types/patient-dashboard";
+import { getPatientDashboardAppointments } from "@/lib/actions/appointments";
 
 interface PatientDashboardProps {
   user: UserType;
+  initialAppointments?: PatientDashboardAppointment[];
 }
 
-const statusConfig = {
+const statusConfig: Record<
+  PatientAppointmentStatus,
+  {
+    label: string;
+    color: string;
+    icon: typeof CheckCircle;
+  }
+> = {
   pending: {
     label: "Pending",
     color: "bg-yellow-100 text-yellow-800",
@@ -47,6 +45,11 @@ const statusConfig = {
   confirmed: {
     label: "Confirmed",
     color: "bg-blue-100 text-blue-800",
+    icon: CheckCircle,
+  },
+  checked_in: {
+    label: "Checked In",
+    color: "bg-emerald-100 text-emerald-800",
     icon: CheckCircle,
   },
   completed: {
@@ -66,21 +69,26 @@ const statusConfig = {
   },
 };
 
-export function PatientDashboard({ user }: PatientDashboardProps) {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function PatientDashboard({
+  user,
+  initialAppointments,
+}: PatientDashboardProps) {
+  const [appointments, setAppointments] = useState<PatientDashboardAppointment[]>(
+    initialAppointments || []
+  );
+  const [isLoading, setIsLoading] = useState(!initialAppointments);
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    if (!initialAppointments) {
+      fetchAppointments();
+    }
+  }, [initialAppointments]);
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch("/api/appointments");
-      if (response.ok) {
-        const data = await response.json();
-        setAppointments(data.appointments);
-      }
+      setIsLoading(true);
+      const data = await getPatientDashboardAppointments(user.id);
+      setAppointments(data);
     } catch (error) {
       console.error("Failed to fetch appointments:", error);
     } finally {
@@ -88,9 +96,21 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
     }
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return "N/A";
+    if (timeStr.includes("T")) {
+      const date = new Date(timeStr);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+    }
+    const [hours, minutes] = timeStr.split(":");
     const hour = parseInt(hours);
+    if (isNaN(hour)) return timeStr;
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
@@ -105,20 +125,34 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
     });
   };
 
-  const upcomingAppointments = appointments.filter(
-    (a) =>
-      ["pending", "confirmed"].includes(a.status) &&
-      new Date(a.appointment_date) >= new Date(),
-  );
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
-  const pastAppointments = appointments.filter(
-    (a) =>
-      ["completed", "cancelled", "no_show"].includes(a.status) ||
-      new Date(a.appointment_date) < new Date(),
-  );
+  const upcomingAppointments = appointments.filter((a) => {
+    const aptDate = new Date(a.appointment_date);
+    aptDate.setHours(0, 0, 0, 0);
+    const isFutureOrToday = aptDate.getTime() >= todayStart.getTime();
+    return (
+      ["pending", "confirmed", "checked_in"].includes(a.status) &&
+      isFutureOrToday
+    );
+  });
 
-  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => {
-    const status = statusConfig[appointment.status];
+  const pastAppointments = appointments.filter((a) => {
+    const aptDate = new Date(a.appointment_date);
+    aptDate.setHours(0, 0, 0, 0);
+    const isPastDate = aptDate.getTime() < todayStart.getTime();
+    return (
+      ["completed", "cancelled", "no_show"].includes(a.status) || isPastDate
+    );
+  });
+
+  const AppointmentCard = ({
+    appointment,
+  }: {
+    appointment: PatientDashboardAppointment;
+  }) => {
+    const status = statusConfig[appointment.status] || statusConfig.pending;
     const StatusIcon = status.icon;
 
     return (
@@ -130,9 +164,16 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
                 <Stethoscope className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">
-                  {appointment.service_name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground">
+                    {appointment.service_name}
+                  </h3>
+                  {appointment.appointment_number && (
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {appointment.appointment_number}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Dr. {appointment.dentist_first_name}{" "}
                   {appointment.dentist_last_name}

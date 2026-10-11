@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getDoctorByUserId, getDoctorDashboardData } from "@/lib/actions/doctors";
+import { getPatientDashboardAppointments } from "@/lib/actions/appointments";
 import { PatientDashboard } from "@/components/dashboard/patient-dashboard";
 import { DoctorDashboard } from "@/components/dashboard/doctor-dashboard";
 import { redirect } from "next/navigation";
@@ -24,5 +25,6 @@ export default async function DashboardPage() {
   }
 
   // Default to patient dashboard
-  return <PatientDashboard user={user} />;
+  const patientAppointments = await getPatientDashboardAppointments(user.id);
+  return <PatientDashboard user={user} initialAppointments={patientAppointments} />;
 }

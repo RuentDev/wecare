@@ -99,6 +99,7 @@ export async function createGuestBooking(data: {
 
     revalidatePath("/admin/appointments");
     revalidatePath("/dashboard/appointments");
+    revalidatePath("/dashboard");
 
     return {
       success: true,

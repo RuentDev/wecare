@@ -165,7 +165,48 @@ export async function getAppointmentByNumber(
     return null;
   }
 }
+import type {
+  PatientDashboardAppointment,
+  PatientAppointmentStatus,
+} from "@/lib/types/patient-dashboard";
+
 export async function getPatientAppointments(patientId: string) {
+  try {
+    const appointments = await prisma.appointments.findMany({
+      where: {
+        patient_id: patientId,
+      },
+      include: {
+        doctors: {
+          include: {
+            users: {
+              select: {
+                first_name: true,
+                last_name: true,
+                avatar_url: true,
+              },
+            },
+          },
+        },
+        services: true,
+        locations: true,
+      },
+      orderBy: [
+        { appointment_date: "desc" },
+        { start_time: "desc" },
+      ],
+    });
+
+    return { success: true, data: serializePrisma(appointments) };
+  } catch (error) {
+    console.error("[GET_PATIENT_APPOINTMENTS]", error);
+    return { success: false, error: "Failed to fetch appointments" };
+  }
+}
+
+export async function getPatientDashboardAppointments(
+  patientId: string
+): Promise<PatientDashboardAppointment[]> {
   try {
     const appointments = await prisma.appointments.findMany({
       where: {
@@ -183,15 +224,32 @@ export async function getPatientAppointments(patientId: string) {
           },
         },
         services: true,
+        locations: true,
       },
-      orderBy: {
-        appointment_date: "desc",
-      },
+      orderBy: [
+        { appointment_date: "desc" },
+        { start_time: "desc" },
+      ],
     });
 
-    return { success: true, data: serializePrisma(appointments) };
+    return appointments.map((apt) => ({
+      id: apt.id,
+      appointment_number:
+        apt.appointment_number || `APT-${apt.id.slice(0, 8).toUpperCase()}`,
+      appointment_date: apt.appointment_date.toISOString(),
+      start_time: apt.start_time.toISOString(),
+      end_time: apt.end_time.toISOString(),
+      status: (apt.status || "pending") as PatientAppointmentStatus,
+      notes: apt.notes,
+      service_name: apt.services.name,
+      service_price: Number(apt.services.price),
+      dentist_first_name: apt.doctors.users?.first_name || "Doctor",
+      dentist_last_name: apt.doctors.users?.last_name || "",
+      location_name: apt.locations.name,
+      location_address: apt.locations.address,
+    }));
   } catch (error) {
-    console.error("[GET_PATIENT_APPOINTMENTS]", error);
-    return { success: false, error: "Failed to fetch appointments" };
+    console.error("[GET_PATIENT_DASHBOARD_APPOINTMENTS]", error);
+    return [];
   }
 }

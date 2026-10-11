@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -326,6 +327,12 @@ const Scheduling = ({ date }: Props) => {
               )}
             </div>
             <div className="pt-8 border-t border-neutral-gray/30 flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                asChild
+                className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-2xl h-auto text-lg transition-all"
+              >
+                <Link href="/dashboard">Go to Dashboard</Link>
+              </Button>
               <Button
                 variant="outline"
                 className="border-2 border-neutral-gray text-neutral-dark font-bold py-4 px-8 rounded-2xl h-auto text-lg hover:bg-neutral-light transition-all"
