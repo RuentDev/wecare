@@ -22,10 +22,10 @@ export interface SidebarItem {
 export const SIDEBAR_NAVS: SidebarItem[] = [
   // Doctor Routes
   {
-    label: "Overview",
+    label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["doctor"],
+    roles: ["patients", "doctor"],
   },
   {
     label: "Schedule",

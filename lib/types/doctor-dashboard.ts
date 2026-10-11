@@ -54,7 +54,7 @@ export interface DailyVolumeStats {
 }
 
 export interface DoctorDashboardData {
-  doctor: doctors & { users: users | null };
+  doctor: (doctors & { users: users | null }) | null;
   stats: {
     todayPatients: number;
     pendingAppointments: number;
