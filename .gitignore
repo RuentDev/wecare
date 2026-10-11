@@ -7,7 +7,9 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 next.user-config.*
 
-.docs.
+#AI FILES
+.docs/
+GEMINI.md
 
 # Environment variables
 .env*.local
