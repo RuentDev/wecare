@@ -7,11 +7,46 @@ import { requirePermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/lib/auth";
 import { serializePrisma } from "@/lib/utils";
 import type { UserWithDoctorDetails } from "@/lib/types/user";
+import type { user_role } from "@/lib/generated/prisma";
 
 /**
  * Fetches all users from DB (Internal use for caching)
  */
 const fetchUsers = async () => {
+  // Auto-sync missing user_roles so seeded/demo users automatically get their RBAC roles
+  const usersMissingRolesCount = await prisma.users.count({
+    where: {
+      user_roles: { none: {} },
+      role: { not: null },
+    },
+  });
+
+  if (usersMissingRolesCount > 0) {
+    const roles = await prisma.roles.findMany();
+    const roleMap = new Map<string, string>(roles.map((r) => [r.name.toLowerCase(), r.id]));
+    const usersWithoutRoles = await prisma.users.findMany({
+      where: {
+        user_roles: { none: {} },
+        role: { not: null },
+      },
+      select: { id: true, role: true },
+    });
+
+    const recordsToCreate = usersWithoutRoles
+      .filter((u) => u.role && roleMap.has(u.role.toLowerCase()))
+      .map((u) => ({
+        user_id: u.id,
+        role_id: roleMap.get(u.role!.toLowerCase())!,
+      }));
+
+    if (recordsToCreate.length > 0) {
+      await prisma.user_roles.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+    }
+  }
+
   return await prisma.users.findMany({
     select: {
       id: true,
@@ -76,9 +111,71 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
     }),
   ]);
 
+  // Sync users.role with primary system role if assigned
+  const assignedRoles = await prisma.roles.findMany({
+    where: { id: { in: roleIds } },
+  });
+  const validSystemRoles: user_role[] = [
+    "admin",
+    "doctor",
+    "nurse",
+    "staff",
+    "patient",
+  ];
+  const matchedSystemRole = assignedRoles
+    .map((r) => r.name.toLowerCase() as user_role)
+    .find((name) => validSystemRoles.includes(name));
+
+  if (matchedSystemRole) {
+    await prisma.users.update({
+      where: { id: userId },
+      data: { role: matchedSystemRole },
+    });
+  }
+
   revalidateTag("users", "default");
   revalidatePath("/admin/users");
   return { success: true };
+}
+
+/**
+ * Explicit helper to sync any users lacking user_roles records
+ */
+export async function syncMissingUserRoles() {
+  const roles = await prisma.roles.findMany();
+  const roleMap = new Map<string, string>(roles.map((r) => [r.name.toLowerCase(), r.id]));
+
+  const usersWithoutRoles = await prisma.users.findMany({
+    where: {
+      user_roles: { none: {} },
+      role: { not: null },
+    },
+    select: { id: true, role: true },
+  });
+
+  if (usersWithoutRoles.length > 0) {
+    const recordsToCreate = usersWithoutRoles
+      .filter((u) => u.role && roleMap.has(u.role.toLowerCase()))
+      .map((u) => ({
+        user_id: u.id,
+        role_id: roleMap.get(u.role!.toLowerCase())!,
+      }));
+
+    if (recordsToCreate.length > 0) {
+      await prisma.user_roles.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
+      });
+    }
+  }
+
+  try {
+    revalidateTag("users", "default");
+    revalidatePath("/admin/users");
+  } catch {
+    // Ignore when executed outside Next.js request context
+  }
+  return { success: true, count: usersWithoutRoles.length };
 }
 
 /**

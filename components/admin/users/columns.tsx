@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,35 +84,47 @@ export const getColumns = ({
   },
   {
     accessorKey: "role",
-    header: "System Role (Legacy)",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="capitalize">
-        {row.getValue("role")}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "user_roles",
-    header: "RBAC Roles",
+    header: "Role",
     cell: ({ row }) => {
-      const userRoles = row.original.user_roles;
+      const user = row.original;
+      const primaryRole = user.role?.toLowerCase() || "patient";
+      const additionalRoles = user.user_roles
+        .map((ur) => ur.roles.name)
+        .filter((name) => name.toLowerCase() !== primaryRole);
+
+      const getRoleBadgeClass = (role: string) => {
+        switch (role) {
+          case "admin":
+            return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800";
+          case "doctor":
+            return "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800";
+          case "nurse":
+            return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800";
+          case "staff":
+            return "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800";
+          case "patient":
+          default:
+            return "bg-neutral-100 text-neutral-700 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700";
+        }
+      };
+
       return (
-        <div className="flex flex-wrap gap-1">
-          {userRoles.length > 0 ? (
-            userRoles.map((ur) => (
-              <Badge
-                key={ur.roles.id}
-                variant="secondary"
-                className="bg-primary/10 text-primary border-primary/20"
-              >
-                {ur.roles.name}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-xs text-muted-foreground italic">
-              No roles assigned
-            </span>
-          )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn("capitalize font-medium shadow-2xs", getRoleBadgeClass(primaryRole))}
+          >
+            {primaryRole}
+          </Badge>
+          {additionalRoles.map((roleName) => (
+            <Badge
+              key={roleName}
+              variant="secondary"
+              className="text-xs py-0 px-1.5 bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 capitalize"
+            >
+              +{roleName}
+            </Badge>
+          ))}
         </div>
       );
     },

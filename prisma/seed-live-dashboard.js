@@ -493,6 +493,21 @@ async function main() {
     },
   });
 
+  // Sync RBAC roles for all users in the system
+  const allRoles = await prisma.roles.findMany();
+  const roleMap = new Map(allRoles.map((r) => [r.name.toLowerCase(), r.id]));
+  const allUsers = await prisma.users.findMany({ select: { id: true, role: true } });
+  for (const u of allUsers) {
+    if (u.role && roleMap.has(u.role.toLowerCase())) {
+      const roleId = roleMap.get(u.role.toLowerCase());
+      await prisma.user_roles.upsert({
+        where: { user_id_role_id: { user_id: u.id, role_id: roleId } },
+        update: {},
+        create: { user_id: u.id, role_id: roleId },
+      });
+    }
+  }
+
   console.log("✅ Live clinic database seeded successfully!");
 }
 
