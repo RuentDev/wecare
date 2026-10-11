@@ -303,10 +303,10 @@ async function main() {
     patients.push(user);
   }
 
-  // 7. Today's Appointments with Realistic Queue Stages
+  // 7. Today's Appointments with Realistic, Non-overlapping Patient Queue Stages
   const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Delete today's test appointments to populate clean realistic queue
+  // Delete all today's appointments before re-seeding to guarantee clean state
   await prisma.appointments.deleteMany({
     where: {
       appointment_date: todayDate,
@@ -323,10 +323,10 @@ async function main() {
     return d;
   };
 
-  // Appointment 1: IN CONSULTATION (Checked in, slot covering right now)
+  // Appointment 1: Maria Santos -> IN CONSULTATION (Slot covers current time)
   await prisma.appointments.create({
     data: {
-      patient_id: patients[0].id,
+      patient_id: patients[0].id, // Maria Santos
       doctor_id: doctorJaneRec.id,
       service_id: s1.id,
       location_id: loc1.id,
@@ -334,29 +334,14 @@ async function main() {
       start_time: makeTime(curHours, 0),
       end_time: makeTime(curHours, 45),
       status: "checked_in",
-      notes: "Follow-up consultation for blood pressure monitoring.",
+      notes: "Routine health checkup and blood pressure management.",
     },
   });
 
-  // Appointment 2: IN CONSULTATION (Another active doctor or second room)
+  // Appointment 2: Ana Reyes -> WAITING in lobby (Scheduled next slot)
   await prisma.appointments.create({
     data: {
-      patient_id: patients[1].id,
-      doctor_id: doctorJaneRec.id,
-      service_id: s3.id,
-      location_id: loc1.id,
-      appointment_date: todayDate,
-      start_time: makeTime(curHours, 15),
-      end_time: makeTime(curHours + 1, 0),
-      status: "checked_in",
-      notes: "Routine ECG test and lifestyle review.",
-    },
-  });
-
-  // Appointment 3: WAITING in Lobby (Checked in, starts in next hour)
-  await prisma.appointments.create({
-    data: {
-      patient_id: patients[2].id,
+      patient_id: patients[2].id, // Ana Reyes
       doctor_id: doctorJaneRec.id,
       service_id: s1.id,
       location_id: loc1.id,
@@ -368,10 +353,10 @@ async function main() {
     },
   });
 
-  // Appointment 4: WAITING in Lobby (Checked in for Pediatrics)
+  // Appointment 3: Robert Tan -> WAITING in lobby (Pediatrics)
   await prisma.appointments.create({
     data: {
-      patient_id: patients[3].id,
+      patient_id: patients[3].id, // Robert Tan
       doctor_id: doctorCassadraRec.id,
       service_id: s2.id,
       location_id: loc2.id,
@@ -383,10 +368,10 @@ async function main() {
     },
   });
 
-  // Appointment 5: WAITING in Lobby (Checked in)
+  // Appointment 4: Elena Gomez -> WAITING in lobby (General Consultation)
   await prisma.appointments.create({
     data: {
-      patient_id: patients[4].id,
+      patient_id: patients[4].id, // Elena Gomez
       doctor_id: doctorMichaelRec.id,
       service_id: s1.id,
       location_id: loc1.id,
@@ -394,29 +379,14 @@ async function main() {
       start_time: makeTime(curHours + 2, 0),
       end_time: makeTime(curHours + 2, 30),
       status: "checked_in",
-      notes: "General physical consultation.",
+      notes: "Pre-employment physical consultation.",
     },
   });
 
-  // Appointment 6: CHECKED OUT (Completed earlier today)
+  // Appointment 5: Juan Dela Cruz -> CHECKED OUT (Completed earlier today)
   await prisma.appointments.create({
     data: {
-      patient_id: patients[0].id,
-      doctor_id: doctorJaneRec.id,
-      service_id: s1.id,
-      location_id: loc1.id,
-      appointment_date: todayDate,
-      start_time: makeTime(8, 0),
-      end_time: makeTime(8, 30),
-      status: "completed",
-      notes: "Morning consultation completed successfully.",
-    },
-  });
-
-  // Appointment 7: CHECKED OUT (Completed earlier today)
-  await prisma.appointments.create({
-    data: {
-      patient_id: patients[1].id,
+      patient_id: patients[1].id, // Juan Dela Cruz
       doctor_id: doctorCassadraRec.id,
       service_id: s2.id,
       location_id: loc2.id,
@@ -424,24 +394,30 @@ async function main() {
       start_time: makeTime(9, 0),
       end_time: makeTime(9, 45),
       status: "completed",
-      notes: "Infant vaccine administered.",
+      notes: "Pediatric follow-up completed successfully.",
     },
   });
 
-  // Appointment 8: CHECKED OUT (Completed earlier today)
-  await prisma.appointments.create({
-    data: {
-      patient_id: patients[2].id,
-      doctor_id: doctorMichaelRec.id,
-      service_id: s3.id,
-      location_id: loc1.id,
-      appointment_date: todayDate,
-      start_time: makeTime(9, 45),
-      end_time: makeTime(10, 30),
-      status: "completed",
-      notes: "Post-op review completed.",
-    },
+  // Appointment 6: Kimbely Alba -> CHECKED OUT (Completed earlier today)
+  const existingPatient = await prisma.users.findUnique({
+    where: { email: "kimbiealba21@gmail.com" },
   });
+
+  if (existingPatient) {
+    await prisma.appointments.create({
+      data: {
+        patient_id: existingPatient.id, // Kimbely Alba
+        doctor_id: doctorJaneRec.id,
+        service_id: s3.id,
+        location_id: loc1.id,
+        appointment_date: todayDate,
+        start_time: makeTime(10, 0),
+        end_time: makeTime(10, 45),
+        status: "completed",
+        notes: "Morning ECG and cardiovascular review completed.",
+      },
+    });
+  }
 
   // Appointment 9 & 10: Pending approval
   await prisma.appointments.create({

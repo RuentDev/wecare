@@ -190,13 +190,20 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     monthlyRevenue,
   };
 
-  // Helper to determine if appointment is currently active
+  // Helper to determine timing relative to current time
   const curTotalMin = now.getHours() * 60 + now.getMinutes();
 
-  const isAppointmentOngoing = (startTime: Date, endTime: Date): boolean => {
+  const getSlotTiming = (startTime: Date, endTime: Date) => {
     const startMin = startTime.getHours() * 60 + startTime.getMinutes();
     const endMin = endTime.getHours() * 60 + endTime.getMinutes();
-    return curTotalMin >= startMin && curTotalMin <= endMin;
+    const isOngoing = curTotalMin >= startMin && curTotalMin <= endMin;
+    const isPast = curTotalMin > endMin;
+    const isUpcoming = curTotalMin < startMin;
+    return { isOngoing, isPast, isUpcoming, startMin, endMin };
+  };
+
+  const isAppointmentOngoing = (startTime: Date, endTime: Date): boolean => {
+    return getSlotTiming(startTime, endTime).isOngoing;
   };
 
   // Patient Queue Aggregation
@@ -204,21 +211,14 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   let inConsultationCount = 0;
   let checkedOutCount = 0;
 
-  const queue: QueuedPatient[] = todayAppointments.map((apt) => {
+  const rawQueue: QueuedPatient[] = todayAppointments.map((apt) => {
     let queueStage: QueueStage = "waiting";
+    const timing = getSlotTiming(apt.start_time, apt.end_time);
 
-    if (apt.status === "completed") {
+    if (apt.status === "completed" || timing.isPast) {
       queueStage = "checked_out";
       checkedOutCount++;
-    } else if (apt.status === "checked_in") {
-      if (isAppointmentOngoing(apt.start_time, apt.end_time)) {
-        queueStage = "in_consultation";
-        inConsultationCount++;
-      } else {
-        queueStage = "waiting";
-        waitingCount++;
-      }
-    } else if (apt.status === "confirmed" && isAppointmentOngoing(apt.start_time, apt.end_time)) {
+    } else if (timing.isOngoing && (apt.status === "checked_in" || apt.status === "confirmed")) {
       queueStage = "in_consultation";
       inConsultationCount++;
     } else {
@@ -245,6 +245,15 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       queueStage,
     };
   });
+
+  // Sort queue: in_consultation first, then waiting, then checked_out
+  const stagePriority: Record<QueueStage, number> = {
+    in_consultation: 0,
+    waiting: 1,
+    checked_out: 2,
+  };
+
+  const queue = rawQueue.sort((a, b) => stagePriority[a.queueStage] - stagePriority[b.queueStage]);
 
   const queueSummary: PatientQueueSummary = {
     waitingCount,
