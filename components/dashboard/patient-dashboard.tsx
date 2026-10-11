@@ -188,123 +188,86 @@ export function PatientDashboard({
     return (
       <Link
         href={`/dashboard/appointments/${appointment.appointment_number}`}
-        className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+        className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl h-full"
       >
         <Card
-          className={`transition-all duration-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer border ${status.cardStyle}`}
+          className={`h-full transition-all duration-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer border flex flex-col justify-between ${status.cardStyle}`}
         >
-          <CardContent className="p-5 md:p-6 space-y-4">
-            {/* Top Row: Service info, status badge, and chevron */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3.5 min-w-0">
-                <Avatar className="w-12 h-12 rounded-xl border border-border/60 shrink-0 bg-primary/10">
-                  <AvatarImage
-                    src={appointment.dentist_avatar_url || ""}
-                    alt={`Dr. ${appointment.dentist_first_name}`}
-                  />
-                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-sm">
-                    {doctorInitials || <Stethoscope className="w-5 h-5 text-primary" />}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-base md:text-lg text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
+          <CardContent className="p-5 flex flex-col h-full justify-between gap-4">
+            {/* Top: Service Header + Status Badge */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Avatar className="w-10 h-10 rounded-xl border border-border/60 shrink-0 bg-primary/10">
+                    <AvatarImage
+                      src={appointment.dentist_avatar_url || ""}
+                      alt={`Dr. ${appointment.dentist_first_name}`}
+                    />
+                    <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xs">
+                      {doctorInitials || <Stethoscope className="w-4 h-4 text-primary" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-base text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
                       {appointment.service_name}
                     </h3>
-                    <Badge
-                      variant="outline"
-                      className="font-mono text-[11px] px-2 py-0.5 bg-background/80 shrink-0 border-border/80"
-                    >
-                      {appointment.appointment_number}
-                    </Badge>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Dr. {appointment.dentist_first_name} {appointment.dentist_last_name}
+                      {appointment.specialization && ` • ${appointment.specialization.replace("_", " ")}`}
+                    </p>
                   </div>
-
-                  <p className="text-sm font-medium text-foreground/80 flex items-center gap-1.5 flex-wrap">
-                    <span>
-                      Dr. {appointment.dentist_first_name}{" "}
-                      {appointment.dentist_last_name}
-                    </span>
-                    {appointment.specialization && (
-                      <>
-                        <span className="text-muted-foreground/60">•</span>
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {appointment.specialization.replace("_", " ")}
-                        </span>
-                      </>
-                    )}
-                  </p>
                 </div>
-              </div>
 
-              {/* Status Badge & Chevron indicator */}
-              <div className="flex items-center gap-2 shrink-0">
                 <Badge
                   variant="outline"
-                  className={`text-xs px-3 py-1 rounded-full border shadow-2xs flex items-center gap-1.5 ${status.badgeStyle}`}
+                  className={`text-[11px] px-2.5 py-0.5 rounded-full border shadow-2xs shrink-0 flex items-center gap-1 ${status.badgeStyle}`}
                 >
-                  <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+                  <StatusIcon className="w-3 h-3 shrink-0" />
                   <span>{status.label}</span>
                 </Badge>
-                <div className="w-8 h-8 rounded-full bg-background/60 border border-border/60 flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-background transition-colors shrink-0">
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+
+              {/* Clinical Details: Date, Time & Location */}
+              <div className="space-y-1.5 pt-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 font-medium text-foreground/90">
+                  <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>{formatDate(appointment.appointment_date)}</span>
+                  <span className="text-muted-foreground/50">•</span>
+                  <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>
+                    {formatTime(appointment.start_time)}
+                    {appointment.duration_minutes ? ` (${appointment.duration_minutes}m)` : ""}
+                  </span>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {appointment.location_name}
+                    {appointment.city ? `, ${appointment.city}` : ""}
+                  </span>
+                </div>
+
+                {appointment.notes && (
+                  <p className="text-[11px] italic text-muted-foreground/80 line-clamp-1 pt-0.5">
+                    &ldquo;{appointment.notes}&rdquo;
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Quick Metadata Bar: Date, Time, Location, Duration, Price */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
-                <Calendar className="w-4 h-4 text-primary shrink-0" />
-                <span className="truncate">{formatDate(appointment.appointment_date)}</span>
+            {/* Bottom Bar: Price & Action */}
+            <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs mt-auto">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <CreditCard className="w-3.5 h-3.5 text-primary" />
+                <span>{formatCurrency(appointment.service_price)}</span>
               </div>
 
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
-                <Clock className="w-4 h-4 text-primary shrink-0" />
-                <span className="truncate">
-                  {formatTime(appointment.start_time)}
-                  {appointment.duration_minutes ? ` (${appointment.duration_minutes}m)` : ""}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
-                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                <span className="truncate">
-                  {appointment.location_name}
-                  {appointment.city ? `, ${appointment.city}` : ""}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-background/60 border border-border/50 text-foreground/90 font-medium">
-                <CreditCard className="w-4 h-4 text-primary shrink-0" />
-                <span className="truncate font-semibold">
-                  {formatCurrency(appointment.service_price)}
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1 font-semibold text-primary group-hover:translate-x-0.5 transition-transform text-xs">
+                View Details
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
             </div>
-
-            {/* Patient notes / reason preview if available */}
-            {appointment.notes && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-background/40 border border-border/40 text-xs text-muted-foreground">
-                <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground/80 shrink-0" />
-                <p className="line-clamp-1 italic text-foreground/75">
-                  &ldquo;{appointment.notes}&rdquo;
-                </p>
-              </div>
-            )}
-
-            {/* Bottom micro-bar for Pending Guidance */}
-            {isPending && (
-              <div className="flex items-center justify-between text-xs text-amber-800 dark:text-amber-300/90 pt-1 border-t border-amber-200/60 dark:border-amber-800/40">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                  Awaiting clinic reception confirmation
-                </span>
-                <span className="text-[11px] font-semibold underline underline-offset-2 group-hover:text-amber-900 transition-colors">
-                  View appointment details &rarr;
-                </span>
-              </div>
-            )}
           </CardContent>
         </Card>
       </Link>
@@ -370,7 +333,7 @@ export function PatientDashboard({
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {upcomingAppointments.map((appointment) => (
                 <AppointmentCard
                   key={appointment.id}
@@ -406,7 +369,7 @@ export function PatientDashboard({
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {pastAppointments.map((appointment) => (
                 <AppointmentCard
                   key={appointment.id}
