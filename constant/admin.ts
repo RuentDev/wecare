@@ -16,16 +16,17 @@ import {
   DollarSign,
   TagIcon,
   Newspaper,
+  type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem {
   name: string;
   href: string;
-  icon: any;
+  icon: LucideIcon;
   children?: {
     name: string;
     href: string;
-    icon: any;
+    icon: LucideIcon;
     allowedRoles: string[];
   }[];
   allowedRoles: string[];
@@ -47,27 +48,7 @@ export const NAVIGATIONS: NavItem[] = [
   {
     name: "Users",
     href: "/admin/users",
-    icon: UserCog,
-    children: [
-      {
-        name: "Users",
-        href: "/admin/users",
-        icon: UserCog,
-        allowedRoles: ["admin", "staff"],
-      },
-      {
-        name: "Doctors",
-        href: "/admin/users/doctors",
-        icon: Stethoscope,
-        allowedRoles: ["admin", "staff", "doctor"],
-      },
-      {
-        name: "Patients",
-        href: "/admin/users/patients",
-        icon: Users,
-        allowedRoles: ["admin", "staff", "doctor"],
-      },
-    ],
+    icon: Users,
     allowedRoles: ["admin", "staff", "doctor"],
   },
   {
@@ -124,7 +105,7 @@ export const NAVIGATIONS: NavItem[] = [
 
 export interface TableAction {
   action: string;
-  icon: any;
+  icon: LucideIcon;
   href?: (id: string) => string;
   allowedRoles: string[];
   className: string;

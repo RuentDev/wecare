@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, Clock, MapPin, User, Stethoscope, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import type { AdminAppointmentRecord } from "./columns";
 
 interface AppointmentDetailsModalProps {
-  appointment: any | null;
+  appointment: AdminAppointmentRecord | null;
   isOpen: boolean;
   onClose: () => void;
 }

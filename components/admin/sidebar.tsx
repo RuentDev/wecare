@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserCog, ChevronDown } from "lucide-react";
+import { UserCog, ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth";
 import {
@@ -43,7 +43,7 @@ function SidebarNavItem({
   pathname,
   isChild = false,
 }: {
-  item: { name: string; href: string; icon: any };
+  item: { name: string; href: string; icon: LucideIcon };
   pathname: string;
   isChild?: boolean;
 }) {

@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 import { DataTable } from "@/components/ui/data-table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { toggleUserStatus, deleteUser } from "@/lib/actions/rbac";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { UserPlus, Users } from "lucide-react";
 import { getColumns, User, Role } from "./columns";
 import { UserRoleModal } from "./user-role-modal";
-import { UserPlus } from "lucide-react";
 import { AddUserModal } from "./add-user-modal";
 import { DeleteUserModal } from "./delete-user-modal";
-import { Button } from "@/components/ui/button";
+import { UsersFilters } from "./users-filters";
+import { UsersProvider, useUsers } from "@/contexts/users-context";
 
 interface UsersClientProps {
   initialUsers: User[];
@@ -21,122 +18,107 @@ interface UsersClientProps {
   currentUserId?: string;
 }
 
-export function UsersClient({
-  initialUsers,
-  roles,
-  currentUserRole,
-  currentUserId,
-}: UsersClientProps) {
-  const router = useRouter();
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    setUsers(initialUsers);
-  }, [initialUsers]);
-
-  async function handleToggleStatus(userId: string, currentStatus: boolean | null) {
-    try {
-      await toggleUserStatus(userId, !currentStatus);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, is_active: !currentStatus } : u
-        )
-      );
-      toast.success(
-        `User ${!currentStatus ? "activated" : "deactivated"} successfully`
-      );
-      router.refresh();
-    } catch {
-      toast.error("Failed to update user status");
-    }
-  }
-
-  function handleOpenRoleModal(user: User) {
-    setSelectedUser(user);
-    setIsRoleModalOpen(true);
-  }
-
-  function handleOpenDeleteModal(user: User) {
-    setUserToDelete(user);
-  }
-
-  async function handleConfirmDelete(userId: string) {
-    try {
-      setIsDeleting(true);
-      await deleteUser(userId);
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      toast.success("User deleted permanently");
-      setUserToDelete(null);
-      router.refresh();
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete user";
-      toast.error(message);
-    } finally {
-      setIsDeleting(false);
-    }
-  }
+function UsersContent() {
+  const {
+    filteredUsers,
+    roles,
+    currentUserRole,
+    currentUserId,
+    selectedUser,
+    isRoleModalOpen,
+    openRoleModal,
+    closeRoleModal,
+    isAddModalOpen,
+    setAddModalOpen,
+    userToDelete,
+    isDeleting,
+    openDeleteModal,
+    closeDeleteModal,
+    handleToggleStatus,
+    handleConfirmDelete,
+  } = useUsers();
 
   const columns = getColumns({
-    onAssignRoles: handleOpenRoleModal,
+    onAssignRoles: openRoleModal,
     onToggleStatus: handleToggleStatus,
-    onDeleteUser: handleOpenDeleteModal,
-    currentUserRole: currentUserRole,
-    currentUserId: currentUserId,
+    onDeleteUser: openDeleteModal,
+    currentUserRole,
+    currentUserId,
   });
 
   return (
-    <div className="space-y-6">
-      <Card className="glassmorphism border-none shadow-xl">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-6">
-            <Badge variant="secondary" className="px-3 py-1">
-              {users.length} total users
-            </Badge>
-
-            {currentUserRole !== "doctor" && (
-              <Button 
-                onClick={() => setIsAddModalOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6 shadow-lg shadow-primary/20 flex items-center gap-2 group transition-all active:scale-95"
-              >
-                <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                Add User Account
-              </Button>
-            )}
+    <div className="space-y-6 pb-10">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+              <Users className="w-5 h-5" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Users Management
+            </h1>
           </div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Manage your clinic&apos;s user accounts, assign RBAC permissions, and monitor active statuses.
+          </p>
+        </div>
 
-          <DataTable 
-            columns={columns} 
-            data={users} 
-            searchKey="user" 
-          />
-        </CardContent>
-      </Card>
+        {currentUserRole !== "doctor" && (
+          <Button
+            id="add-user-button"
+            onClick={() => setAddModalOpen(true)}
+            className="gap-2 text-xs font-semibold shadow-xs shrink-0"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Add User Account
+          </Button>
+        )}
+      </div>
+
+      {/* Main Table Container with Filter Toolbar */}
+      <div className="space-y-4">
+        <UsersFilters />
+        <DataTable columns={columns} data={filteredUsers} />
+      </div>
 
       <UserRoleModal
         user={selectedUser}
         roles={roles}
         isOpen={isRoleModalOpen}
-        onClose={() => setIsRoleModalOpen(false)}
+        onClose={closeRoleModal}
       />
 
-      <AddUserModal 
+      <AddUserModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => setAddModalOpen(false)}
       />
 
       <DeleteUserModal
         user={userToDelete}
         isOpen={!!userToDelete}
         isDeleting={isDeleting}
-        onClose={() => setUserToDelete(null)}
+        onClose={closeDeleteModal}
         onConfirm={handleConfirmDelete}
       />
     </div>
+  );
+}
+
+export function UsersClient({
+  initialUsers,
+  roles,
+  currentUserRole,
+  currentUserId,
+}: UsersClientProps) {
+  return (
+    <UsersProvider
+      initialUsers={initialUsers}
+      roles={roles}
+      currentUserRole={currentUserRole}
+      currentUserId={currentUserId}
+    >
+      <UsersContent />
+    </UsersProvider>
   );
 }

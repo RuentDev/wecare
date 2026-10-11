@@ -13,6 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import type { getAppointments } from "@/lib/actions/appointments";
+
+export type AdminAppointmentRecord = Awaited<ReturnType<typeof getAppointments>>[number];
+
 export type AppointmentColumn = {
   id: string;
   patientName: string;
@@ -22,10 +26,12 @@ export type AppointmentColumn = {
   time: string;
   status: string;
   isGuest: boolean;
-  raw: any; // Keep the raw object for the modal
+  raw: AdminAppointmentRecord;
 };
 
-export const getColumns = (onView: (appointment: any) => void): ColumnDef<AppointmentColumn>[] => [
+export const getColumns = (
+  onView: (appointment: AdminAppointmentRecord) => void
+): ColumnDef<AppointmentColumn>[] => [
   {
     accessorKey: "patientName",
     header: "Patient",
