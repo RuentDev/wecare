@@ -47,23 +47,22 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
   },
   {
     label: "Audit Logs",
-    href: "/dashboard/audit-logs",
+    href: "/admin/audit-logs",
     icon: ShieldCheck,
-    roles: ["doctor"],
+    roles: ["admin"],
   },
   {
     label: "Reports",
-    href: "/dashboard/reports",
+    href: "/admin/reports",
     icon: BarChart3,
-    roles: ["doctor"],
+    roles: ["admin"],
   },
   {
     label: "Health Metrics",
-    href: "/dashboard/metrics",
+    href: "/admin/metrics",
     icon: Activity,
-    roles: ["doctor"],
+    roles: ["admin"],
   },
-  // Patient Routes
   {
     label: "Dashboard",
     href: "/dashboard",

@@ -23,7 +23,7 @@ export function LocationsPageClient({
   // Dialog state
   const [formOpen, setFormOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<AdminLocation | null>(null);
-  
+
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingLocation, setDeletingLocation] = useState<AdminLocation | null>(null);
 
@@ -67,71 +67,6 @@ export function LocationsPageClient({
           <Plus className="w-4 h-4" />
           Add Location
         </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="py-0 border-white/20 bg-white/30 backdrop-blur-md">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/30">
-              <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">
-                Total Locations
-              </p>
-              <p className="text-xl font-bold text-foreground">{stats.total}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="py-0 border-white/20 bg-white/30 backdrop-blur-md">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">
-                Active
-              </p>
-              <p className="text-xl font-bold text-foreground">
-                {stats.active}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="py-0 border-white/20 bg-white/30 backdrop-blur-md">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/30">
-              <MapPin className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">
-                Inactive
-              </p>
-              <p className="text-xl font-bold text-foreground">
-                {stats.inactive}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="py-0 border-white/20 bg-white/30 backdrop-blur-md">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-50 dark:bg-violet-950/30">
-              <Map className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">
-                Cities Covered
-              </p>
-              <p className="text-xl font-bold text-foreground">
-                {stats.cities}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Data Table */}

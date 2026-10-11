@@ -24,11 +24,11 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface DoctorOverviewProps {
+interface DoctorDashboardProps {
   data: any;
 }
 
-export function DoctorOverview({ data }: DoctorOverviewProps) {
+export function DoctorDashboard({ data }: DoctorDashboardProps) {
   const { stats, recentAppointments, doctor } = data;
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -102,87 +102,6 @@ export function DoctorOverview({ data }: DoctorOverviewProps) {
             </Badge>
           )}
         </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                <Users className="w-6 h-6" />
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-blue-50/50 text-blue-700 border-blue-100 font-bold"
-              >
-                Today
-              </Badge>
-            </div>
-            <p className="text-sm font-medium text-slate-500">
-              Scheduled Patients
-            </p>
-            <h3 className="text-3xl font-bold text-slate-900 mt-1">
-              {stats.todayPatients}
-            </h3>
-            <div className="flex items-center gap-1 mt-4 text-xs font-bold text-blue-600 uppercase tracking-wider">
-              <span>View details</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-amber-50/50 text-amber-700 border-amber-100 font-bold"
-              >
-                Action Required
-              </Badge>
-            </div>
-            <p className="text-sm font-medium text-slate-500">
-              Pending Approvals
-            </p>
-            <h3 className="text-3xl font-bold text-slate-900 mt-1">
-              {stats.pendingAppointments}
-            </h3>
-            <div className="flex items-center gap-1 mt-4 text-xs font-bold text-amber-600 uppercase tracking-wider">
-              <span>Review list</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm bg-white overflow-hidden group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-emerald-50/50 text-emerald-700 border-emerald-100 font-bold"
-              >
-                New
-              </Badge>
-            </div>
-            <p className="text-sm font-medium text-slate-500">
-              Unread Messages
-            </p>
-            <h3 className="text-3xl font-bold text-slate-900 mt-1">
-              {stats.unreadMessages}
-            </h3>
-            <div className="flex items-center gap-1 mt-4 text-xs font-bold text-emerald-600 uppercase tracking-wider">
-              <span>Open inbox</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Content Grid */}
@@ -271,11 +190,10 @@ export function DoctorOverview({ data }: DoctorOverviewProps) {
                         </Link>
                         <Button
                           size="sm"
-                          className={`rounded-xl shadow-sm font-bold transition-all ${
-                            apt.status === "checked_in"
-                              ? "bg-slate-100 text-slate-500 hover:bg-slate-100"
-                              : "bg-primary hover:bg-primary/90"
-                          }`}
+                          className={`rounded-xl shadow-sm font-bold transition-all ${apt.status === "checked_in"
+                            ? "bg-slate-100 text-slate-500 hover:bg-slate-100"
+                            : "bg-primary hover:bg-primary/90"
+                            }`}
                           onClick={() => handleCheckIn(apt.id)}
                           disabled={isPending || apt.status === "checked_in"}
                         >

@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getDoctorByUserId, getDoctorDashboardData } from "@/lib/actions/doctors";
 import { PatientDashboard } from "@/components/dashboard/patient-dashboard";
-import { DoctorOverview } from "@/components/dashboard/doctor-overview";
+import { DoctorDashboard } from "@/components/dashboard/doctor-dashboard";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
       );
     }
     const dashboardData = await getDoctorDashboardData(doctor.id);
-    return <DoctorOverview data={dashboardData} />;
+    return <DoctorDashboard data={dashboardData} />;
   }
 
   // Default to patient dashboard

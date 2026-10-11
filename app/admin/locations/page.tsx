@@ -1,6 +1,8 @@
 import { getAdminLocations, getLocationStats } from "@/lib/actions/locations";
 import { LocationsPageClient } from "@/components/admin/locations/locations-page-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function LocationsManagement() {
   const [locationsResult, statsResult] = await Promise.all([
     getAdminLocations(),
