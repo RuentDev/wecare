@@ -106,7 +106,7 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
 
   return (
     <Card className="flex flex-col h-full shadow-sm hover:shadow transition-shadow duration-200">
-      <CardHeader className="pb-3 border-b border-border/60">
+      <CardHeader className="pt-5 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -132,11 +132,10 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3">
           <div
             onClick={() => setActiveFilter("doctor")}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "doctor"
+            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${activeFilter === "doctor"
                 ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-muted-foreground">Doctors</span>
@@ -149,11 +148,10 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
 
           <div
             onClick={() => setActiveFilter("nurse")}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "nurse"
+            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${activeFilter === "nurse"
                 ? "bg-cyan-50/80 border-cyan-300 dark:bg-cyan-950/40 dark:border-cyan-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-muted-foreground">Nurses</span>
@@ -166,11 +164,10 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
 
           <div
             onClick={() => setActiveFilter("staff")}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "staff"
+            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${activeFilter === "staff"
                 ? "bg-blue-50/80 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-muted-foreground">Receptionists</span>
@@ -183,11 +180,10 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
 
           <div
             onClick={() => setActiveFilter("admin")}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "admin"
+            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${activeFilter === "admin"
                 ? "bg-purple-50/80 border-purple-300 dark:bg-purple-950/40 dark:border-purple-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-muted-foreground">Admins</span>
@@ -200,61 +196,56 @@ export function ActiveUserLogsCard({ activeStaff }: ActiveUserLogsCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 flex-1 flex flex-col">
+      <CardContent className="pb-10 flex-1 flex flex-col">
         {/* Role Filters bar */}
         <div className="flex items-center gap-1.5 pb-3 text-xs flex-wrap">
           <button
             type="button"
             onClick={() => setActiveFilter("all")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "all"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "all"
                 ? "bg-primary text-primary-foreground font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             All Active ({activeStaff.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("doctor")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "doctor"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "doctor"
                 ? "bg-emerald-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             Doctors ({doctorsCount})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("nurse")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "nurse"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "nurse"
                 ? "bg-cyan-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             Nurses ({nursesCount})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("staff")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "staff"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "staff"
                 ? "bg-blue-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             Receptionists ({staffCount})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("admin")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "admin"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "admin"
                 ? "bg-purple-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             Admins ({adminsCount})
           </button>

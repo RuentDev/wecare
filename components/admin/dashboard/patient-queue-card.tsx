@@ -77,7 +77,7 @@ export function PatientQueueCard({ queue }: PatientQueueCardProps) {
 
   return (
     <Card className="flex flex-col h-full shadow-sm hover:shadow transition-shadow duration-200">
-      <CardHeader className="pb-3 border-b border-border/60">
+      <CardHeader className="py-5 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -103,11 +103,10 @@ export function PatientQueueCard({ queue }: PatientQueueCardProps) {
         <div className="grid grid-cols-3 gap-2.5 pt-3">
           <div
             onClick={() => setActiveFilter("waiting")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "waiting"
-                ? "bg-blue-50/80 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800 shadow-xs"
-                : "bg-card hover:bg-muted/40 border-border"
-            }`}
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "waiting"
+              ? "bg-blue-50/80 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800 shadow-xs"
+              : "bg-card hover:bg-muted/40 border-border"
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">Waiting</span>
@@ -120,11 +119,10 @@ export function PatientQueueCard({ queue }: PatientQueueCardProps) {
 
           <div
             onClick={() => setActiveFilter("in_consultation")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "in_consultation"
-                ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 shadow-xs"
-                : "bg-card hover:bg-muted/40 border-border"
-            }`}
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "in_consultation"
+              ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 shadow-xs"
+              : "bg-card hover:bg-muted/40 border-border"
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">In Consultation</span>
@@ -137,11 +135,10 @@ export function PatientQueueCard({ queue }: PatientQueueCardProps) {
 
           <div
             onClick={() => setActiveFilter("checked_out")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "checked_out"
-                ? "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 shadow-xs"
-                : "bg-card hover:bg-muted/40 border-border"
-            }`}
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "checked_out"
+              ? "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 shadow-xs"
+              : "bg-card hover:bg-muted/40 border-border"
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">Checked Out</span>
@@ -154,51 +151,47 @@ export function PatientQueueCard({ queue }: PatientQueueCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 flex-1 flex flex-col">
+      <CardContent className="pb-10 flex-1 flex flex-col">
         {/* Filters bar */}
         <div className="flex items-center justify-between pb-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={() => setActiveFilter("all")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                activeFilter === "all"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "all"
+                ? "bg-primary text-primary-foreground font-semibold"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+                }`}
             >
               All ({queue.queue.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveFilter("waiting")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                activeFilter === "waiting"
-                  ? "bg-blue-600 text-white font-semibold"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "waiting"
+                ? "bg-blue-600 text-white font-semibold"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+                }`}
             >
               Waiting ({queue.waitingCount})
             </button>
             <button
               type="button"
               onClick={() => setActiveFilter("in_consultation")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                activeFilter === "in_consultation"
-                  ? "bg-emerald-600 text-white font-semibold"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "in_consultation"
+                ? "bg-emerald-600 text-white font-semibold"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+                }`}
             >
               In-Consultation ({queue.inConsultationCount})
             </button>
             <button
               type="button"
               onClick={() => setActiveFilter("checked_out")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                activeFilter === "checked_out"
-                  ? "bg-slate-700 text-white font-semibold"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "checked_out"
+                ? "bg-slate-700 text-white font-semibold"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+                }`}
             >
               Checked Out ({queue.checkedOutCount})
             </button>

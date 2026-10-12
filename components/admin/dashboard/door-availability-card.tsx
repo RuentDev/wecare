@@ -81,7 +81,7 @@ export function DoorAvailabilityCard({ physicians }: DoorAvailabilityCardProps) 
 
   return (
     <Card className="flex flex-col h-full shadow-sm hover:shadow transition-shadow duration-200">
-      <CardHeader className="pb-3 border-b border-border/60">
+      <CardHeader className="pt-5 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -107,11 +107,10 @@ export function DoorAvailabilityCard({ physicians }: DoorAvailabilityCardProps) 
         <div className="grid grid-cols-3 gap-2.5 pt-3">
           <div
             onClick={() => setActiveFilter("ON_DUTY")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "ON_DUTY"
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "ON_DUTY"
                 ? "bg-emerald-50/80 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">On-Duty</span>
@@ -124,11 +123,10 @@ export function DoorAvailabilityCard({ physicians }: DoorAvailabilityCardProps) 
 
           <div
             onClick={() => setActiveFilter("ON_BREAK")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "ON_BREAK"
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "ON_BREAK"
                 ? "bg-amber-50/80 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">On Break</span>
@@ -141,11 +139,10 @@ export function DoorAvailabilityCard({ physicians }: DoorAvailabilityCardProps) 
 
           <div
             onClick={() => setActiveFilter("FINISHED")}
-            className={`p-3 rounded-xl border transition-all cursor-pointer ${
-              activeFilter === "FINISHED"
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${activeFilter === "FINISHED"
                 ? "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 shadow-xs"
                 : "bg-card hover:bg-muted/40 border-border"
-            }`}
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">Finished</span>
@@ -158,50 +155,46 @@ export function DoorAvailabilityCard({ physicians }: DoorAvailabilityCardProps) 
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 flex-1 flex flex-col">
+      <CardContent className="pb-10 flex-1 flex flex-col">
         {/* Filter bar */}
         <div className="flex items-center gap-1.5 pb-3 text-xs flex-wrap">
           <button
             type="button"
             onClick={() => setActiveFilter("all")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "all"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "all"
                 ? "bg-primary text-primary-foreground font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             All Doctors ({physicians.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("ON_DUTY")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "ON_DUTY"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "ON_DUTY"
                 ? "bg-emerald-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             On-Duty ({onDutyCount})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("ON_BREAK")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "ON_BREAK"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "ON_BREAK"
                 ? "bg-amber-600 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             On Break ({onBreakCount})
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter("FINISHED")}
-            className={`px-2.5 py-1 rounded-md transition-colors ${
-              activeFilter === "FINISHED"
+            className={`px-2.5 py-1 rounded-md transition-colors ${activeFilter === "FINISHED"
                 ? "bg-slate-700 text-white font-semibold"
                 : "bg-muted hover:bg-muted/80 text-foreground"
-            }`}
+              }`}
           >
             Finished ({finishedCount})
           </button>

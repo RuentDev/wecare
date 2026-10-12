@@ -64,7 +64,7 @@ export function RBACShortcutsCard({ rbac }: RBACShortcutsCardProps) {
 
   return (
     <Card className="flex flex-col h-full shadow-sm hover:shadow transition-shadow duration-200">
-      <CardHeader className="pb-3 border-b border-border/60">
+      <CardHeader className="pt-5 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function RBACShortcutsCard({ rbac }: RBACShortcutsCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 flex-1 flex flex-col justify-between space-y-4">
+      <CardContent className="pb-10 flex-1 flex flex-col justify-between space-y-4">
         {/* Quick Shortcuts List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {shortcuts.map((shortcut) => {
