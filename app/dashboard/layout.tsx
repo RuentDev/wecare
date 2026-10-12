@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { getUserPermissions } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-topbar";
@@ -21,9 +22,14 @@ export default async function DashboardLayout({
     redirect("/admin");
   }
 
+  const userPermissions = await getUserPermissions(user.id);
+
   return (
     <SidebarProvider>
-      <DashboardSidebar userRole={user.role} />
+      <DashboardSidebar
+        userRole={user.role}
+        userPermissions={userPermissions}
+      />
       <SidebarInset className="bg-slate-50/50">
         <DashboardTopBar user={user} />
         <main className="p-5">{children}</main>
@@ -31,3 +37,4 @@ export default async function DashboardLayout({
     </SidebarProvider>
   );
 }
+

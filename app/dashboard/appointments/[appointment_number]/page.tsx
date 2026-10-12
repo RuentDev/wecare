@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
+import { AccessDenied } from "@/components/dashboard/access-denied";
 import { getDoctorByUserId } from "@/lib/actions/doctors";
 import { getAppointmentByNumber } from "@/lib/actions/appointments";
 import { AppointmentDetailsView } from "@/components/dashboard/appointments/appointment-details-view";
@@ -20,6 +22,16 @@ export default async function AppointmentDetailsPage({
   let filter: { doctorId?: string; patientId?: string } = {};
 
   if (user.role === "doctor") {
+    const canView = await hasPermission(user.id, "appointments:read");
+    if (!canView) {
+      return (
+        <AccessDenied
+          title="Appointment Details Restricted"
+          description="Your doctor account does not have permission to view appointment details."
+          permission="appointments:read"
+        />
+      );
+    }
     const doctor = await getDoctorByUserId(user.id);
     if (!doctor) {
       redirect("/dashboard");

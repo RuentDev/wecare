@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { Loader2, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
+import { AccessDenied } from "@/components/dashboard/access-denied";
 import { getDoctorByUserId } from "@/lib/actions/doctors";
 import { getDoctorAppointments } from "@/lib/actions/appointments";
 import { DoctorAppointmentsClient } from "@/components/dashboard/appointments/doctor-appointments-client";
@@ -13,6 +15,17 @@ export default async function DoctorAppointmentsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "doctor") {
     redirect("/dashboard");
+  }
+
+  const canView = await hasPermission(user.id, "appointments:read");
+  if (!canView) {
+    return (
+      <AccessDenied
+        title="Appointments Access Restricted"
+        description="Your doctor account currently does not have privileges to view patient appointments."
+        permission="appointments:read"
+      />
+    );
   }
 
   const doctor = await getDoctorByUserId(user.id);

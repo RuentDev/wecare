@@ -3,15 +3,31 @@ import { PatientsStats } from "@/components/admin/patients/patients-stats";
 import { Badge } from "@/components/ui/badge";
 import { getPatients, getPatientStats } from "@/lib/actions/patients";
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
+import { AccessDenied } from "@/components/dashboard/access-denied";
+import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 
 const PatientsPage = async () => {
   const user = await getCurrentUser();
-  const isDoctor = user?.role === "doctor";
+  if (!user) redirect("/login");
+
+  const canView = await hasPermission(user.id, "medical_records:read");
+  if (!canView) {
+    return (
+      <AccessDenied
+        title="Patients Directory Restricted"
+        description="Your account currently does not have privileges to view patient records."
+        permission="medical_records:read"
+      />
+    );
+  }
+
+  const isDoctor = user.role === "doctor";
   const [stats, patients] = await Promise.all([
-    getPatientStats({ doctorId: isDoctor ? user?.id : undefined }),
-    getPatients({ doctorId: isDoctor ? user?.id : undefined }),
+    getPatientStats({ doctorId: isDoctor ? user.id : undefined }),
+    getPatients({ doctorId: isDoctor ? user.id : undefined }),
   ]);
 
   return (

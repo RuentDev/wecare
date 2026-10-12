@@ -12,40 +12,73 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import type { Permission } from "@/lib/rbac";
 
 export interface SidebarItem {
   label: string;
   href: string;
   icon: LucideIcon;
   roles: string[];
+  requiredPermission?: Permission;
 }
 
 export const SIDEBAR_NAVS: SidebarItem[] = [
-  // Doctor Routes
+  // Dashboard Home
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["patients", "doctor"],
+    roles: ["patient", "doctor"],
   },
+  // Clinical Operations
   {
     label: "Schedule",
     href: "/dashboard/schedule",
     icon: Calendar,
     roles: ["doctor"],
+    requiredPermission: "appointments:read",
+  },
+  {
+    label: "Appointments",
+    href: "/dashboard/appointments",
+    icon: Calendar,
+    roles: ["doctor"],
+    requiredPermission: "appointments:read",
   },
   {
     label: "Patients",
     href: "/dashboard/patients",
     icon: Users,
     roles: ["doctor"],
+    requiredPermission: "medical_records:read",
   },
   {
     label: "Lab Results",
     href: "/dashboard/labs",
     icon: FlaskConical,
     roles: ["patient"],
+    requiredPermission: "medical_records:read",
   },
+  {
+    label: "Billing",
+    href: "/dashboard/billing",
+    icon: CreditCard,
+    roles: ["patient"],
+    requiredPermission: "billing:read",
+  },
+  {
+    label: "Messages",
+    href: "/dashboard/messages",
+    icon: MessageSquare,
+    roles: ["doctor", "patient"],
+  },
+  {
+    label: "Profile",
+    href: "/dashboard/profile",
+    icon: User,
+    roles: ["patient", "doctor"],
+  },
+  // Admin Routes (for fallback or testing if accessed in dashboard context)
   {
     label: "Audit Logs",
     href: "/admin/audit-logs",
@@ -65,39 +98,10 @@ export const SIDEBAR_NAVS: SidebarItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    roles: ["patient"],
-  },
-  {
-    label: "Messages",
-    href: "/dashboard/messages",
-    icon: MessageSquare,
-    roles: ["doctor", "patient"],
-  },
-  {
-    label: "Appointments",
-    href: "/dashboard/appointments",
-    icon: Calendar,
-    roles: ["doctor"],
-  },
-  {
-    label: "Billing",
-    href: "/dashboard/billing",
-    icon: CreditCard,
-    roles: ["patient"],
-  },
-  {
     label: "Services",
-    href: "/dashboard/services",
+    href: "/admin/services",
     icon: Settings,
     roles: ["admin"],
   },
-  {
-    label: "Profile",
-    href: "/dashboard/profile",
-    icon: User,
-    roles: ["patient", "doctor"],
-  },
 ];
+

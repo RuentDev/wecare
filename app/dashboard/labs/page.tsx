@@ -1,4 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
+import { AccessDenied } from "@/components/dashboard/access-denied";
 import { LabResultsClient } from "@/components/dashboard/labs/lab-results-client";
 import { prisma } from "@/lib/prisma-db";
 import { redirect } from "next/navigation";
@@ -6,6 +8,17 @@ import { redirect } from "next/navigation";
 export default async function LabResultsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "patient") redirect("/dashboard");
+
+  const canView = await hasPermission(user.id, "medical_records:read");
+  if (!canView) {
+    return (
+      <AccessDenied
+        title="Lab Results Access Restricted"
+        description="Your account currently does not have privileges to view medical records and lab results."
+        permission="medical_records:read"
+      />
+    );
+  }
 
   // Fetch lab results (medical records with lab attachments)
   // In a real app, this would be a dedicated table or a filtered query

@@ -18,14 +18,27 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function DashboardSidebar({ userRole }: { userRole: string }) {
+export function DashboardSidebar({
+  userRole,
+  userPermissions = [],
+}: {
+  userRole: string;
+  userPermissions?: string[];
+}) {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
-  const navItems = SIDEBAR_NAVS.filter((item) =>
-    item.roles.includes(userRole),
-  ).sort((a, b) => {
+  const navItems = SIDEBAR_NAVS.filter((item) => {
+    if (!item.roles.includes(userRole)) return false;
+    if (item.requiredPermission) {
+      const hasPerm =
+        userPermissions.includes(item.requiredPermission) ||
+        userPermissions.includes("roles:manage");
+      if (!hasPerm) return false;
+    }
+    return true;
+  }).sort((a, b) => {
     const isDashboardA =
       a.href === "/dashboard" || a.label.toLowerCase() === "dashboard";
     const isDashboardB =
