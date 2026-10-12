@@ -155,14 +155,12 @@ export function PermissionActionCard({
                 asChild
                 onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="p-1 text-muted-foreground/60 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors shrink-0"
+                <span
+                  className="p-1 text-muted-foreground/60 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors shrink-0 cursor-help inline-flex items-center"
                   aria-label={`Details for ${name}`}
                 >
                   <Info className="h-3.5 w-3.5" />
-                </div>
+                </span>
               </TooltipTrigger>
               <TooltipContent
                 side="top"

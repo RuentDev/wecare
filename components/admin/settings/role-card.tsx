@@ -80,27 +80,29 @@ export function RoleCard({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
-      <Card className="glassmorphism-card border border-white/50 dark:border-slate-800/70 overflow-hidden transition-all duration-300">
-        {/* Interactive Collapsible Header */}
+      <Card className="glassmorphism-card border border-white/50 dark:border-slate-800/70 overflow-hidden shadow-md transition-all duration-300 hover:shadow-lg">
+        {/* Non-nested Accessible Header Container */}
         <div
-          role="button"
-          tabIndex={0}
-          onClick={() => setIsOpen(!isOpen)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setIsOpen(!isOpen);
-            }
-          }}
           className={cn(
-            "relative bg-white/70 dark:bg-slate-900/60 flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 sm:p-5 cursor-pointer transition-colors hover:bg-white/90 dark:hover:bg-slate-900/80 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 select-none",
+            "relative bg-white/70 dark:bg-slate-900/60 flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 sm:p-5 select-none transition-colors",
             isOpen && "border-b border-slate-200/60 dark:border-slate-800/60",
           )}
-          aria-expanded={isOpen}
-          aria-label={`Toggle role settings for ${role.name}`}
         >
-          {/* Left: Role identification */}
-          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+          {/* Left: Role identification (Interactive toggle for expand/collapse) */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setIsOpen(!isOpen)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setIsOpen(!isOpen);
+              }
+            }}
+            aria-expanded={isOpen}
+            aria-label={`Toggle role settings for ${role.name}`}
+            className="flex items-center gap-3.5 flex-1 min-w-0 cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary/40 p-1 -m-1 transition-colors hover:opacity-95"
+          >
             <div className="p-2.5 sm:p-3 bg-primary/10 rounded-2xl shrink-0 transition-transform group-hover:scale-105">
               <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
@@ -119,14 +121,11 @@ export function RoleCard({
             </div>
           </div>
 
-          {/* Right: Action controls & Collapse toggle */}
+          {/* Right: Action controls & Collapse toggle (Sibling buttons, zero nesting) */}
           <div className="flex items-center justify-between md:justify-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/50 dark:border-slate-800/50">
-            {/* Bulk and Save buttons — displayed only when expanded per user choice */}
+            {/* Bulk and Save buttons — displayed only when expanded */}
             {isOpen && (
-              <div
-                className="flex flex-wrap items-center gap-2 animate-in-fade"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="flex flex-wrap items-center gap-2 animate-in-fade">
                 <Button
                   type="button"
                   variant="outline"
@@ -179,15 +178,20 @@ export function RoleCard({
               </div>
             )}
 
-            {/* Chevron toggle icon */}
-            <div className="p-1 rounded-lg text-muted-foreground/70 hover:text-foreground transition-colors shrink-0">
+            {/* Chevron toggle button */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              aria-label={isOpen ? `Collapse ${role.name}` : `Expand ${role.name}`}
+            >
               <ChevronDown
                 className={cn(
                   "h-5 w-5 transition-transform duration-200",
                   isOpen && "rotate-180",
                 )}
               />
-            </div>
+            </button>
           </div>
         </div>
 

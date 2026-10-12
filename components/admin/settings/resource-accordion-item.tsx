@@ -74,15 +74,11 @@ export function ResourceAccordionItem({
               : `${selectedCount} / ${totalCount} enabled`}
           </span>
 
-          <button
-            type="button"
-            onClick={() =>
-              onToggleAllInModule(
-                module.permissions.map((p) => p.id),
-                !isAllSelected,
-              )
-            }
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/40 text-xs font-semibold text-foreground transition-all cursor-pointer shadow-2xs active:scale-97"
+          <label
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/40 text-xs font-semibold text-foreground transition-all cursor-pointer shadow-2xs active:scale-97 select-none"
             aria-label={`Select all permissions for ${module.label}`}
           >
             <Checkbox
@@ -93,10 +89,16 @@ export function ResourceAccordionItem({
                     ? "indeterminate"
                     : false
               }
-              className="pointer-events-none h-4 w-4"
+              onCheckedChange={() =>
+                onToggleAllInModule(
+                  module.permissions.map((p) => p.id),
+                  !isAllSelected,
+                )
+              }
+              className="h-4 w-4"
             />
             <span>Select All</span>
-          </button>
+          </label>
         </div>
       </div>
 
