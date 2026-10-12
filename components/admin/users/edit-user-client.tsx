@@ -65,16 +65,16 @@ export function EditUserClient({
 
   const doctorPayload = doctor
     ? {
-        ...doctor,
-        user_id: user.id,
-        users: {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          phone: user.phone || "",
-          is_active: user.is_active ?? true,
-        },
-      }
+      ...doctor,
+      user_id: user.id,
+      users: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone || "",
+        is_active: user.is_active ?? true,
+      },
+    }
     : null;
 
   const generatePassword = () => {
@@ -476,13 +476,13 @@ export function EditUserClient({
 
           <TabsContent value="appointments">
             <Card className="glassmorphism-card border-none overflow-hidden rounded-[24px]">
-              <CardHeader className="bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
+              <CardHeader className="pt-5 bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <CalendarDays className="w-5 h-5 text-primary" /> Appointment
                   History
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pb-10">
                 <DoctorAppointments
                   appointments={doctor?.appointments || []}
                 />

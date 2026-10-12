@@ -25,16 +25,16 @@ import type { DoctorUserRelation } from "@/lib/types/user";
 
 interface EditDoctorClientProps {
   doctor?:
-    | (DoctorUserRelation & {
-        users?: {
-          first_name?: string | null;
-          last_name?: string | null;
-          email?: string | null;
-          phone?: string | null;
-          is_active?: boolean | null;
-        } | null;
-      })
-    | null;
+  | (DoctorUserRelation & {
+    users?: {
+      first_name?: string | null;
+      last_name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      is_active?: boolean | null;
+    } | null;
+  })
+  | null;
   locations: ClinicLocation[];
   allServices: AdminService[];
 }
@@ -151,13 +151,13 @@ export function EditDoctorClient({
           <>
             <TabsContent value="appointments">
               <Card className="glassmorphism-card border-none overflow-hidden rounded-[24px]">
-                <CardHeader className="bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
+                <CardHeader className="pt-5 bg-linear-to-r from-primary/5 to-transparent border-b border-white/20">
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <CalendarDays className="w-5 h-5 text-primary" />{" "}
                     Appointment History
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pb-10">
                   <DoctorAppointments
                     appointments={doctor.appointments || []}
                   />
