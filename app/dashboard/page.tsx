@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { getDoctorByUserId, getDoctorDashboardData } from "@/lib/actions/doctors";
 import { getPatientDashboardAppointments } from "@/lib/actions/appointments";
 import { PatientDashboard } from "@/components/dashboard/patient-dashboard";
@@ -20,8 +21,14 @@ export default async function DashboardPage() {
         </div>
       );
     }
-    const dashboardData = await getDoctorDashboardData(doctor.id);
-    return <DoctorDashboard data={dashboardData} />;
+    const canViewAppointments = await hasPermission(user.id, "appointments:read");
+    const dashboardData = await getDoctorDashboardData(doctor.id, canViewAppointments);
+    return (
+      <DoctorDashboard
+        data={dashboardData}
+        canViewAppointments={canViewAppointments}
+      />
+    );
   }
 
   // Default to patient dashboard

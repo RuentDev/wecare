@@ -124,7 +124,10 @@ export async function getDoctorStats() {
 /**
  * Fetches data for the main doctor dashboard overview.
  */
-export async function getDoctorDashboardData(doctorId: string) {
+export async function getDoctorDashboardData(
+  doctorId: string,
+  canViewAppointments: boolean = true,
+) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
   // No explicit permission check here as this is the doctor's own dashboard
@@ -137,37 +140,41 @@ export async function getDoctorDashboardData(doctorId: string) {
     const [doctor, todayAppointments, pendingCount, unreadMessages] = await Promise.all([
       prisma.doctors.findUnique({
         where: { id: doctorId },
-        include: { users: true },
+        include: { users: true, locations: true },
       }),
-      prisma.appointments.findMany({
-        where: {
-          doctor_id: doctorId,
-          appointment_date: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-        include: {
-          users: {
-            select: {
-              first_name: true,
-              last_name: true,
-              email: true,
-              phone: true,
-              avatar_url: true,
+      canViewAppointments
+        ? prisma.appointments.findMany({
+            where: {
+              doctor_id: doctorId,
+              appointment_date: {
+                gte: startOfDay,
+                lte: endOfDay,
+              },
             },
-          },
-          services: true,
-          locations: true,
-        },
-        orderBy: { start_time: "asc" },
-      }),
-      prisma.appointments.count({
-        where: {
-          doctor_id: doctorId,
-          status: "pending",
-        },
-      }),
+            include: {
+              users: {
+                select: {
+                  first_name: true,
+                  last_name: true,
+                  email: true,
+                  phone: true,
+                  avatar_url: true,
+                },
+              },
+              services: true,
+              locations: true,
+            },
+            orderBy: { start_time: "asc" },
+          })
+        : Promise.resolve([]),
+      canViewAppointments
+        ? prisma.appointments.count({
+            where: {
+              doctor_id: doctorId,
+              status: "pending",
+            },
+          })
+        : Promise.resolve(0),
       prisma.notification_logs.count({
         where: {
           user_id: user.id,
