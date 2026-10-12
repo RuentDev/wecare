@@ -3,28 +3,31 @@
 import { useState, useTransition } from "react";
 import { updateRolePermissions } from "@/lib/actions/rbac";
 import { toast } from "sonner";
-import { RolesHeader } from "@/components/admin/settings/roles-header";
 import { RoleCard } from "@/components/admin/settings/role-card";
 import { RBACNote } from "@/components/admin/settings/rbac-note";
+import type {
+  PermissionRecord,
+  RoleWithPermissions,
+} from "@/lib/types/rbac";
 
 interface RolesClientProps {
-  initialRoles: any[];
-  initialPermissions: any[];
+  initialRoles: RoleWithPermissions[];
+  initialPermissions: PermissionRecord[];
 }
 
 export function RolesClient({
   initialRoles,
   initialPermissions,
 }: RolesClientProps) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [savingRoleId, setSavingRoleId] = useState<string | null>(null);
 
   // Local state for the matrix to allow "Save" button approach
   const [matrix, setMatrix] = useState<Record<string, string[]>>(() => {
     const initialMatrix: Record<string, string[]> = {};
-    initialRoles.forEach((role: any) => {
+    initialRoles.forEach((role) => {
       initialMatrix[role.id] = role.role_permissions.map(
-        (rp: any) => rp.permission_id,
+        (rp) => rp.permission_id,
       );
     });
     return initialMatrix;
@@ -40,17 +43,42 @@ export function RolesClient({
     });
   }
 
+  function toggleModulePermissions(
+    roleId: string,
+    permIds: string[],
+    selectAll: boolean,
+  ) {
+    setMatrix((prev) => {
+      const current = new Set(prev[roleId] || []);
+      if (selectAll) {
+        permIds.forEach((id) => current.add(id));
+      } else {
+        permIds.forEach((id) => current.delete(id));
+      }
+      return { ...prev, [roleId]: Array.from(current) };
+    });
+  }
+
+  function setRoleAllPermissions(roleId: string, selectAll: boolean) {
+    setMatrix((prev) => {
+      return {
+        ...prev,
+        [roleId]: selectAll ? initialPermissions.map((p) => p.id) : [],
+      };
+    });
+  }
+
   async function handleSave(roleId: string) {
     return new Promise<void>((resolve, reject) => {
       setSavingRoleId(roleId);
       startTransition(async () => {
         try {
-          await updateRolePermissions(roleId, matrix[roleId]);
-          toast.success("Permissions updated successfully");
+          await updateRolePermissions(roleId, matrix[roleId] || []);
+          toast.success("Role permissions updated successfully");
           setSavingRoleId(null);
           resolve();
         } catch (error) {
-          toast.error("Failed to update permissions");
+          toast.error("Failed to update role permissions");
           setSavingRoleId(null);
           reject(error);
         }
@@ -59,8 +87,8 @@ export function RolesClient({
   }
 
   return (
-    <main className="flex flex-col gap-5 animate-in-fade">
-      <div className="grid gap-5">
+    <main className="flex flex-col gap-6 animate-in-fade">
+      <div className="grid gap-3.5">
         {initialRoles.map((role) => (
           <RoleCard
             key={role.id}
@@ -68,8 +96,11 @@ export function RolesClient({
             permissions={initialPermissions}
             matrix={matrix}
             onToggle={togglePermission}
+            onToggleModule={toggleModulePermissions}
+            onSetRoleAll={setRoleAllPermissions}
             onSave={handleSave}
             isSaving={savingRoleId === role.id}
+            defaultExpanded={false}
           />
         ))}
       </div>
