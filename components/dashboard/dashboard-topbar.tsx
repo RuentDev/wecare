@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Search, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useApp } from "@/contexts/app-context";
+import type { User as UserType } from "@/lib/types/user";
 
-export function DashboardTopBar({ user }: { user: any }) {
+export function DashboardTopBar({ user }: { user: UserType }) {
   const pathname = usePathname();
   const { logout } = useApp();
 
@@ -106,8 +108,10 @@ export function DashboardTopBar({ user }: { user: any }) {
           >
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg gap-2">
-              <User className="w-4 h-4" /> Profile
+            <DropdownMenuItem asChild className="rounded-lg gap-2 cursor-pointer">
+              <Link href="/dashboard/profile" className="flex items-center gap-2 w-full">
+                <User className="size-4" /> Profile
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="rounded-lg gap-2">
               <Settings className="w-4 h-4" /> Settings

@@ -3,6 +3,12 @@
 import prisma from "@/lib/prisma-db";
 import { revalidatePath } from "next/cache";
 import { serializePrisma } from "../utils";
+import { getCurrentUser } from "@/lib/auth";
+import {
+  patientProfileSchema,
+  type PatientProfileFormValues,
+} from "@/lib/validations/patient-profile";
+import type { User, UserRole } from "@/lib/types/user";
 
 type GetPatientsArgs = {
   doctorId?: string;
@@ -349,5 +355,75 @@ export async function saveClinicalRecord(patientId: string, data: any) {
   } catch (error) {
     console.error("[SAVE_CLINICAL_RECORD]", error);
     return { success: false, error: "Failed to save clinical record" };
+  }
+}
+
+export type UpdatePatientProfileResult =
+  | { success: true; user: User }
+  | { success: false; error: string };
+
+export async function updatePatientProfile(
+  data: PatientProfileFormValues,
+): Promise<UpdatePatientProfileResult> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: "Unauthorized. Please log in again." };
+    }
+
+    const validatedFields = patientProfileSchema.safeParse(data);
+    if (!validatedFields.success) {
+      return {
+        success: false,
+        error: validatedFields.error.errors[0]?.message || "Invalid input data",
+      };
+    }
+
+    const { first_name, last_name, phone } = validatedFields.data;
+
+    const updatedUser = await prisma.users.update({
+      where: { id: currentUser.id },
+      data: {
+        first_name,
+        last_name,
+        phone: phone && phone.trim() !== "" ? phone.trim() : null,
+        updated_at: new Date(),
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/profile");
+
+    const userResult: User = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      first_name: updatedUser.first_name,
+      last_name: updatedUser.last_name,
+      phone: updatedUser.phone,
+      role: (updatedUser.role as UserRole) || "patient",
+      avatar_url: updatedUser.avatar_url,
+      gender: updatedUser.gender as User["gender"],
+      date_of_birth: updatedUser.date_of_birth,
+      street: updatedUser.street,
+      city: updatedUser.city,
+      state: updatedUser.state,
+      postal_code: updatedUser.postal_code,
+      address: updatedUser.address,
+      is_active: updatedUser.is_active || false,
+      is_guest: updatedUser.is_guest || false,
+      email_verified: updatedUser.email_verified || false,
+      created_at: updatedUser.created_at || new Date(),
+    };
+
+    return {
+      success: true,
+      user: serializePrisma(userResult),
+    };
+  } catch (error) {
+    console.error("[UPDATE_PATIENT_PROFILE]", error);
+    return {
+      success: false,
+      error: "Failed to update profile. Please try again.",
+    };
   }
 }
