@@ -1,6 +1,18 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendInstance: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  if (resendInstance) return resendInstance;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.startsWith("re_...")) {
+    return null;
+  }
+
+  resendInstance = new Resend(apiKey);
+  return resendInstance;
+}
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@denteria.com";
 const CLINIC_NAME = "Denteria Dental Clinic";
@@ -13,6 +25,14 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions) {
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn(
+      `[Email Skipped] RESEND_API_KEY is not configured or placeholder. Skipping sending "${options.subject}" to ${options.to}`
+    );
+    return { id: "skipped-unconfigured" };
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: `${CLINIC_NAME} <${FROM_EMAIL}>`,
