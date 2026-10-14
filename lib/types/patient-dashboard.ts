@@ -24,4 +24,8 @@ export interface PatientDashboardAppointment {
   location_name: string;
   location_address?: string | null;
   city?: string | null;
+  doctor_id?: string;
+  service_id?: string;
+  location_id?: string;
 }
+

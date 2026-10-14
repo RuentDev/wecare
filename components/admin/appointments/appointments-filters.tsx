@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, RotateCcw, Filter } from "lucide-react";
+import { Search, RotateCcw, Filter, CheckCheck, Loader2 } from "lucide-react";
 import { useAppointments } from "@/contexts/appointments-context";
+import { autoFlagStaleAppointments } from "@/lib/actions/appointments";
+import { toast } from "sonner";
 
 export function AppointmentsFilters() {
   const {
@@ -26,6 +28,25 @@ export function AppointmentsFilters() {
     totalFilteredCount,
     formattedData,
   } = useAppointments();
+
+  const [isReconciling, startReconcile] = useTransition();
+
+  const handleReconcile = () => {
+    startReconcile(async () => {
+      const res = await autoFlagStaleAppointments();
+      if (res.success) {
+        if (res.reconciledCount > 0 || res.completedCount > 0) {
+          toast.success(
+            `Reconciliation complete: Marked ${res.reconciledCount} as No-Show, ${res.completedCount} as Completed.`
+          );
+        } else {
+          toast.info("All past appointments are up to date.");
+        }
+      } else {
+        toast.error(res.error || "Failed to reconcile appointments");
+      }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,11 +101,27 @@ export function AppointmentsFilters() {
           )}
         </div>
 
-        {/* Counter Badge */}
-        <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
+        {/* Counter Badge & Reconcile Button */}
+        <div className="flex items-center gap-2.5 self-start lg:self-center shrink-0 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReconcile}
+            disabled={isReconciling}
+            className="h-8 rounded-lg text-xs font-semibold gap-1.5 border-border/70 bg-card hover:bg-muted/50 text-foreground shadow-2xs"
+            title="Auto-flag overdue past uncompleted appointments as No-Show and completed visits"
+          >
+            {isReconciling ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            ) : (
+              <CheckCheck className="w-3.5 h-3.5 text-primary" />
+            )}
+            <span>Reconcile Past Visits</span>
+          </Button>
+
           <Badge
             variant="outline"
-            className="text-xs font-medium px-2.5 py-1 bg-muted/40 border-border/70 text-muted-foreground gap-1.5"
+            className="text-xs font-medium px-2.5 py-1 bg-muted/40 border-border/70 text-muted-foreground gap-1.5 h-8"
           >
             <Filter className="w-3 h-3 text-muted-foreground" />
             Showing{" "}

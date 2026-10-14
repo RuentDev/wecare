@@ -517,3 +517,127 @@ export async function sendDoctorUnavailableNotice(
   const { subject, html, text } = doctorUnavailableEmail(data);
   return sendEmail({ to: email, subject, html, text });
 }
+
+export interface PatientNoShowEmailData {
+  patientName: string;
+  doctorName: string;
+  appointmentNumber: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  serviceName: string;
+  locationName: string;
+  rescheduleUrl: string;
+}
+
+export function patientNoShowEmail(data: PatientNoShowEmailData) {
+  const subject = `We Missed You Today — Appointment ${data.appointmentNumber}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+  <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">WeCare Clinic</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 6px 0 0 0; font-size: 14px;">Patient Care & Health Services</p>
+  </div>
+  
+  <div style="background: #ffffff; padding: 32px 28px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <h2 style="color: #0369a1; margin-top: 0; font-size: 20px; font-weight: 600;">We Missed You at Your Appointment</h2>
+    
+    <p style="font-size: 15px; color: #334155;">Dear ${data.patientName},</p>
+    
+    <p style="font-size: 15px; color: #334155;">
+      We noticed that you were unable to attend your scheduled consultation today with <strong>Dr. ${data.doctorName}</strong>. We hope everything is well with you.
+    </p>
+    
+    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0284c7; padding: 18px 20px; border-radius: 8px; margin: 24px 0;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <tr>
+          <td style="padding: 6px 0; color: #64748b; width: 140px;">Appointment ID:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #0f172a;">${data.appointmentNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Scheduled Date:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #0f172a;">${data.appointmentDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Scheduled Time:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #0f172a;">${data.appointmentTime}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Service:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #0f172a;">${data.serviceName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Location:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #0f172a;">${data.locationName}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="font-size: 15px; color: #334155;">
+      Healthcare needs are important, and we understand that unexpected events happen. You can easily pick a new date and time that fits your schedule using the button below:
+    </p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${data.rescheduleUrl}" style="background: #0284c7; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px; display: inline-block; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);">
+        Reschedule Appointment Online
+      </a>
+    </div>
+
+    <p style="font-size: 13px; color: #64748b; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+      If you need immediate assistance or would prefer to speak with our reception team directly, please call clinic support or reply to this notice.
+    </p>
+    
+    <p style="margin-bottom: 0; font-size: 14px; color: #334155;">
+      Warm regards,<br>
+      <strong>WeCare Clinic Care Team</strong>
+    </p>
+  </div>
+  
+  <div style="padding: 20px; text-align: center;">
+    <p style="color: #94a3b8; margin: 0; font-size: 13px;">
+      WeCare Clinic &bull; Automated Patient Encounter Notice<br>
+      Please do not reply directly to this automated email if urgent care is required.
+    </p>
+  </div>
+</body>
+</html>
+  `;
+
+  const text = `
+We Missed You Today — Appointment ${data.appointmentNumber}
+
+Dear ${data.patientName},
+
+We noticed that you were unable to attend your scheduled consultation today with Dr. ${data.doctorName}. We hope everything is well with you.
+
+Missed Appointment Details:
+- Reference: ${data.appointmentNumber}
+- Date: ${data.appointmentDate}
+- Time: ${data.appointmentTime}
+- Service: ${data.serviceName}
+- Location: ${data.locationName}
+
+We understand that unexpected schedule changes happen. When you are ready, you can easily reschedule online at your convenience:
+${data.rescheduleUrl}
+
+Warm regards,
+WeCare Clinic Care Team
+  `;
+
+  return { subject, html, text };
+}
+
+export async function sendPatientNoShowNotice(
+  email: string,
+  data: PatientNoShowEmailData,
+) {
+  const { subject, html, text } = patientNoShowEmail(data);
+  return sendEmail({ to: email, subject, html, text });
+}
+

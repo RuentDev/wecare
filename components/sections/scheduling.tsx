@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { Suspense, useEffect, useReducer, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -130,9 +131,13 @@ interface Props {
   date?: Date;
 }
 
-const Scheduling = ({ date }: Props) => {
+const SchedulingContent = ({ date }: Props) => {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
+  const paramDoctorId = searchParams.get("doctor");
+  const paramServiceId = searchParams.get("service");
+  const paramLocationId = searchParams.get("location");
 
   const [state, dispatch] = useReducer(bookingReducer, {
     currentStep: 1,
@@ -187,6 +192,26 @@ const Scheduling = ({ date }: Props) => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Pre-fill from URL query parameters (e.g. from Reschedule CTA)
+  useEffect(() => {
+    if (paramLocationId) {
+      dispatch({ type: "SELECT_LOCATION", id: paramLocationId });
+    }
+    if (paramServiceId) {
+      dispatch({ type: "SELECT_SERVICE", id: paramServiceId });
+    }
+    if (paramDoctorId) {
+      dispatch({ type: "SELECT_DOCTOR", id: paramDoctorId });
+    }
+    if (paramLocationId && paramServiceId && paramDoctorId) {
+      dispatch({ type: "SET_STEP", step: 4 }); // Jump straight to Date & Time selection
+    } else if (paramLocationId && paramServiceId) {
+      dispatch({ type: "SET_STEP", step: 3 }); // Jump to Doctor selection
+    } else if (paramLocationId) {
+      dispatch({ type: "SET_STEP", step: 2 }); // Jump to Service selection
+    }
+  }, [paramLocationId, paramServiceId, paramDoctorId]);
 
   // Derived: find the currently selected doctor/service objects
   const selectedDoctor = doctors.data.find(
@@ -547,6 +572,20 @@ const Scheduling = ({ date }: Props) => {
         </div>
       </div>
     </section>
+  );
+};
+
+const Scheduling = (props: Props) => {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-muted-foreground text-sm font-medium">
+          Loading booking schedule...
+        </div>
+      }
+    >
+      <SchedulingContent {...props} />
+    </Suspense>
   );
 };
 

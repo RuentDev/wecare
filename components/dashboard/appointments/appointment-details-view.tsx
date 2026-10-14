@@ -21,15 +21,29 @@ import {
   Building,
   CreditCard,
   AlertCircle,
+  UserX,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/utils";
 import {
   updateAppointmentStatus,
+  markAppointmentAsNoShow,
   type AppointmentStatus,
   type getAppointmentByNumber,
 } from "@/lib/actions/appointments";
@@ -51,6 +65,8 @@ export function AppointmentDetailsView({
     useState<AppointmentDetailData>(initialAppointment);
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [noShowDialogOpen, setNoShowDialogOpen] = useState(false);
+  const [noShowNotes, setNoShowNotes] = useState("");
 
   const aptNumber =
     appointment.appointment_number ||
@@ -157,11 +173,43 @@ export function AppointmentDetailsView({
                   Mark as Completed
                 </Button>
               )}
+
+              {["pending", "confirmed"].includes(appointment.status || "") && (
+                <Button
+                  onClick={() => {
+                    setNoShowNotes("");
+                    setNoShowDialogOpen(true);
+                  }}
+                  disabled={isPending}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shadow-xs"
+                >
+                  <UserX className="w-4 h-4" />
+                  Mark as No-Show
+                </Button>
+              )}
             </>
           )}
 
+          {userRole === "patient" && appointment.status === "no_show" && (
+            <Button
+              asChild
+              size="sm"
+              className="gap-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-xs"
+            >
+              <Link
+                href={`/booking?doctor=${appointment.doctor_id}&service=${appointment.service_id}&location=${appointment.location_id}`}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Reschedule Appointment
+              </Link>
+            </Button>
+          )}
+
           {appointment.status !== "cancelled" &&
-            appointment.status !== "completed" && (
+            appointment.status !== "completed" &&
+            appointment.status !== "no_show" && (
               <Button
                 onClick={() => handleStatusChange("cancelled")}
                 disabled={isPending}
@@ -170,13 +218,46 @@ export function AppointmentDetailsView({
                 className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 rounded-xl shadow-xs"
               >
                 <XCircle className="w-4 h-4" />
-                {userRole === "patient"
-                  ? "Cancel Appointment"
-                  : "Cancel Appointment"}
+                Cancel Appointment
               </Button>
             )}
         </div>
       </div>
+
+      {/* Patient No-Show Re-engagement Notice */}
+      {appointment.status === "no_show" && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+              <UserX className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Missed Consultation (No-Show)
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {userRole === "patient"
+                  ? "You were unable to attend this appointment. If you still require clinical care or advice, you can easily reschedule anytime."
+                  : `This appointment was marked as No-Show. Reason: ${appointment.cancellation_reason || "Patient did not attend"}`}
+              </p>
+            </div>
+          </div>
+          {userRole === "patient" && (
+            <Button
+              asChild
+              size="sm"
+              className="gap-1.5 shrink-0 rounded-xl shadow-xs"
+            >
+              <Link
+                href={`/booking?doctor=${appointment.doctor_id}&service=${appointment.service_id}&location=${appointment.location_id}`}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reschedule Visit
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Main Appointment Banner Card */}
       <Card className="rounded-2xl border-border/70 overflow-hidden shadow-xs bg-card">
@@ -385,10 +466,97 @@ export function AppointmentDetailsView({
                   </p>
                 </div>
               )}
+
+              {/* No-Show Reason if marked as no_show */}
+              {appointment.status === "no_show" && (
+                <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-semibold text-sm">
+                    <UserX className="w-4 h-4" />
+                    No-Show Incident Recorded
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {appointment.cancellation_reason ||
+                      "Patient did not attend scheduled consultation."}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* No-Show Confirmation Dialog */}
+      <AlertDialog
+        open={noShowDialogOpen}
+        onOpenChange={setNoShowDialogOpen}
+      >
+        <AlertDialogContent className="rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <UserX className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              Mark Appointment as No-Show
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-sm space-y-2">
+              <span className="block">
+                Are you sure you want to mark appointment{" "}
+                <strong className="text-foreground">{aptNumber}</strong> as
+                No-Show?
+              </span>
+              <span className="block text-xs text-muted-foreground/90 mt-1">
+                This will update the status, log an audit trail entry, and dispatch a caring email to the patient with a link to reschedule.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="py-2 space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">
+              Clinical / Operational Note (Optional):
+            </label>
+            <Textarea
+              placeholder="e.g. Patient did not arrive; clinic reception called phone with no response."
+              value={noShowNotes}
+              onChange={(e) => setNoShowNotes(e.target.value)}
+              className="rounded-xl text-xs resize-none"
+              rows={3}
+            />
+          </div>
+
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel
+              disabled={isPending}
+              className="rounded-xl"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                startTransition(async () => {
+                  const prev = appointment;
+                  setAppointment({ ...prev, status: "no_show" });
+                  setNoShowDialogOpen(false);
+
+                  const res = await markAppointmentAsNoShow(
+                    appointment.id,
+                    noShowNotes
+                  );
+                  if (res.success) {
+                    toast.success(
+                      "Appointment marked as No-Show. Re-engagement email sent."
+                    );
+                  } else {
+                    setAppointment(prev);
+                    toast.error(res.error || "Failed to mark as No-Show");
+                  }
+                });
+              }}
+              disabled={isPending}
+              className="rounded-xl bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600"
+            >
+              Confirm No-Show
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

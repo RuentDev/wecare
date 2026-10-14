@@ -21,6 +21,8 @@ import {
   FileText,
   CreditCard,
   Building,
+  UserX,
+  RefreshCw,
 } from "lucide-react";
 import type { User as UserType } from "@/lib/auth";
 import type {
@@ -85,12 +87,12 @@ const statusConfig: Record<
     icon: XCircle,
   },
   no_show: {
-    label: "No Show",
+    label: "No Show (Missed)",
     badgeStyle:
-      "bg-gray-100 text-gray-800 border-gray-200 dark:bg-muted dark:text-muted-foreground",
+      "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900/60 dark:text-slate-300 dark:border-slate-700",
     cardStyle:
-      "bg-card/70 border-border/60 border-l-4 border-l-muted-foreground/40 opacity-75 hover:opacity-100",
-    icon: XCircle,
+      "bg-card/70 border-border/60 border-l-4 border-l-slate-400 opacity-90 hover:opacity-100",
+    icon: UserX,
   },
 };
 
@@ -263,10 +265,35 @@ export function PatientDashboard({
                 <span>{formatCurrency(appointment.service_price)}</span>
               </div>
 
-              <span className="inline-flex items-center gap-1 font-semibold text-primary group-hover:translate-x-0.5 transition-transform text-xs">
-                View Details
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
+              <div className="flex items-center gap-2">
+                {appointment.status === "no_show" && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.location.href = `/booking?doctor=${appointment.doctor_id || ""}&service=${appointment.service_id || ""}&location=${appointment.location_id || ""}`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/booking?doctor=${appointment.doctor_id || ""}&service=${appointment.service_id || ""}&location=${appointment.location_id || ""}`;
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 font-semibold text-xs px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Reschedule
+                  </span>
+                )}
+
+                <span className="inline-flex items-center gap-1 font-semibold text-primary group-hover:translate-x-0.5 transition-transform text-xs">
+                  View Details
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
