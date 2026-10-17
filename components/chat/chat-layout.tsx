@@ -313,6 +313,8 @@ export function ChatLayout({
             />
 
             <ChatMessageList
+              key={activeConversationId}
+              conversationId={activeConversationId}
               messages={messages}
               currentUserId={currentUserId}
               isLoading={isLoadingMessages}

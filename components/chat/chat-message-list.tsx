@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, UIEvent } from "react";
+import { useRef, useEffect, useState, useCallback, UIEvent } from "react";
 import { DecryptedChatMessage } from "@/types/chat";
 import { ChatBubble } from "./chat-bubble";
 import { TypingIndicator } from "./typing-indicator";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, ArrowDown, Loader2 } from "lucide-react";
 
 interface ChatMessageListProps {
+  conversationId?: string | null;
   messages: DecryptedChatMessage[];
   currentUserId: string;
   isLoading?: boolean;
@@ -17,6 +18,7 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({
+  conversationId,
   messages,
   currentUserId,
   isLoading = false,
@@ -27,47 +29,135 @@ export function ChatMessageList({
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
-  const prevMessagesLength = useRef(messages.length);
 
-  // Auto-scroll to bottom on mount and on incoming messages if already near bottom
+  // Scroll tracking references
+  const hasInitializedScroll = useRef(false);
+  const prevMessagesLength = useRef(0);
+  const prevScrollHeightRef = useRef(0);
+
+  // Instantly anchor to bottom (zero animation delay for initial load)
+  const scrollToBottomInstant = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, []);
+
+  // Smooth scroll to bottom for live incoming/outgoing messages
+  const scrollToBottomSmooth = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  // Reset scroll initialization flag when conversation changes
+  useEffect(() => {
+    hasInitializedScroll.current = false;
+    prevMessagesLength.current = 0;
+    prevScrollHeightRef.current = 0;
+  }, [conversationId]);
+
+  // Main scroll engine
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+    // Phase 1: Initial conversation load or page refresh
+    if (!hasInitializedScroll.current && messages.length > 0) {
+      scrollToBottomInstant();
 
-    if (isNearBottom || messages.length - prevMessagesLength.current === 1) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      // Additional frames to ensure accurate layout positioning after DOM paints and font metrics
+      const rafId = requestAnimationFrame(() => {
+        scrollToBottomInstant();
+      });
+      const timerId = setTimeout(() => {
+        scrollToBottomInstant();
+      }, 50);
+
+      hasInitializedScroll.current = true;
+      prevMessagesLength.current = messages.length;
+      prevScrollHeightRef.current = containerRef.current.scrollHeight;
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        clearTimeout(timerId);
+      };
+    }
+
+    // Phase 2: Pagination (older messages prepended via load-more)
+    if (
+      messages.length > prevMessagesLength.current &&
+      messages.length - prevMessagesLength.current > 1
+    ) {
+      const currentScrollHeight = containerRef.current.scrollHeight;
+      const heightDifference = currentScrollHeight - prevScrollHeightRef.current;
+      if (heightDifference > 0) {
+        containerRef.current.scrollTop += heightDifference;
+      }
+      prevMessagesLength.current = messages.length;
+      prevScrollHeightRef.current = currentScrollHeight;
+      return;
+    }
+
+    // Phase 3: Single new message arrived or sent
+    if (messages.length - prevMessagesLength.current === 1) {
+      const latestMessage = messages[messages.length - 1];
+      const isSentByMe = latestMessage?.senderId === currentUserId;
+
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 180;
+
+      if (isSentByMe || isNearBottom) {
+        scrollToBottomSmooth();
+        setShowScrollBottom(false);
+      } else {
+        setShowScrollBottom(true);
+      }
     }
 
     prevMessagesLength.current = messages.length;
-  }, [messages]);
+    prevScrollHeightRef.current = containerRef.current.scrollHeight;
+  }, [messages, currentUserId, scrollToBottomInstant, scrollToBottomSmooth]);
 
-  // Smooth scroll to bottom when typing begins if near bottom
+  // Keep pinned to bottom during initial image/avatar expansions
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (!hasInitializedScroll.current && messages.length > 0) {
+        scrollToBottomInstant();
+      } else {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 120;
+        if (isNearBottom) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, [messages.length, scrollToBottomInstant]);
+
+  // Smooth scroll when typing begins if near bottom
   useEffect(() => {
     if (!containerRef.current || !typingParticipant) return;
 
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 180;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
 
     if (isNearBottom) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottomSmooth();
     }
-  }, [typingParticipant]);
+  }, [typingParticipant, scrollToBottomSmooth]);
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 200;
+    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 180;
     setShowScrollBottom(isScrolledUp);
 
     // Load more when reaching near top
     if (scrollTop < 50 && hasMore && !isLoading && onLoadMore) {
+      prevScrollHeightRef.current = scrollHeight;
       onLoadMore();
     }
-  };
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -139,7 +229,7 @@ export function ChatMessageList({
       {showScrollBottom && (
         <button
           type="button"
-          onClick={scrollToBottom}
+          onClick={scrollToBottomSmooth}
           className="absolute bottom-4 right-6 flex size-8 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-md backdrop-blur-xs transition hover:bg-muted"
           aria-label="Scroll to newest messages"
         >
