@@ -282,12 +282,11 @@ export function ChatLayout({
   };
 
   return (
-    <div className="flex h-[calc(100dvh-13.5rem)] sm:h-[calc(100vh-14.5rem)] min-h-[460px] sm:min-h-[580px] w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <div className="flex h-[calc(100dvh-10rem)] sm:h-[calc(100vh-14.5rem)] min-h-[460px] sm:min-h-[580px] w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
       {/* Sidebar: Thread List */}
       <div
-        className={`w-full md:w-60 lg:w-70 shrink-0 ${
-          activeConversationId ? "hidden md:block" : "block"
-        }`}
+        className={`w-full md:w-60 lg:w-70 shrink-0 ${activeConversationId ? "hidden md:block" : "block"
+          }`}
       >
         <ChatThreadList
           conversations={conversations}
@@ -299,9 +298,8 @@ export function ChatLayout({
 
       {/* Main Chat Area */}
       <div
-        className={`flex flex-1 min-w-0 flex-col overflow-hidden bg-background ${
-          !activeConversationId ? "hidden md:flex" : "flex"
-        }`}
+        className={`flex flex-1 min-w-0 flex-col overflow-hidden bg-background ${!activeConversationId ? "hidden md:flex" : "flex"
+          }`}
       >
         {activeConversation ? (
           <>

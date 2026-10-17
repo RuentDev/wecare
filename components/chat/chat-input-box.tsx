@@ -15,7 +15,7 @@ export function ChatInputBox({
   onSendMessage,
   onTypingChange,
   isDisabled = false,
-  placeholder = "Type a secure clinical message...",
+  placeholder = "Type here ...",
 }: ChatInputBoxProps) {
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -141,7 +141,6 @@ export function ChatInputBox({
           <span className="hidden sm:inline">Press Enter to send, Shift + Enter for new line</span>
           <span className="sm:hidden">Encrypted clinical consultation</span>
         </span>
-        <span className="hidden sm:inline shrink-0">HIPAA Encrypted (AES-256)</span>
       </div>
     </div>
   );
