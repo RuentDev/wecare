@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import PusherClient, { Channel } from "pusher-js";
 import { WebSocketServerEvent, DecryptedChatMessage, ChatParticipant } from "@/types/chat";
 import { broadcastTypingStatus } from "@/lib/actions/chat";
 
@@ -12,6 +13,27 @@ interface UseChatSocketProps {
   onParticipantRemoved?: (conversationId: string, userId: string, removedByName?: string) => void;
   onReadReceipt?: (userId: string, messageId: string) => void;
   onTyping?: (userId: string, isTyping: boolean) => void;
+}
+
+// Client-side singleton cache for Pusher to prevent redundant WebSocket handshakes
+let cachedPusherClient: PusherClient | null = null;
+
+function getPusherClient(): PusherClient | null {
+  const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+  const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1";
+
+  if (!pusherKey) {
+    return null;
+  }
+
+  if (!cachedPusherClient) {
+    cachedPusherClient = new PusherClient(pusherKey, {
+      cluster: pusherCluster,
+      forceTLS: true,
+    });
+  }
+
+  return cachedPusherClient;
 }
 
 export function useChatSocket({
@@ -26,6 +48,7 @@ export function useChatSocket({
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const pusherChannelRef = useRef<Channel | null>(null);
 
   const handleEvent = useCallback(
     (event: WebSocketServerEvent) => {
@@ -59,9 +82,75 @@ export function useChatSocket({
     }
 
     let isUnmounted = false;
+
+    // 1. PRIMARY: Pusher Managed Realtime Gateway (Vercel Serverless Ready)
+    const pusher = getPusherClient();
+    if (pusher) {
+      const channelName = `chat-conv-${conversationId}`;
+      const channel = pusher.subscribe(channelName);
+      pusherChannelRef.current = channel;
+
+      if (pusher.connection.state === "connected") {
+        setIsConnected(true);
+      }
+
+      const handleConnectionStateChange = (states: { current: string }) => {
+        if (!isUnmounted) {
+          setIsConnected(states.current === "connected");
+        }
+      };
+
+      pusher.connection.bind("state_change", handleConnectionStateChange);
+
+      // Bind all incoming event frames
+      channel.bind("MESSAGE_RECEIVED", (data: { message: DecryptedChatMessage }) => {
+        if (!isUnmounted && data?.message) {
+          onMessage?.(data.message);
+        }
+      });
+
+      channel.bind("TYPING_BROADCAST", (data: { userId: string; isTyping: boolean }) => {
+        if (!isUnmounted && data) {
+          onTyping?.(data.userId, data.isTyping);
+        }
+      });
+
+      channel.bind("PARTICIPANT_ADDED", (data: { participant: ChatParticipant }) => {
+        if (!isUnmounted && data?.participant) {
+          onParticipantAdded?.(data.participant);
+        }
+      });
+
+      channel.bind(
+        "PARTICIPANT_REMOVED",
+        (data: { conversationId: string; userId: string; removedByName?: string }) => {
+          if (!isUnmounted && data) {
+            onParticipantRemoved?.(data.conversationId, data.userId, data.removedByName);
+          }
+        }
+      );
+
+      channel.bind(
+        "READ_RECEIPT_BROADCAST",
+        (data: { userId: string; messageId: string }) => {
+          if (!isUnmounted && data) {
+            onReadReceipt?.(data.userId, data.messageId);
+          }
+        }
+      );
+
+      return () => {
+        isUnmounted = true;
+        pusher.connection.unbind("state_change", handleConnectionStateChange);
+        channel.unbind_all();
+        pusher.unsubscribe(channelName);
+        pusherChannelRef.current = null;
+      };
+    }
+
+    // 2. FALLBACK: Direct WebSocket (local development) or Server-Sent Events (SSE)
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
 
-    // Try WebSocket first if explicitly configured
     if (wsUrl) {
       try {
         const ws = new WebSocket(wsUrl);
@@ -110,7 +199,9 @@ export function useChatSocket({
     function connectSSE() {
       if (isUnmounted) return;
 
-      const es = new EventSource(`/api/chat/stream?conversationId=${encodeURIComponent(conversationId!)}`);
+      const es = new EventSource(
+        `/api/chat/stream?conversationId=${encodeURIComponent(conversationId!)}`
+      );
       eventSourceRef.current = es;
 
       es.onopen = () => {
@@ -144,7 +235,15 @@ export function useChatSocket({
         wsRef.current = null;
       }
     };
-  }, [conversationId, handleEvent]);
+  }, [
+    conversationId,
+    handleEvent,
+    onMessage,
+    onParticipantAdded,
+    onParticipantRemoved,
+    onReadReceipt,
+    onTyping,
+  ]);
 
   const sendTyping = useCallback(
     (isTyping: boolean) => {
@@ -159,6 +258,7 @@ export function useChatSocket({
           })
         );
       } else {
+        // Dispatches through Server Action -> Pusher / PubSub
         broadcastTypingStatus(conversationId, isTyping).catch(() => {});
       }
     },

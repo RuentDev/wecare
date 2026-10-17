@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { WebSocketServerEvent } from "@/types/chat";
+import { getPusherServer } from "@/lib/pusher/server";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -16,18 +17,30 @@ memoryBus.setMaxListeners(10000);
 
 /**
  * Publishes a realtime chat event to all interested subscribers.
- * In production with REDIS_URL, this broadcasts to Redis pub/sub.
- * Otherwise, falls back to the in-memory event bus.
+ * In serverless production environments (such as Vercel), dispatches
+ * through Pusher Channels via REST API across isolated Lambda containers.
+ * Concurrently emits to the local in-memory event bus.
  */
 export async function publishChatEvent(
   conversationId: string,
   event: WebSocketServerEvent
 ): Promise<void> {
-  const channel = `chat:conv:${conversationId}`;
+  const memoryChannel = `chat:conv:${conversationId}`;
+  const pusherChannel = `chat-conv-${conversationId}`;
 
-  // Broadcast to in-memory bus
-  memoryBus.emit(channel, event);
-  memoryBus.emit("chat:global", { channel, event });
+  // 1. Broadcast to in-memory bus (for local dev and background servers)
+  memoryBus.emit(memoryChannel, event);
+  memoryBus.emit("chat:global", { channel: memoryChannel, event });
+
+  // 2. Broadcast via Pusher Channels for Vercel Serverless cross-container delivery
+  const pusher = getPusherServer();
+  if (pusher) {
+    try {
+      await pusher.trigger(pusherChannel, event.type, event);
+    } catch (err: unknown) {
+      console.error("[Pusher Serverless Dispatch Error]:", err);
+    }
+  }
 }
 
 /**
