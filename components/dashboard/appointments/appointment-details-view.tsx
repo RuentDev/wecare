@@ -23,6 +23,7 @@ import {
   AlertCircle,
   UserX,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -206,6 +207,19 @@ export function AppointmentDetailsView({
               </Link>
             </Button>
           )}
+
+          {/* Message Doctor/Patient Action Button */}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="gap-1.5 border-teal-600/30 text-teal-700 hover:bg-teal-50 dark:border-teal-500/40 dark:text-teal-300 dark:hover:bg-teal-950/40 rounded-xl shadow-xs"
+          >
+            <Link href={`/dashboard/messages?appointmentId=${appointment.id}`}>
+              <MessageSquare className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              {userRole === "patient" ? "Message Doctor" : "Message Patient"}
+            </Link>
+          </Button>
 
           {appointment.status !== "cancelled" &&
             appointment.status !== "completed" &&

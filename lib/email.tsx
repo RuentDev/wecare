@@ -14,8 +14,8 @@ function getResendClient(): Resend | null {
   return resendInstance;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@denteria.com";
-const CLINIC_NAME = "Denteria Dental Clinic";
+const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@wecare-clinic.com";
+const CLINIC_NAME = process.env.NEXT_PUBLIC_CLINIC_NAME || "WeCare Clinic";
 
 interface EmailOptions {
   to: string;

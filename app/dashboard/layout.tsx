@@ -27,6 +27,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar
+        user={user}
         userRole={user.role}
         userPermissions={userPermissions}
       />

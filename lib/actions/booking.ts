@@ -5,6 +5,7 @@ import { createGuestUser, findUserByEmail, getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { guestBookingSchema } from "@/lib/validations/booking";
 import { generateUniqueAppointmentNumber } from "@/lib/appointment-number";
+import { provisionAppointmentConversation } from "@/lib/actions/chat";
 
 export async function createGuestBooking(data: {
   // Patient info
@@ -96,6 +97,9 @@ export async function createGuestBooking(data: {
         notes: data.reason,
       },
     });
+
+    // Auto-provision encounter-bound chat room
+    await provisionAppointmentConversation(appointment.id, patientId, data.doctorId);
 
     revalidatePath("/admin/appointments");
     revalidatePath("/dashboard/appointments");

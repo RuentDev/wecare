@@ -10,6 +10,7 @@ import type {
   PatientAppointmentStatus,
   PatientDashboardAppointment,
 } from "@/lib/types/patient-dashboard";
+import { provisionAppointmentConversation } from "@/lib/actions/chat";
 
 export async function getAppointments() {
   try {
@@ -66,13 +67,25 @@ export async function updateAppointmentStatus(
   }
 
   try {
-    await prisma.appointments.update({
+    const updatedAppointment = await prisma.appointments.update({
       where: { id },
       data: { status },
+      select: { id: true, patient_id: true, doctor_id: true, status: true },
     });
+
+    // Auto-provision encounter-bound chat room upon confirmation
+    if (status === "confirmed") {
+      await provisionAppointmentConversation(
+        updatedAppointment.id,
+        updatedAppointment.patient_id,
+        updatedAppointment.doctor_id
+      );
+    }
+
     revalidatePath("/admin/appointments");
     revalidatePath("/dashboard/appointments");
     revalidatePath("/dashboard/schedule");
+    revalidatePath("/dashboard/messages");
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {

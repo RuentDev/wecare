@@ -29,7 +29,7 @@ const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_WIDTH_ICON = "4rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContextProps = {
@@ -139,7 +139,7 @@ function SidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full max-w-full overflow-x-hidden",
             className,
           )}
           {...props}
@@ -180,6 +180,72 @@ function Sidebar({
     );
   }
 
+  if (collapsible === "icon") {
+    if (isMobile) {
+      return (
+        <>
+          {/* Persistent Collapsible Icon Rail on Mobile */}
+          <div
+            className="group peer text-sidebar-foreground block shrink-0"
+            data-state="collapsed"
+            data-collapsible="icon"
+            data-variant={variant}
+            data-side={side}
+            data-slot="sidebar"
+          >
+            <div
+              data-slot="sidebar-gap"
+              className="relative w-(--sidebar-width-icon) shrink-0 bg-transparent transition-[width] duration-200 ease-linear"
+            />
+            <div
+              data-slot="sidebar-container"
+              className={cn(
+                "fixed inset-y-0 z-20 flex h-svh w-(--sidebar-width-icon) shrink-0 transition-[left,right,width] duration-200 ease-linear",
+                side === "left"
+                  ? "left-0 border-r border-sidebar-border"
+                  : "right-0 border-l border-sidebar-border",
+                className,
+              )}
+            >
+              <div
+                data-sidebar="sidebar"
+                data-slot="sidebar-inner"
+                className="bg-sidebar flex h-full w-full flex-col"
+              >
+                {children}
+              </div>
+            </div>
+          </div>
+
+          {/* Slide-over Drawer when expanded on Mobile */}
+          <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+            <SheetContent
+              data-sidebar="sidebar"
+              data-slot="sidebar"
+              data-mobile="true"
+              className="bg-sidebar text-sidebar-foreground w-72 max-w-[85vw] p-0 z-50 border-r border-sidebar-border shadow-2xl"
+              side={side}
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Displays the full sidebar navigation.</SheetDescription>
+              </SheetHeader>
+              <div
+                data-sidebar="sidebar"
+                data-slot="sidebar-inner"
+                data-state="expanded"
+                data-collapsible=""
+                className="group bg-sidebar flex h-full w-full flex-col"
+              >
+                {children}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
+      );
+    }
+  }
+
   if (isMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -207,7 +273,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer text-sidebar-foreground hidden md:block"
+      className="group peer text-sidebar-foreground hidden md:block shrink-0"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -218,7 +284,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+          "relative w-(--sidebar-width) shrink-0 bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
@@ -229,7 +295,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+          "fixed inset-y-0 z-20 hidden h-svh w-(--sidebar-width) shrink-0 transition-[left,right,width] duration-200 ease-linear md:flex",
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -309,7 +375,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col",
+        "bg-background relative flex min-w-0 w-auto flex-1 flex-col overflow-x-hidden",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className,
       )}
@@ -474,7 +540,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding,background-color] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:justify-center! group-data-[collapsible=icon]:p-0! [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

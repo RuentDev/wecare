@@ -1,21 +1,49 @@
 import { Activity } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-const Logo = ({ isCollapsed }: { isCollapsed: boolean }) => {
+interface LogoProps {
+  isCollapsed?: boolean;
+  className?: string;
+  onClick?: () => void;
+}
+
+export default function Logo({ isCollapsed = false, className, onClick }: LogoProps) {
   return (
-    <div className="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
-      <Link href="/" className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-          <Activity className="w-5 h-5 text-white" />
+    <div
+      className={cn(
+        "h-16 flex items-center transition-all duration-200 px-3 w-full justify-start",
+        "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+        isCollapsed && "justify-center px-0",
+        className
+      )}
+    >
+      <Link
+        href="/dashboard"
+        onClick={onClick}
+        className={cn(
+          "flex items-center gap-3 group outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-xl p-1 transition-all",
+          "group-data-[collapsible=icon]:justify-center",
+          isCollapsed && "justify-center"
+        )}
+      >
+        <div className="size-9 bg-primary text-primary-foreground rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105">
+          <Activity className="size-5" />
         </div>
-        {!isCollapsed && (
-          <span className="font-bold text-xl tracking-tight text-slate-800">
+        <div
+          className={cn(
+            "flex flex-col min-w-0 transition-opacity duration-200 group-data-[collapsible=icon]:hidden",
+            isCollapsed && "hidden"
+          )}
+        >
+          <span className="font-bold text-lg tracking-tight text-sidebar-foreground leading-tight">
             WeCare
           </span>
-        )}
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            Health Portal
+          </span>
+        </div>
       </Link>
     </div>
   );
-};
-
-export default Logo;
+}

@@ -149,7 +149,17 @@ interface AppContextType extends AppState {
   clearError: () => void;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const globalForApp = globalThis as unknown as {
+  AppContext?: React.Context<AppContextType | undefined>;
+};
+
+export const AppContext =
+  globalForApp.AppContext ??
+  createContext<AppContextType | undefined>(undefined);
+
+if (process.env.NODE_ENV !== "production") {
+  globalForApp.AppContext = AppContext;
+}
 
 // Provider
 export function AppProvider({ children }: { children: React.ReactNode }) {

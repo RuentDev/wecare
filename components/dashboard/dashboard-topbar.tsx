@@ -2,129 +2,78 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, User, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight, Home } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useApp } from "@/contexts/app-context";
+import { NotificationDropdown } from "./header/notification-dropdown";
+import { ThemeToggle } from "./header/theme-toggle";
+import { UserDropdown } from "./header/user-dropdown";
 import type { User as UserType } from "@/lib/types/user";
 
 export function DashboardTopBar({ user }: { user: UserType }) {
   const pathname = usePathname();
-  const { logout } = useApp();
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  // Simple breadcrumb logic
+  // Breadcrumb segment generation
   const pathSegments = pathname.split("/").filter(Boolean);
-  const breadcrumb = pathSegments.map((segment, index) => {
+  const breadcrumbs = pathSegments.map((segment, index) => {
     const label =
       segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
-    return { label, href: "/" + pathSegments.slice(0, index + 1).join("/") };
+    return {
+      label,
+      href: "/" + pathSegments.slice(0, index + 1).join("/"),
+      isLast: index === pathSegments.length - 1,
+    };
   });
 
   return (
-    <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-2 text-slate-500 hover:text-primary transition-colors" />
+    <header className="sticky top-0 z-40 h-16 px-4 md:px-6 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors duration-200">
+      {/* Left: Sidebar trigger and contextual breadcrumbs */}
+      <div className="flex items-center gap-3 min-w-0">
+        <SidebarTrigger className="-ml-1.5 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors duration-150 active:scale-95" />
 
-        <div className="h-6 w-px bg-slate-100 mx-2 hidden md:block" />
+        <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
-        <nav className="hidden md:flex items-center gap-2 text-sm font-medium text-slate-500">
-          {breadcrumb.map((item, index) => (
-            <div key={item.href} className="flex items-center gap-2">
-              {index > 0 && <span className="text-slate-300">/</span>}
-              <span
-                className={
-                  index === breadcrumb.length - 1
-                    ? "text-slate-900 font-bold"
-                    : ""
-                }
-              >
-                {item.label}
-              </span>
-            </div>
-          ))}
+        {/* Breadcrumb Navigation */}
+        <nav
+          aria-label="Breadcrumb"
+          className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 truncate"
+        >
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span className="sr-only md:not-sr-only">Dashboard</span>
+          </Link>
+
+          {breadcrumbs.length > 1 &&
+            breadcrumbs.slice(1).map((item) => (
+              <div key={item.href} className="flex items-center gap-1.5 truncate">
+                <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 shrink-0" />
+                {item.isLast ? (
+                  <span className="text-slate-900 dark:text-slate-100 font-semibold truncate">
+                    {item.label}
+                  </span>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors truncate"
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
+            ))}
         </nav>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            className="pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all"
-          />
-        </div>
+      {/* Right: Actions, Notifications, Theme switcher, and User Profile */}
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <NotificationDropdown />
+        <ThemeToggle />
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-slate-500 hover:text-primary transition-colors"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </Button>
+        <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
 
-        <div className="h-8 w-px bg-slate-100 mx-1"></div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="pl-1 pr-2 gap-2 h-10 rounded-xl hover:bg-slate-50 transition-all"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar_url || ""} />
-                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                  {user.first_name?.[0]}
-                  {user.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left hidden lg:block">
-                <p className="text-xs font-bold text-slate-900 leading-tight">
-                  {user.first_name} {user.last_name}
-                </p>
-                <p className="text-[10px] text-slate-500 capitalize leading-tight">
-                  {user.role}
-                </p>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56 rounded-xl border-slate-100 shadow-xl shadow-slate-200/50"
-          >
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="rounded-lg gap-2 cursor-pointer">
-              <Link href="/dashboard/profile" className="flex items-center gap-2 w-full">
-                <User className="size-4" /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-lg gap-2">
-              <Settings className="w-4 h-4" /> Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="rounded-lg gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
-            >
-              <LogOut className="w-4 h-4" /> Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserDropdown user={user} profileHref="/dashboard/profile" />
       </div>
     </header>
   );
